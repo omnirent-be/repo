@@ -1,0 +1,106 @@
+@import '../../styles/customMediaQueries.css';
+
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: var(--zIndexTopbar);
+  height: 64px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background-color: var(--colorWhite);
+  border-top: 1px solid var(--colorGrey100);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+
+  @media (--viewportMedium) {
+    display: none;
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  /* Without this, a flex item's default min-width:auto keeps it from
+     shrinking past its label's intrinsic text width - on a narrow phone
+     5 such items (e.g. "Opgeslagen", "Berichten") don't actually fit,
+     and the row silently overflows sideways past the screen edge instead
+     of each item compressing to share the available space. */
+  min-width: 0;
+  height: 100%;
+  padding: 0 2px;
+  color: var(--colorGrey400);
+
+  &:hover {
+    text-decoration: none;
+    color: var(--colorGrey700);
+  }
+}
+
+.itemActive {
+  color: var(--marketplaceColor);
+}
+
+.icon {
+  width: 21px;
+  height: 21px;
+}
+
+.iconWrapper {
+  position: relative;
+  display: flex;
+}
+
+.notificationDot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--colorFail);
+  border: 1.5px solid var(--colorWhite);
+}
+
+.label {
+  font-size: 10.5px;
+  font-weight: var(--fontWeightMedium);
+  white-space: nowrap;
+}
+
+.addItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  color: var(--colorGrey700);
+
+  &:hover {
+    text-decoration: none;
+    color: var(--colorGrey700);
+  }
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-top: -20px;
+  border-radius: 50%;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}

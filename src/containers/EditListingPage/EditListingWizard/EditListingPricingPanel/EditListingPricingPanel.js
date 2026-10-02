@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import classNames from 'classnames';
 
 // Import configs and util modules
@@ -7,13 +8,14 @@ import { LISTING_STATE_DRAFT, propTypes } from '../../../../util/types';
 import { types as sdkTypes } from '../../../../util/sdkLoader';
 import { isPriceVariationsEnabled } from '../../../../util/configHelpers';
 import { isValidCurrencyForTransactionProcess } from '../../../../util/fieldHelpers';
-import { FIXED, isBookingProcess } from '../../../../transactions/transaction';
+import { FIXED, isBookingProcess, isNegotiationProcess } from '../../../../transactions/transaction';
 
 // Import shared components
 import { H3, ListingLink } from '../../../../components';
 
 // Import modules from this directory
 import EditListingPricingForm from './EditListingPricingForm';
+import { fetchComparablePricesThunk } from '../../EditListingPage.duck';
 import {
   getInitialValuesForPriceVariants,
   handleSubmitValuesForPriceVariants,
@@ -36,18 +38,43 @@ const getListingTypeConfig = (publicData, listingTypes) => {
 // This is a tentative approach to contain logic in one place.
 const getInitialValues = props => {
   const { listing, listingTypes } = props;
-  const { publicData } = listing?.attributes || {};
-  const { unitType } = publicData || {};
+  const { publicData, price } = listing?.attributes || {};
+  const {
+    unitType,
+    extraDayPriceInSubunits,
+    depositInSubunits,
+    weekendDiscountEnabled,
+    quotePriceVariables,
+  } = publicData || {};
   const listingTypeConfig = getListingTypeConfig(publicData, listingTypes);
   // Note: publicData contains priceVariationsEnabled if listing is created with priceVariations enabled.
   const isPriceVariationsInUse = isPriceVariationsEnabled(publicData, listingTypeConfig);
+  const depositMaybe =
+    depositInSubunits != null && price?.currency
+      ? { deposit: new Money(depositInSubunits, price.currency) }
+      : {};
+  const weekendDiscountMaybe = { weekendDiscountEnabled: !!weekendDiscountEnabled };
 
-  return unitType === FIXED || isPriceVariationsInUse
-    ? {
-        ...getInitialValuesForPriceVariants(props, isPriceVariationsInUse),
-        ...getInitialValuesForStartTimeInterval(props),
-      }
-    : { price: listing?.attributes?.price };
+  if (unitType === FIXED || isPriceVariationsInUse) {
+    return {
+      ...getInitialValuesForPriceVariants(props, isPriceVariationsInUse),
+      ...getInitialValuesForStartTimeInterval(props),
+      ...depositMaybe,
+      ...weekendDiscountMaybe,
+    };
+  }
+
+  const extraDayPriceMaybe =
+    extraDayPriceInSubunits != null && price?.currency
+      ? { extraDayPrice: new Money(extraDayPriceInSubunits, price.currency) }
+      : {};
+  return {
+    price,
+    ...extraDayPriceMaybe,
+    ...depositMaybe,
+    ...weekendDiscountMaybe,
+    quotePriceVariables: quotePriceVariables || [],
+  };
 };
 
 // This is needed to show the listing's price consistently over XHR calls.
@@ -90,6 +117,8 @@ const getOptimisticListing = (listing, updateValues) => {
  */
 const EditListingPricingPanel = props => {
   const [state, setState] = useState({ initialValues: getInitialValues(props) });
+  const [comparablePrices, setComparablePrices] = useState(null);
+  const dispatch = useDispatch();
 
   const {
     className,
@@ -118,9 +147,28 @@ const EditListingPricingPanel = props => {
   const transactionProcessAlias = listingTypeConfig?.transactionType?.alias;
   const process = listingTypeConfig?.transactionType?.process;
   const isBooking = isBookingProcess(process);
+  const isNegotiation = isNegotiationProcess(process);
 
   // Note: publicData contains priceVariationsEnabled if listing is created with priceVariations enabled.
   const isPriceVariationsInUse = isPriceVariationsEnabled(publicData, listingTypeConfig);
+
+  const listingTypeForComparison = publicData?.listingType;
+  const categoryLevel1ForComparison = publicData?.categoryLevel1;
+  useEffect(() => {
+    if (!listingTypeForComparison) {
+      return;
+    }
+    dispatch(
+      fetchComparablePricesThunk({
+        listingType: listingTypeForComparison,
+        categoryLevel1: categoryLevel1ForComparison,
+        excludeListingId: listing?.id?.uuid,
+      })
+    )
+      .unwrap()
+      .then(setComparablePrices)
+      .catch(() => setComparablePrices(null));
+  }, [listingTypeForComparison, categoryLevel1ForComparison, listing?.id?.uuid]);
 
   const isCompatibleCurrency = isValidCurrencyForTransactionProcess(
     transactionProcessAlias,
@@ -162,7 +210,14 @@ const EditListingPricingPanel = props => {
           className={css.form}
           initialValues={initialValues}
           onSubmit={values => {
-            const { price } = values;
+            const { price, extraDayPrice, deposit, weekendDiscountEnabled, quotePriceVariables } =
+              values;
+            const depositMaybe =
+              isBooking || isNegotiation ? { depositInSubunits: deposit?.amount ?? null } : {};
+            const weekendDiscountMaybe = isBooking
+              ? { weekendDiscountEnabled: !!weekendDiscountEnabled }
+              : {};
+            const quotePriceVariablesMaybe = isNegotiation ? { quotePriceVariables } : {};
 
             // New values for listing attributes
             let updateValues = {};
@@ -193,17 +248,26 @@ const EditListingPricingPanel = props => {
                   priceVariationsEnabled: isPriceVariationsInUse,
                   ...startTimeIntervalChanges.publicData,
                   ...priceVariantChanges.publicData,
+                  ...depositMaybe,
+                  ...weekendDiscountMaybe,
                 },
               };
             } else {
               const priceVariationsEnabledMaybe = isBooking
                 ? {
-                    publicData: {
-                      priceVariationsEnabled: false,
-                    },
+                    priceVariationsEnabled: false,
                   }
                 : {};
-              updateValues = { price, ...priceVariationsEnabledMaybe };
+              updateValues = {
+                price,
+                publicData: {
+                  ...priceVariationsEnabledMaybe,
+                  extraDayPriceInSubunits: extraDayPrice?.amount ?? null,
+                  ...depositMaybe,
+                  ...weekendDiscountMaybe,
+                  ...quotePriceVariablesMaybe,
+                },
+              };
             }
 
             // Save the initialValues to state
@@ -220,7 +284,9 @@ const EditListingPricingPanel = props => {
           unitType={unitType}
           listingTypeConfig={listingTypeConfig}
           isPriceVariationsInUse={isPriceVariationsInUse}
+          comparablePrices={comparablePrices}
           listingMinimumPriceSubUnits={listingMinimumPriceSubUnits}
+          replacementValueInSubunits={publicData?.replacementValueInSubunits}
           saveActionMsg={submitButtonText}
           disabled={disabled}
           ready={ready}

@@ -32,6 +32,12 @@
   border-radius: 8px;
   box-shadow: var(--boxShadowPopup);
   width: calc(100vw - 83px);
+  /* The width values below (here and per gridCol*) assume a full-width
+     page-builder section; a narrower parent (e.g. one column of a
+     two-column hero) would otherwise overflow it, since none of those are
+     relative to the actual parent. This keeps the preferred width while
+     never exceeding whatever space is actually available. */
+  max-width: 100%;
   padding: 0 8px 8px 8px;
   margin-top: 40px;
   @media (--viewportMedium) {

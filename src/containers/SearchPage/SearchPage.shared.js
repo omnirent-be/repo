@@ -642,8 +642,12 @@ export const getDerivedRenderData = ({
     ...customPrimaryFilters,
     ...builtInFilters,
   ];
+  // The grid layout's sidebar/mobile-filters list (unlike the map layout's
+  // availablePrimaryFilters above) drops the full category-tree filter -
+  // CategoryQuickNav already exposes the same taxonomy as horizontal chips
+  // right above the results, so keeping both was pure duplication.
   const availableFilters = [
-    ...builtInPrimaryFilters,
+    ...builtInPrimaryFilters.filter(f => f.key !== 'categoryLevel'),
     ...customPrimaryFilters,
     ...builtInFilters,
     ...customSecondaryFilters,

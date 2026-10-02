@@ -3,9 +3,11 @@
  * We are following Ducks module proposition:
  * https://github.com/erikras/ducks-modular-redux
  */
+import BalancePage from './BalancePage/BalancePage.duck';
 import CheckoutPage from './CheckoutPage/CheckoutPage.duck';
 import ContactDetailsPage from './ContactDetailsPage/ContactDetailsPage.duck';
 import EditListingPage from './EditListingPage/EditListingPage.duck';
+import FavoriteListingsPage from './FavoriteListingsPage/FavoriteListingsPage.duck';
 import InboxPage from './InboxPage/InboxPage.duck';
 import ListingPage from './ListingPage/ListingPage.duck';
 import MakeOfferPage from './MakeOfferPage/MakeOfferPage.duck';
@@ -23,9 +25,11 @@ import StripePayoutPage from './StripePayoutPage/StripePayoutPage.duck';
 import TransactionPage from './TransactionPage/TransactionPage.duck';
 
 export {
+  BalancePage,
   CheckoutPage,
   ContactDetailsPage,
   EditListingPage,
+  FavoriteListingsPage,
   InboxPage,
   ListingPage,
   MakeOfferPage,

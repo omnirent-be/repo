@@ -5,6 +5,8 @@ import classNames from 'classnames';
 import appSettings from '../../../config/settings';
 import { FormattedMessage, useIntl } from '../../../util/reactIntl';
 import { required, bookingDatesRequired, composeValidators } from '../../../util/validators';
+import { formatMoney } from '../../../util/currency';
+import { types as sdkTypes } from '../../../util/sdkLoader';
 import {
   getStartOf,
   addTime,
@@ -21,13 +23,17 @@ import { LINE_ITEM_DAY, propTypes } from '../../../util/types';
 import { timeSlotsPerDate } from '../../../util/generators';
 import { BOOKING_PROCESS_NAME } from '../../../transactions/transaction';
 
-import { Form, PrimaryButton, FieldDateRangePicker, FieldSelect, H6 } from '../../../components';
+import { Form, PrimaryButton, FieldDateRangePicker, FieldSelect } from '../../../components';
 
-import EstimatedCustomerBreakdownMaybe from '../EstimatedCustomerBreakdownMaybe';
+import EstimatedCustomerBreakdownMaybe, {
+  estimatedTotalPrice,
+} from '../EstimatedCustomerBreakdownMaybe';
 
 import FetchLineItemsError from '../FetchLineItemsError/FetchLineItemsError.js';
 
 import css from './BookingDatesForm.module.css';
+
+const { Money } = sdkTypes;
 
 const TODAY = new Date();
 
@@ -528,6 +534,7 @@ export const BookingDatesForm = props => {
     timeZone,
     dayCountAvailableForBooking,
     marketplaceName,
+    marketplaceCurrency,
     payoutDetailsWarning,
     monthlyTimeSlots,
     onMonthChanged,
@@ -537,10 +544,12 @@ export const BookingDatesForm = props => {
     priceVariantFieldComponent: PriceVariantFieldComponent,
     preselectedPriceVariant,
     isPublishedListing,
+    publicData,
     ...rest
   } = props;
   const intl = useIntl();
   const [currentMonth, setCurrentMonth] = useState(getStartOf(TODAY, 'month', timeZone));
+  const [isBreakdownOpen, setBreakdownOpen] = useState(false);
   const initialValuesMaybe =
     priceVariants.length > 1 && preselectedPriceVariant
       ? { initialValues: { priceVariantName: preselectedPriceVariant?.name } }
@@ -594,6 +603,7 @@ export const BookingDatesForm = props => {
   }, [currentMonth, currentMonthInProgress, nextMonthInProgress, timeZone, monthlyTimeSlots]);
 
   const classes = classNames(rootClassName || css.root, className);
+  const { depositInSubunits, extraDayPriceInSubunits } = publicData || {};
 
   const onHandleFetchLineItems = calculateLineItems(
     listingId,
@@ -646,6 +656,14 @@ export const BookingDatesForm = props => {
             : null;
         const showEstimatedBreakdown =
           breakdownData && lineItems && !fetchLineItemsInProgress && !fetchLineItemsError;
+
+        const customerLineItems = lineItems
+          ? lineItems.filter(item => item.includeFor.includes('customer'))
+          : [];
+        const totalPrice =
+          showEstimatedBreakdown && customerLineItems.length > 0
+            ? estimatedTotalPrice(customerLineItems, unitPrice.currency)
+            : null;
 
         const dateFormatOptions = {
           weekday: 'short',
@@ -709,6 +727,7 @@ export const BookingDatesForm = props => {
                 priceVariantName={priceVariantName}
                 onPriceVariantChange={onPriceVariantChange(formRenderProps)}
                 disabled={!isPublishedListing}
+                marketplaceCurrency={marketplaceCurrency}
               />
             ) : null}
 
@@ -826,20 +845,76 @@ export const BookingDatesForm = props => {
               </FieldSelect>
             ) : null}
 
-            {showEstimatedBreakdown ? (
+            {showEstimatedBreakdown && totalPrice ? (
               <div className={css.priceBreakdownContainer}>
-                <H6 as="h3" className={css.bookingBreakdownTitle}>
-                  <FormattedMessage id="BookingDatesForm.priceBreakdownTitle" />
-                </H6>
-                <hr className={css.totalDivider} />
-                <EstimatedCustomerBreakdownMaybe
-                  breakdownData={breakdownData}
-                  lineItems={lineItems}
-                  timeZone={timeZone}
-                  currency={unitPrice.currency}
-                  marketplaceName={marketplaceName}
-                  processName={BOOKING_PROCESS_NAME}
-                />
+                <button
+                  type="button"
+                  className={css.priceBreakdownTrigger}
+                  onClick={() => setBreakdownOpen(true)}
+                >
+                  <span className={css.priceBreakdownTotal}>{formatMoney(intl, totalPrice)}</span>
+                  <span className={css.priceBreakdownLink}>
+                    <FormattedMessage id="BookingDatesForm.viewPriceBreakdown" />
+                  </span>
+                </button>
+                {isBreakdownOpen ? (
+                  <>
+                    <div
+                      className={css.priceBreakdownBackdrop}
+                      onClick={() => setBreakdownOpen(false)}
+                    />
+                    <div className={css.priceBreakdownPopover} role="dialog" aria-modal="true">
+                      <button
+                        type="button"
+                        className={css.priceBreakdownPopoverClose}
+                        onClick={() => setBreakdownOpen(false)}
+                        aria-label={intl.formatMessage({
+                          id: 'BookingDatesForm.closePriceBreakdown',
+                        })}
+                      >
+                        ×
+                      </button>
+                      <EstimatedCustomerBreakdownMaybe
+                        breakdownData={breakdownData}
+                        lineItems={lineItems}
+                        timeZone={timeZone}
+                        currency={unitPrice.currency}
+                        marketplaceName={marketplaceName}
+                        processName={BOOKING_PROCESS_NAME}
+                      />
+                      {depositInSubunits || extraDayPriceInSubunits ? (
+                        <div className={css.extraCostsNotice}>
+                          {depositInSubunits ? (
+                            <p className={css.extraCostsRow}>
+                              <FormattedMessage
+                                id="BookingDatesForm.depositNotice"
+                                values={{
+                                  depositAmount: formatMoney(
+                                    intl,
+                                    new Money(depositInSubunits, unitPrice.currency)
+                                  ),
+                                }}
+                              />
+                            </p>
+                          ) : null}
+                          {extraDayPriceInSubunits ? (
+                            <p className={css.extraCostsRow}>
+                              <FormattedMessage
+                                id="BookingDatesForm.extraDayNotice"
+                                values={{
+                                  extraDayAmount: formatMoney(
+                                    intl,
+                                    new Money(extraDayPriceInSubunits, unitPrice.currency)
+                                  ),
+                                }}
+                              />
+                            </p>
+                          ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                  </>
+                ) : null}
               </div>
             ) : null}
             <FetchLineItemsError error={fetchLineItemsError} />

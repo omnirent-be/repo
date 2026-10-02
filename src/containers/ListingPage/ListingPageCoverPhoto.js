@@ -51,7 +51,10 @@ import {
 import SectionHero from './SectionHero';
 import SectionReviews from './SectionReviews';
 import SectionAuthorMaybe from './SectionAuthorMaybe';
+import SectionBreadcrumbs from './SectionBreadcrumbs';
+import SectionMoreFromProvider from './SectionMoreFromProvider';
 import SectionMapMaybe from './SectionMapMaybe';
+import SectionDistanceMaybe from './SectionDistanceMaybe';
 import CustomListingFields from './CustomListingFields';
 import Notifications from './Notifications/Notifications';
 import ListingPageAccessWrapper from './ListingPageAccessWrapper';
@@ -264,6 +267,10 @@ export const ListingPageComponent = props => {
       }}
     >
       <LayoutSingleColumn className={css.pageRoot} topbar={topbar} footer={<FooterContainer />}>
+        <SectionBreadcrumbs
+          publicData={publicData}
+          categories={config.categoryConfiguration.categories}
+        />
         {showListingImage ? (
           <SectionHero
             title={title}
@@ -299,6 +306,14 @@ export const ListingPageComponent = props => {
             </div>
             {showDescription && <SectionText text={description} showAsIngress />}
 
+            <SectionDistanceMaybe
+              geolocation={geolocation}
+              publicData={publicData}
+              listingId={currentListing.id}
+              mapsConfig={config.maps}
+              isOwnListing={isOwnListing}
+            />
+
             <CustomListingFields
               publicData={publicData}
               metadata={metadata}
@@ -326,6 +341,10 @@ export const ListingPageComponent = props => {
               onSubmitInquiry={onSubmitInquiry}
               currentUser={currentUser}
               onManageDisableScrolling={onManageDisableScrolling}
+            />
+            <SectionMoreFromProvider
+              authorId={ensuredAuthor.id}
+              currentListingId={listingId?.uuid}
             />
           </div>
           <div className={css.orderColumnForHeroLayout}>

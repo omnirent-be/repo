@@ -22,11 +22,15 @@ import LineItemBookingPeriod from './LineItemBookingPeriod';
 import LineItemBasePriceMaybe from './LineItemBasePriceMaybe';
 import LineItemSubTotalMaybe from './LineItemSubTotalMaybe';
 import LineItemShippingFeeMaybe from './LineItemShippingFeeMaybe';
+import LineItemMultiDayDiscountMaybe from './LineItemMultiDayDiscountMaybe';
 import LineItemPickupFeeMaybe from './LineItemPickupFeeMaybe';
+import LineItemProviderVatMaybe from './LineItemProviderVatMaybe';
 import LineItemCustomerCommissionMaybe from './LineItemCustomerCommissionMaybe';
 import LineItemCustomerCommissionRefundMaybe from './LineItemCustomerCommissionRefundMaybe';
 import LineItemProviderCommissionMaybe from './LineItemProviderCommissionMaybe';
 import LineItemProviderCommissionRefundMaybe from './LineItemProviderCommissionRefundMaybe';
+import LineItemCustomerCreditMaybe from './LineItemCustomerCreditMaybe';
+import LineItemCouponDiscountMaybe from './LineItemCouponDiscountMaybe';
 import LineItemRefundMaybe from './LineItemRefundMaybe';
 import LineItemTotalPrice from './LineItemTotalPrice';
 import LineItemUnknownItemsMaybe from './LineItemUnknownItemsMaybe';
@@ -114,8 +118,10 @@ export const OrderBreakdownComponent = props => {
       />
 
       <LineItemBasePriceMaybe lineItems={lineItems} code={lineItemUnitType} intl={intl} />
+      <LineItemMultiDayDiscountMaybe lineItems={lineItems} intl={intl} />
       <LineItemShippingFeeMaybe lineItems={lineItems} intl={intl} />
       <LineItemPickupFeeMaybe lineItems={lineItems} intl={intl} />
+      <LineItemProviderVatMaybe lineItems={lineItems} intl={intl} />
       <LineItemUnknownItemsMaybe lineItems={lineItems} isProvider={isProvider} intl={intl} />
 
       <LineItemSubTotalMaybe
@@ -152,6 +158,9 @@ export const OrderBreakdownComponent = props => {
         marketplaceName={marketplaceName}
         intl={intl}
       />
+
+      <LineItemCustomerCreditMaybe lineItems={lineItems} intl={intl} />
+      <LineItemCouponDiscountMaybe lineItems={lineItems} intl={intl} />
 
       <LineItemTotalPrice transaction={transaction} isProvider={isProvider} intl={intl} />
 

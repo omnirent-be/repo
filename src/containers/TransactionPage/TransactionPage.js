@@ -4,6 +4,7 @@ import { useHistory } from 'react-router-dom';
 import classNames from 'classnames';
 
 import appSettings from '../../config/settings.js';
+import * as log from '../../util/log';
 import { useConfiguration } from '../../context/configurationContext';
 import { useRouteConfiguration } from '../../context/routeConfigurationContext';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
@@ -14,9 +15,10 @@ import {
   LISTING_UNIT_TYPES,
   propTypes,
 } from '../../util/types';
-import { timestampToDate } from '../../util/dates';
+import { timestampToDate, getStartOf, parseDateFromISO8601 } from '../../util/dates';
 import { createSlug } from '../../util/urlHelpers';
 import { requireListingImage } from '../../util/configHelpers';
+import { formatContractSignatureMessage } from '../../util/contractSignature';
 import { getCurrentUserTypeRoles, hasPermissionToViewData } from '../../util/userHelpers.js';
 import { userDisplayNameAsString } from '../../util/data';
 import { isMobileSafari } from '../../util/userAgent';
@@ -72,6 +74,9 @@ import ReportModal from './ReportModal/ReportModal';
 import ReviewModal from './ReviewModal/ReviewModal';
 import RequestChangesModal from './RequestChangesModal/RequestChangesModal';
 import MakeCounterOfferModal from './MakeCounterOfferModal/MakeCounterOfferModal';
+import RequestExtraDayModal from './RequestExtraDayModal/RequestExtraDayModal';
+import ExtraDayPaymentModal from './ExtraDayPaymentModal/ExtraDayPaymentModal';
+import DepositPaymentModal from './DepositPaymentModal/DepositPaymentModal';
 import SendMessageForm from './SendMessageForm/SendMessageForm';
 import TransactionPanel from './TransactionPanel/TransactionPanel';
 
@@ -86,7 +91,17 @@ import {
   clearUploadedFiles,
   selectFileUploads,
   downloadFile,
+  requestExtraDay,
+  acceptExtraDay,
+  declineExtraDay,
+  confirmExtraDayPayment,
+  fetchExtraDayTransaction,
+  initiateDepositHold,
+  confirmDepositHold,
+  releaseDeposit,
+  claimDeposit,
 } from './TransactionPage.duck';
+import { confirmCardPayment } from '../../ducks/stripe.duck.js';
 import css from './TransactionPage.module.css';
 
 const MAX_MOBILE_SCREEN_WIDTH = 1023;
@@ -152,6 +167,58 @@ const onChangeRequest = (
     })
     .catch(e => {
       // Do nothing, error will be handled by the form
+    });
+};
+
+// The booking's start/end are stored as midnight in the *listing's* own
+// timezone, not UTC. Reading the calendar date back in that same timezone
+// keeps this in sync with both what's displayed to the user (intl.formatDate
+// on the same Date, using the browser's local timezone) and the server's
+// own timezone-aware comparison in server/api/extra-day/request.js.
+const toISODate = (date, timeZone) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date(date));
+
+// Submit an extra-day-range request. The price is calculated automatically
+// server-side (server/api/extra-day/request.js) and the booking is
+// extended in the same call - no waiting on the provider. The resulting
+// transition is what shows up in the activity feed (see
+// TransactionPage.stateData.js's transitionMessages) - no separate chat
+// message is sent for this anymore.
+const onRequestExtraDay = (
+  currentTransactionId,
+  onDispatchRequestExtraDay,
+  timeZone,
+  setRequestExtraDayModalOpen,
+  setRequestExtraDaySubmitted,
+  setRequestExtraDayInProgress,
+  setRequestExtraDayError,
+  setExtraDayPaymentTransaction,
+  setExtraDayPaymentModalOpen
+) => values => {
+  const { dateRange, note } = values;
+  const startDate = toISODate(dateRange.startDate, timeZone);
+  // The picker's endDate is the last inclusive extra day; the API's
+  // bookingEnd (and our own stored endDate) is exclusive, one day later.
+  const endDate = toISODate(
+    getStartOf(dateRange.endDate, 'day', timeZone, 1, 'days'),
+    timeZone
+  );
+
+  setRequestExtraDayInProgress(true);
+  setRequestExtraDayError(null);
+  onDispatchRequestExtraDay(currentTransactionId, startDate, endDate, note || null)
+    .then(extraDayTransaction => {
+      setRequestExtraDayInProgress(false);
+      setRequestExtraDayModalOpen(false);
+      setRequestExtraDaySubmitted(true);
+      // Move straight into the payment step - the extra-day transaction
+      // (its own booking + Stripe payment intent) already exists.
+      setExtraDayPaymentTransaction(extraDayTransaction);
+      setExtraDayPaymentModalOpen(true);
+    })
+    .catch(e => {
+      setRequestExtraDayInProgress(false);
+      setRequestExtraDayError(e);
     });
 };
 
@@ -331,6 +398,13 @@ export const TransactionPageComponent = props => {
   const [changeRequestSubmitted, setChangeRequestSubmitted] = useState(false);
   const [isMakeCounterOfferModalOpen, setMakeCounterOfferModalOpen] = useState(false);
   const [counterOfferSubmitted, setCounterOfferSubmitted] = useState(false);
+  const [isRequestExtraDayModalOpen, setRequestExtraDayModalOpen] = useState(false);
+  const [requestExtraDaySubmitted, setRequestExtraDaySubmitted] = useState(false);
+  const [requestExtraDayInProgress, setRequestExtraDayInProgress] = useState(false);
+  const [requestExtraDayError, setRequestExtraDayError] = useState(null);
+  const [isExtraDayPaymentModalOpen, setExtraDayPaymentModalOpen] = useState(false);
+  const [extraDayPaymentTransaction, setExtraDayPaymentTransaction] = useState(null);
+  const [isDepositPaymentModalOpen, setDepositPaymentModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -378,7 +452,19 @@ export const TransactionPageComponent = props => {
     onClearUploadedFiles,
     onDownloadFile,
     fileDownloads,
+    onRequestExtraDay: onDispatchRequestExtraDay,
+    onAcceptExtraDay: onDispatchAcceptExtraDay,
+    onDeclineExtraDay: onDispatchDeclineExtraDay,
+    onConfirmCardPayment,
+    onConfirmExtraDayPayment,
+    onFetchExtraDayTransaction,
+    onInitiateDepositHold,
+    onConfirmDepositHold,
+    onReleaseDeposit: onDispatchReleaseDeposit,
+    onClaimDeposit: onDispatchClaimDeposit,
     fileUploadsDisabled,
+    monthlyTimeSlots,
+    onFetchTimeSlots,
     ...restOfProps
   } = props;
 
@@ -516,6 +602,143 @@ export const TransactionPageComponent = props => {
   // This is called from action buttons
   const onOpenMakeCounterOfferModal = () => {
     setMakeCounterOfferModalOpen(true);
+  };
+
+  // Open request extra day modal (customer, accepted booking). Fetches
+  // availability once for the window right after the current booking end,
+  // so the calendar can grey out days already booked by someone else -
+  // same underlying time slots machinery as the normal booking calendar.
+  const onOpenRequestExtraDayModal = () => {
+    const bookingEnd = booking?.attributes?.end;
+    const dayCountAvailableForBooking = config.stripe.dayCountAvailableForBooking;
+    if (bookingEnd && listing?.id && timeZone) {
+      const rangeEnd = getStartOf(bookingEnd, 'day', timeZone, dayCountAvailableForBooking, 'days');
+      onFetchTimeSlots(listing.id, bookingEnd, rangeEnd, timeZone);
+    }
+    setRequestExtraDayModalOpen(true);
+  };
+
+  // Re-open the payment modal for an extra-day request that was already
+  // created but never confirmed (e.g. the customer closed the modal before
+  // entering their card) - re-fetches the existing transaction rather than
+  // creating a duplicate one.
+  const onOpenExtraDayPaymentModal = () => {
+    const extraDay = transaction?.attributes?.protectedData?.extraDay;
+    if (!extraDay?.extraDayTransactionId) {
+      return;
+    }
+    onFetchExtraDayTransaction(extraDay.extraDayTransactionId).then(tx => {
+      setExtraDayPaymentTransaction(tx);
+      setExtraDayPaymentModalOpen(true);
+    });
+  };
+
+  // Provider accepts a customer's extra-day request. Captures the
+  // already-authorized payment on the linked extra-day transaction
+  // (a plain, non-privileged transition, called directly - not through
+  // onTransition/makeTransition - so it isn't tracked by the shared
+  // transitionError state; catch here instead so a failure doesn't end up
+  // as a bare unhandled rejection), then syncs the outcome onto the
+  // original booking's protectedData.
+  const onAcceptExtraDay = () => {
+    const extraDay = transaction?.attributes?.protectedData?.extraDay;
+    return onDispatchAcceptExtraDay(extraDay?.extraDayTransactionId)
+      .then(() => {
+        const params = {
+          protectedData: { extraDay: { ...extraDay, status: 'accepted' } },
+        };
+        return onTransition(transaction?.id, process?.transitions?.ACCEPT_EXTRA_DAY, params);
+      })
+      .catch(e => {
+        log.error(e, 'accept-extra-day-failed', { transactionId: transaction?.id?.uuid });
+        throw e;
+      });
+  };
+
+  // Provider declines a customer's extra-day request. Releases the
+  // authorization hold on the linked extra-day transaction (customer is
+  // never charged), same non-privileged/error-handling considerations as
+  // onAcceptExtraDay above.
+  const onDeclineExtraDay = () => {
+    const extraDay = transaction?.attributes?.protectedData?.extraDay;
+    return onDispatchDeclineExtraDay(extraDay?.extraDayTransactionId)
+      .then(() => {
+        const params = {
+          protectedData: { extraDay: { ...extraDay, status: 'declined' } },
+        };
+        return onTransition(transaction?.id, process?.transitions?.DECLINE_EXTRA_DAY, params);
+      })
+      .catch(e => {
+        log.error(e, 'decline-extra-day-failed', { transactionId: transaction?.id?.uuid });
+        throw e;
+      });
+  };
+
+  // Called once the card is confirmed on the linked extra-day transaction
+  // (it's now "preauthorized" - not yet captured, the provider still has
+  // to accept it). Uses its own transition (CONFIRM_EXTRA_DAY_PAID,
+  // distinct from LINK_EXTRA_DAY_PAYMENT used to start the request) so the
+  // activity feed can show a distinct bullet for this exact moment (see
+  // TransactionPage.stateData.js's transitionMessages).
+  const onExtraDayPaymentSuccess = extraDayTransactionId => {
+    const extraDay = transaction?.attributes?.protectedData?.extraDay;
+    const params = {
+      protectedData: { extraDay: { ...extraDay, status: 'requested', extraDayTransactionId } },
+    };
+
+    onTransition(transaction?.id, process?.transitions?.CONFIRM_EXTRA_DAY_PAID, params)
+      .then(() => {
+        setExtraDayPaymentModalOpen(false);
+      })
+      .catch(e => {
+        setExtraDayPaymentModalOpen(false);
+      });
+  };
+
+  // Open deposit payment modal (customer, accepted booking)
+  const onOpenDepositPaymentModal = () => {
+    setDepositPaymentModalOpen(true);
+  };
+
+  // Called once the deposit payment fully completes: mark it as held on
+  // the original transaction. The customer only ever pays the deposit
+  // while the booking is still ACCEPTED (see stateDataBooking.js), so the
+  // non-"_delivered" transition is always the right one here.
+  const onDepositPaymentSuccess = depositTransactionId => {
+    const deposit = transaction?.attributes?.protectedData?.deposit;
+    const params = {
+      protectedData: { deposit: { ...deposit, status: 'held', depositTransactionId } },
+    };
+
+    onTransition(transaction?.id, process?.transitions?.CONFIRM_DEPOSIT_HELD, params)
+      .then(() => {
+        setDepositPaymentModalOpen(false);
+      })
+      .catch(e => {
+        setDepositPaymentModalOpen(false);
+      });
+  };
+
+  // Provider releases (fully refunds) a held security deposit. Privileged
+  // (calls Stripe refund on the linked deposit-hold transaction), so this
+  // goes through the server endpoint rather than onTransition/makeTransition
+  // - which also means it isn't tracked by the shared transitionError
+  // state, hence the explicit catch/log here.
+  const onReleaseDeposit = () => {
+    return onDispatchReleaseDeposit(transaction?.id).catch(e => {
+      log.error(e, 'release-deposit-failed', { transactionId: transaction?.id?.uuid });
+      throw e;
+    });
+  };
+
+  // Provider claims (fully pays out to themselves) a held security
+  // deposit. Same privileged/error-handling considerations as
+  // onReleaseDeposit above.
+  const onClaimDeposit = () => {
+    return onDispatchClaimDeposit(transaction?.id).catch(e => {
+      log.error(e, 'claim-deposit-failed', { transactionId: transaction?.id?.uuid });
+      throw e;
+    });
   };
 
   // Submit review and close the review modal
@@ -681,6 +904,11 @@ export const TransactionPageComponent = props => {
       .catch(() => {});
   };
 
+  // "Signing" is a specially-marked chat message rather than a new field
+  // on the transaction - see src/util/contractSignature.js for why.
+  const onSignContract = name =>
+    onSendMessage(transaction.id, formatContractSignatureMessage(name), config, null);
+
   const showListingImage = requireListingImage(foundListingTypeConfig);
 
   if (isDataAvailable && isProviderRole && !isOwnSale) {
@@ -747,6 +975,13 @@ export const TransactionPageComponent = props => {
           onOpenReviewModal,
           onOpenRequestChangesModal,
           onOpenMakeCounterOfferModal,
+          onOpenRequestExtraDayModal,
+          onOpenExtraDayPaymentModal,
+          onAcceptExtraDay,
+          onDeclineExtraDay,
+          onOpenDepositPaymentModal,
+          onReleaseDeposit,
+          onClaimDeposit,
           onCheckoutRedirect: handleSubmitOrderRequest,
           onMakeOfferRedirect: onMakeOffer,
           intl,
@@ -779,6 +1014,18 @@ export const TransactionPageComponent = props => {
 
   const timeZone = listing?.attributes?.availabilityPlan?.timezone;
 
+  const extraDay = transaction?.attributes?.protectedData?.extraDay;
+  const extraDayStartDateObj = extraDay?.startDate
+    ? parseDateFromISO8601(extraDay.startDate, timeZone)
+    : null;
+  const extraDayEndDateObj = extraDay?.endDate
+    ? parseDateFromISO8601(extraDay.endDate, timeZone)
+    : null;
+  const extraDayCount =
+    extraDayStartDateObj && extraDayEndDateObj
+      ? Math.round((extraDayEndDateObj - extraDayStartDateObj) / (1000 * 60 * 60 * 24))
+      : null;
+
   const hasViewingRights = currentUser && hasPermissionToViewData(currentUser);
 
   const txBookingMaybe = booking?.id ? { booking, timeZone } : {};
@@ -797,12 +1044,26 @@ export const TransactionPageComponent = props => {
       }
     : {};
 
-  // The location of the booking can be shown if fuzzy location, and if
-  // the listing type actually includes a location field.
+  // The location of the booking can be shown once the booking is accepted,
+  // provided the listing actually has an address saved. Deliberately not
+  // gated on foundListingTypeConfig?.defaultListingFields.location (Console's
+  // toggle for Sharetribe's own built-in location field): OmniRent's
+  // daily-rental listing type has that off, since the address is instead
+  // captured through the custom delivery step's own location field (see
+  // EditListingDeliveryForm.js) - gating on that flag here would mean the
+  // address never reveals to the renter at all, even after a paid booking.
   const showBookingLocation =
     isBookingProcess(stateData.processName) &&
     process?.hasPassedState(process?.states?.ACCEPTED, transaction) &&
-    foundListingTypeConfig?.defaultListingFields.location;
+    !!listing?.attributes?.publicData?.location?.address;
+
+  // The rental agreement PDF only makes sense once the booking is actually
+  // confirmed (payment captured) - a contract for a still-pending request
+  // could describe terms that never happen. Same accepted-or-later check as
+  // showBookingLocation above.
+  const showContractDownload =
+    isBookingProcess(stateData.processName) &&
+    process?.hasPassedState(process?.states?.ACCEPTED, transaction);
 
   const isNegotiationProcess = processName === NEGOTIATION_PROCESS_NAME;
   const isRegularNegotiation =
@@ -858,6 +1119,9 @@ export const TransactionPageComponent = props => {
       stateData={stateData}
       transactionRole={transactionRole}
       showBookingLocation={showBookingLocation}
+      showContractDownload={showContractDownload}
+      onSignContract={onSignContract}
+      sendMessageInProgress={sendMessageInProgress}
       hasViewingRights={hasViewingRights}
       showListingImage={showListingImage}
       sendMessageForm={
@@ -939,6 +1203,7 @@ export const TransactionPageComponent = props => {
           isNegotiationProcess={isNegotiationProcess}
           isCustomerBanned={isCustomerBanned}
           transactionRole={transactionRole}
+          processState={stateData?.processState}
           intl={intl}
           transactionFieldsComponent={
             <TransactionFields {...customTransactionFieldProps('customer', true)} />
@@ -958,6 +1223,7 @@ export const TransactionPageComponent = props => {
           }
         />
       }
+      canAttachPhotos={!!listingTypeHasFileAttachments && allowFiles}
       isInquiryProcess={processName === INQUIRY_PROCESS_NAME}
       config={config}
       {...orderBreakdownMaybe}
@@ -990,6 +1256,8 @@ export const TransactionPageComponent = props => {
           hidePrice={isDownloadProcess(processName)}
           onSubmit={isNegotiationProcess ? onMakeOffer : handleSubmitOrderRequest}
           onManageDisableScrolling={onManageDisableScrolling}
+          monthlyTimeSlots={monthlyTimeSlots}
+          onFetchTimeSlots={onFetchTimeSlots}
           {...restOfProps}
           validListingTypes={config.listing.listingTypes}
           marketplaceCurrency={config.currency}
@@ -1134,6 +1402,65 @@ export const TransactionPageComponent = props => {
             currencyConfig={currencyConfig}
           />
         ) : null}
+        {process?.transitions?.REQUEST_EXTRA_DAY ? (
+          <RequestExtraDayModal
+            id="RequestExtraDayModal"
+            isOpen={isRequestExtraDayModalOpen}
+            onCloseModal={() => setRequestExtraDayModalOpen(false)}
+            focusElementId={`${actionButtonContainer}_${ACTION_BUTTON_3_ID}`}
+            onManageDisableScrolling={onManageDisableScrolling}
+            onRequestExtraDay={onRequestExtraDay(
+              transaction?.id,
+              onDispatchRequestExtraDay,
+              timeZone,
+              setRequestExtraDayModalOpen,
+              setRequestExtraDaySubmitted,
+              setRequestExtraDayInProgress,
+              setRequestExtraDayError,
+              setExtraDayPaymentTransaction,
+              setExtraDayPaymentModalOpen
+            )}
+            extraDayDate={booking?.attributes?.end}
+            dayCountAvailableForBooking={config.stripe.dayCountAvailableForBooking}
+            timeZone={timeZone}
+            monthlyTimeSlots={monthlyTimeSlots}
+            requestExtraDaySubmitted={requestExtraDaySubmitted}
+            requestExtraDayInProgress={requestExtraDayInProgress}
+            requestExtraDayError={requestExtraDayError}
+          />
+        ) : null}
+        {process?.transitions?.REQUEST_EXTRA_DAY ? (
+          <ExtraDayPaymentModal
+            id="ExtraDayPaymentModal"
+            isOpen={isExtraDayPaymentModalOpen}
+            onCloseModal={() => setExtraDayPaymentModalOpen(false)}
+            focusElementId={`${actionButtonContainer}_${ACTION_BUTTON_3_ID}`}
+            onManageDisableScrolling={onManageDisableScrolling}
+            paymentTransaction={extraDayPaymentTransaction}
+            stripePublishableKey={config.stripe.publishableKey}
+            currentUserName={userDisplayNameAsString(currentUser, '')}
+            extraDayCount={extraDayCount}
+            onConfirmCardPayment={onConfirmCardPayment}
+            onConfirmExtraDayPayment={onConfirmExtraDayPayment}
+            onPaymentSuccess={onExtraDayPaymentSuccess}
+          />
+        ) : null}
+        {process?.transitions?.LINK_DEPOSIT_PAYMENT ? (
+          <DepositPaymentModal
+            id="DepositPaymentModal"
+            isOpen={isDepositPaymentModalOpen}
+            onCloseModal={() => setDepositPaymentModalOpen(false)}
+            focusElementId={`${actionButtonContainer}_${ACTION_BUTTON_1_ID}`}
+            onManageDisableScrolling={onManageDisableScrolling}
+            transactionId={transaction?.id}
+            stripePublishableKey={config.stripe.publishableKey}
+            currentUserName={userDisplayNameAsString(currentUser, '')}
+            onInitiateDepositHold={onInitiateDepositHold}
+            onConfirmCardPayment={onConfirmCardPayment}
+            onConfirmDepositHold={onConfirmDepositHold}
+            onPaymentSuccess={onDepositPaymentSuccess}
+          />
+        ) : null}
       </LayoutSingleColumn>
     </Page>
   );
@@ -1237,6 +1564,44 @@ const TransactionPage = props => {
     (fileAttachmentId, isOwnFile) => dispatch(downloadFile(fileAttachmentId, isOwnFile)),
     [dispatch]
   );
+  const onRequestExtraDay = useCallback(
+    (transactionId, startDate, endDate, note) =>
+      dispatch(requestExtraDay(transactionId, startDate, endDate, note)),
+    [dispatch]
+  );
+  const onAcceptExtraDay = useCallback(
+    extraDayTransactionId => dispatch(acceptExtraDay(extraDayTransactionId)),
+    [dispatch]
+  );
+  const onDeclineExtraDay = useCallback(
+    extraDayTransactionId => dispatch(declineExtraDay(extraDayTransactionId)),
+    [dispatch]
+  );
+  const onConfirmCardPayment = useCallback(params => dispatch(confirmCardPayment(params)), [
+    dispatch,
+  ]);
+  const onConfirmExtraDayPayment = useCallback(
+    extraDayTransactionId => dispatch(confirmExtraDayPayment(extraDayTransactionId)),
+    [dispatch]
+  );
+  const onFetchExtraDayTransaction = useCallback(
+    extraDayTransactionId => dispatch(fetchExtraDayTransaction(extraDayTransactionId)),
+    [dispatch]
+  );
+  const onInitiateDepositHold = useCallback(
+    transactionId => dispatch(initiateDepositHold(transactionId)),
+    [dispatch]
+  );
+  const onConfirmDepositHold = useCallback(
+    depositTransactionId => dispatch(confirmDepositHold(depositTransactionId)),
+    [dispatch]
+  );
+  const onReleaseDeposit = useCallback(transactionId => dispatch(releaseDeposit(transactionId)), [
+    dispatch,
+  ]);
+  const onClaimDeposit = useCallback(transactionId => dispatch(claimDeposit(transactionId)), [
+    dispatch,
+  ]);
 
   return (
     <TransactionPageComponent
@@ -1278,6 +1643,16 @@ const TransactionPage = props => {
       onClearUploadedFiles={onClearUploadedFiles}
       onDownloadFile={onDownloadFile}
       fileDownloads={fileDownloads}
+      onRequestExtraDay={onRequestExtraDay}
+      onAcceptExtraDay={onAcceptExtraDay}
+      onDeclineExtraDay={onDeclineExtraDay}
+      onConfirmCardPayment={onConfirmCardPayment}
+      onConfirmExtraDayPayment={onConfirmExtraDayPayment}
+      onFetchExtraDayTransaction={onFetchExtraDayTransaction}
+      onInitiateDepositHold={onInitiateDepositHold}
+      onConfirmDepositHold={onConfirmDepositHold}
+      onReleaseDeposit={onReleaseDeposit}
+      onClaimDeposit={onClaimDeposit}
       history={history}
     />
   );

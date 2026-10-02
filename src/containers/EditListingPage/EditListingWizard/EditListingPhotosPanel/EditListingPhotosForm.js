@@ -19,10 +19,20 @@ import { Button, Form, AspectRatioWrapper, NamedLink } from '../../../../compone
 import ListingImage from './ListingImage';
 import css from './EditListingPhotosForm.module.css';
 
-const ACCEPT_IMAGES = 'image/*';
+// Matches the ".JPG of .PNG" copy under the upload button - see the same
+// constant in EditListingBasicsForm.js for why this is checked up front
+// instead of letting an unsupported format (AVIF/WebP/HEIC, ...) reach the
+// upload call, where it could leave the button stuck "loading" forever
+// instead of failing.
+const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png'];
+const ACCEPT_IMAGES = ACCEPTED_IMAGE_TYPES.join(',');
 
 const ImageUploadError = props => {
-  return props.uploadOverLimit ? (
+  return props.invalidFileType ? (
+    <p className={css.error}>
+      <FormattedMessage id="EditListingPhotosForm.imageUploadFailed.invalidFileType" />
+    </p>
+  ) : props.uploadOverLimit ? (
     <p className={css.error}>
       <FormattedMessage id="EditListingPhotosForm.imageUploadFailed.uploadOverLimit" />
     </p>
@@ -138,20 +148,27 @@ const FieldListingImage = props => {
 export const EditListingPhotosForm = props => {
   const [state, setState] = useState({ imageUploadRequested: false });
   const [submittedImages, setSubmittedImages] = useState([]);
+  const [invalidFileType, setInvalidFileType] = useState(false);
 
   const onImageUploadHandler = file => {
     const { listingImageConfig, onImageUpload } = props;
-    if (file) {
-      setState({ imageUploadRequested: true });
-
-      onImageUpload({ id: `${file.name}_${Date.now()}`, file }, listingImageConfig)
-        .then(() => {
-          setState({ imageUploadRequested: false });
-        })
-        .catch(() => {
-          setState({ imageUploadRequested: false });
-        });
+    if (!file) {
+      return;
     }
+    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+      setInvalidFileType(true);
+      return;
+    }
+    setInvalidFileType(false);
+    setState({ imageUploadRequested: true });
+
+    onImageUpload({ id: `${file.name}_${Date.now()}`, file }, listingImageConfig)
+      .then(() => {
+        setState({ imageUploadRequested: false });
+      })
+      .catch(() => {
+        setState({ imageUploadRequested: false });
+      });
   };
   const intl = useIntl();
 
@@ -273,6 +290,7 @@ export const EditListingPhotosForm = props => {
             {imagesError ? <div className={css.arrayError}>{imagesError}</div> : null}
 
             <ImageUploadError
+              invalidFileType={invalidFileType}
               uploadOverLimit={uploadOverLimit}
               uploadImageError={uploadImageError}
             />

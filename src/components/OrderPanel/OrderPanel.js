@@ -23,6 +23,7 @@ import {
   LISTING_STATE_PUBLISHED,
 } from '../../util/types';
 import { formatMoney } from '../../util/currency';
+import { types as sdkTypes } from '../../util/sdkLoader';
 import { createSlug, parse, stringify } from '../../util/urlHelpers';
 import { userDisplayNameAsString } from '../../util/data';
 import {
@@ -42,6 +43,8 @@ import PriceVariantPicker from './PriceVariantPicker/PriceVariantPicker';
 import SubmitFinePrint from './SubmitFinePrint/SubmitFinePrint';
 
 import css from './OrderPanel.module.css';
+
+const { Money } = sdkTypes;
 
 const BookingTimeForm = loadable(() =>
   import(/* webpackChunkName: "BookingTimeForm" */ './BookingTimeForm/BookingTimeForm')
@@ -190,6 +193,84 @@ const PriceMaybe = props => {
       <p className={css.price}>
         <FormattedMessage id="OrderPanel.price" values={{ priceValue, pricePerUnit }} />
       </p>
+    </div>
+  );
+};
+
+// When a listing has multiple price variants (e.g. "weekend" vs. "Dagprijs"),
+// PriceMaybe intentionally hides the listing's single top-level price, since
+// showing one variant's price as *the* price would be misleading. Without a
+// replacement, though, no price shows anywhere until a renter has already
+// picked a variant and both booking dates - this fills that gap with an
+// honest "Vanaf {cheapest variant price}" hint instead of no price at all.
+const PriceVariantsFromMaybe = props => {
+  const { priceVariants, publicData, validListingTypes, intl, marketplaceCurrency } = props;
+  const { listingType, unitType } = publicData || {};
+
+  const foundListingTypeConfig = validListingTypes.find(conf => conf.listingType === listingType);
+  const showPrice = displayPrice(foundListingTypeConfig);
+  const cheapest = getCheapestPriceVariant(priceVariants);
+  const hasCheapestPrice = Number.isInteger(cheapest?.priceInSubunits) && marketplaceCurrency;
+
+  if (!showPrice || !hasCheapestPrice) {
+    return null;
+  }
+
+  const cheapestPrice = new Money(cheapest.priceInSubunits, marketplaceCurrency);
+  const priceValue = (
+    <span className={css.priceValue}>{formatMoneyIfSupportedCurrency(cheapestPrice, intl)}</span>
+  );
+  const pricePerUnit = (
+    <span className={css.perUnit}>
+      <FormattedMessage id="OrderPanel.perUnit" values={{ unitType }} />
+    </span>
+  );
+
+  return (
+    <div className={css.priceContainer}>
+      <p className={css.price}>
+        <FormattedMessage id="OrderPanel.priceFrom" values={{ priceValue, pricePerUnit }} />
+      </p>
+    </div>
+  );
+};
+
+// A persistent "price for X days" table, visible before any dates are
+// picked - the booking form only shows a cost breakdown after the renter
+// has already chosen dates, which is too late to help them compare options
+// at a glance. Uses the same per-extra-day math as the provider-facing
+// preview in EditListingPricingForm.
+const TieredPriceTable = props => {
+  const { price, extraDayPriceInSubunits, marketplaceCurrency, intl } = props;
+
+  const isValidMoney = value => value instanceof Money && Number.isInteger(value.amount);
+  if (!isValidMoney(price)) {
+    return null;
+  }
+
+  const extraDayAmount = Number.isInteger(extraDayPriceInSubunits)
+    ? extraDayPriceInSubunits
+    : price.amount;
+
+  const totalFor = days => {
+    const amount = price.amount + (days - 1) * extraDayAmount;
+    return formatMoney(intl, new Money(amount, marketplaceCurrency));
+  };
+
+  return (
+    <div className={css.tieredPriceTable}>
+      <div className={css.tieredPriceRow}>
+        <span><FormattedMessage id="OrderPanel.tieredPrice1Day" /></span>
+        <span>{totalFor(1)}</span>
+      </div>
+      <div className={css.tieredPriceRow}>
+        <span><FormattedMessage id="OrderPanel.tieredPrice3Days" /></span>
+        <span>{totalFor(3)}</span>
+      </div>
+      <div className={css.tieredPriceRow}>
+        <span><FormattedMessage id="OrderPanel.tieredPrice7Days" /></span>
+        <span>{totalFor(7)}</span>
+      </div>
     </div>
   );
 };
@@ -385,9 +466,16 @@ const OrderPanel = props => {
 
   // Note: publicData contains priceVariationsEnabled if listing is created with priceVariations enabled.
   const isPriceVariationsInUse = !!publicData?.priceVariationsEnabled;
+  // Prefer the variant requested via the "bookableOption" query param (e.g. a CTA
+  // link for one specific option); otherwise default to the cheapest variant
+  // instead of leaving the picker unselected. Booking dates stay disabled until
+  // priceVariantName has a value, so a blank default previously forced an extra,
+  // blind click before a renter could even open the date picker.
   const preselectedPriceVariant =
-    Array.isArray(priceVariants) && preselectedPriceVariantSlug && isPriceVariationsInUse
-      ? priceVariants.find(pv => pv?.name && createSlug(pv?.name) === preselectedPriceVariantSlug)
+    Array.isArray(priceVariants) && isPriceVariationsInUse
+      ? preselectedPriceVariantSlug
+        ? priceVariants.find(pv => pv?.name && createSlug(pv?.name) === preselectedPriceVariantSlug)
+        : getCheapestPriceVariant(priceVariants)
       : null;
 
   const priceVariantsMaybe = isPriceVariationsInUse
@@ -422,6 +510,7 @@ const OrderPanel = props => {
     fetchLineItemsInProgress,
     fetchLineItemsError,
     payoutDetailsWarning,
+    publicData,
   };
 
   const showClosedListingHelpText = listing.id && isClosed;
@@ -468,6 +557,28 @@ const OrderPanel = props => {
             marketplaceCurrency={marketplaceCurrency}
           />
         )}
+
+        {!hidePrice && shouldHaveBookingDates && !isPriceVariationsInUse ? (
+          <TieredPriceTable
+            price={price}
+            extraDayPriceInSubunits={publicData?.extraDayPriceInSubunits}
+            marketplaceCurrency={marketplaceCurrency}
+            intl={intl}
+          />
+        ) : null}
+
+        {!hidePrice &&
+        isPriceVariationsInUse &&
+        priceVariants?.length > 1 &&
+        !showInvalidPriceVariantsMessage ? (
+          <PriceVariantsFromMaybe
+            priceVariants={priceVariants}
+            publicData={publicData}
+            validListingTypes={validListingTypes}
+            intl={intl}
+            marketplaceCurrency={marketplaceCurrency}
+          />
+        ) : null}
 
         {!hideAuthorInfo && (
           <div className={css.author}>

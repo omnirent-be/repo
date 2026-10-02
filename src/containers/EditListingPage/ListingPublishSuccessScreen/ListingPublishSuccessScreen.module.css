@@ -1,0 +1,123 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  display: flex;
+  justify-content: center;
+  padding: 24px 24px 72px 24px;
+}
+
+.content {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.heading {
+  composes: h1 from global;
+  margin-top: 24px;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.subHeading {
+  composes: h5 from global;
+  color: var(--colorGrey600);
+  font-weight: var(--fontWeightRegular);
+  margin-top: 0;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.shareImageSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.shareImagePreview {
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: var(--borderRadius);
+  box-shadow: var(--boxShadow);
+  margin-bottom: 16px;
+}
+
+.shareImagePlaceholder {
+  width: 100%;
+  max-width: 280px;
+  aspect-ratio: 9 / 16;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  background-color: var(--colorGrey50);
+  border-radius: var(--borderRadius);
+  color: var(--colorGrey400);
+  composes: marketplaceBodyFontStyles from global;
+  margin-bottom: 16px;
+}
+
+.shareImageError {
+  composes: marketplaceBodyFontStyles from global;
+  color: var(--colorGrey400);
+  text-align: center;
+  margin: 0 0 16px 0;
+}
+
+.downloadButton {
+  composes: buttonSecondary from global;
+  display: inline-block;
+  width: auto;
+  padding: 8px 24px;
+  min-height: auto;
+  text-decoration: none;
+}
+
+.copyLinkRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.linkInput {
+  composes: marketplaceBodyFontStyles from global;
+  flex-grow: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadius);
+  background-color: var(--colorGrey50);
+  color: var(--colorGrey700);
+}
+
+.copyButton {
+  flex-shrink: 0;
+  width: auto;
+  min-height: auto;
+  padding: 8px 20px;
+}
+
+.incentiveText {
+  composes: marketplaceBodyFontStyles from global;
+  color: var(--colorGrey600);
+  background-color: var(--colorGrey50);
+  border-radius: var(--borderRadius);
+  padding: 16px;
+  margin: 0 0 32px 0;
+}
+
+.continueRow {
+  display: flex;
+  justify-content: center;
+}
+
+.continueButton {
+  width: 100%;
+  max-width: 320px;
+}

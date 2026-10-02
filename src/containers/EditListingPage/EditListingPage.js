@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { compose } from 'redux';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -23,6 +23,7 @@ import { ensureOwnListing } from '../../util/data';
 import { hasPermissionToPostListings, isUserAuthorized } from '../../util/userHelpers';
 import { getMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
+import { login, signup } from '../../ducks/auth.duck';
 import {
   stripeAccountClearError,
   getStripeConnectAccountLink,
@@ -52,6 +53,7 @@ import {
   downloadFile,
 } from './EditListingPage.duck';
 import EditListingWizard from './EditListingWizard/EditListingWizard';
+import ListingPublishSuccessScreen from './ListingPublishSuccessScreen/ListingPublishSuccessScreen';
 import css from './EditListingPage.module.css';
 
 const STRIPE_ONBOARDING_RETURN_URL_SUCCESS = 'success';
@@ -142,8 +144,18 @@ const pickRenderableImages = (
  */
 export const EditListingPageComponent = props => {
   const intl = useIntl();
+  // Set once the provider clicks past ListingPublishSuccessScreen (see
+  // below) - kept local to this page since it only needs to suppress the
+  // very next render's success screen and doesn't need to survive a reload.
+  const [successScreenDismissed, setSuccessScreenDismissed] = useState(false);
   const {
     currentUser,
+    onSignup,
+    onLogin,
+    signupInProgress,
+    signupError,
+    loginInProgress,
+    loginError,
     createStripeAccountError,
     fetchInProgress,
     fetchStripeAccountError,
@@ -185,6 +197,21 @@ export const EditListingPageComponent = props => {
   const isDraftURI = type === LISTING_PAGE_PARAM_TYPE_DRAFT;
   const isNewListingFlow = isNewURI || isDraftURI;
 
+  // "List First, Sign Up Later": the route itself is no longer auth-gated
+  // (see routeConfiguration.js), so this container enforces auth itself -
+  // for every case EXCEPT starting a brand-new listing (isNewURI), which is
+  // the one anonymous visitors are allowed to reach. Editing an existing
+  // draft/listing still requires a real account, since there's no
+  // anonymous-owned listing to show.
+  if (!currentUser?.id && !isNewURI) {
+    return (
+      <NamedRedirect
+        name="SignupPage"
+        state={{ from: `${location.pathname}${location.search}${location.hash}` }}
+      />
+    );
+  }
+
   const listingId = page.submittedListingId || (id ? new UUID(id) : null);
   const currentListing = ensureOwnListing(getOwnListing(listingId));
   const { state: currentListingState } = currentListing.attributes;
@@ -200,7 +227,7 @@ export const EditListingPageComponent = props => {
   const hasStripeOnboardingDataIfNeeded = returnURLType ? !!currentUser?.id : true;
   const showWizard = hasStripeOnboardingDataIfNeeded && (isNewURI || currentListing.id);
 
-  if (!isUserAuthorized(currentUser)) {
+  if (currentUser?.id && !isUserAuthorized(currentUser)) {
     return (
       <NamedRedirect
         name="NoAccessPage"
@@ -212,6 +239,19 @@ export const EditListingPageComponent = props => {
       <NamedRedirect
         name="NoAccessPage"
         params={{ missingAccessRight: NO_ACCESS_PAGE_POST_LISTINGS }}
+      />
+    );
+  } else if (shouldRedirectAfterPosting && !successScreenDismissed) {
+    // Shown exactly once, right as a brand-new listing's state first moves
+    // past draft (i.e. publish just succeeded) - see
+    // ListingPublishSuccessScreen.js. Once dismissed, falls through to the
+    // existing shouldRedirectAfterPosting branch below on the next render,
+    // which already knows how to route to the pending-approval variant vs.
+    // the plain listing page - deliberately not duplicated here.
+    return (
+      <ListingPublishSuccessScreen
+        listing={currentListing}
+        onContinue={() => setSuccessScreenDismissed(true)}
       />
     );
   } else if (shouldRedirectAfterPosting) {
@@ -301,6 +341,24 @@ export const EditListingPageComponent = props => {
           history={history}
           images={images}
           listing={currentListing}
+          // "List First, Sign Up Later" (see the guard above): the Basics
+          // step is reachable anonymously, so it needs its own way to ask
+          // for an account right when the provider tries to submit it - see
+          // CompleteAccountModal.js.
+          basicsAuthProps={{
+            // Deliberately currentUser?.id, not the auth slice's own
+            // isAuthenticated flag: the rest of this container already
+            // treats "has a currentUser" as the source of truth for
+            // access (see the guard above and shouldRedirectNoPostingRights
+            // below), so this stays consistent with that.
+            isAuthenticated: !!currentUser?.id,
+            onSignup,
+            onLogin,
+            signupInProgress,
+            signupError,
+            loginInProgress,
+            loginError,
+          }}
           weeklyExceptionQueries={page.weeklyExceptionQueries}
           monthlyExceptionQueries={page.monthlyExceptionQueries}
           allExceptions={page.allExceptions}
@@ -377,7 +435,7 @@ const mapStateToProps = state => {
     return listings.length === 1 ? listings[0] : null;
   };
 
-  const { authScopes } = state.auth;
+  const { authScopes, signupInProgress, signupError, loginInProgress, loginError } = state.auth;
 
   return {
     getAccountLinkInProgress,
@@ -388,6 +446,10 @@ const mapStateToProps = state => {
     stripeAccount,
     stripeAccountFetched,
     currentUser: state.user.currentUser,
+    signupInProgress,
+    signupError,
+    loginInProgress,
+    loginError,
     fetchInProgress: createStripeAccountInProgress,
     getOwnListing,
     page,
@@ -401,6 +463,8 @@ const mapStateToProps = state => {
 };
 
 const mapDispatchToProps = dispatch => ({
+  onSignup: params => dispatch(signup(params)),
+  onLogin: (username, password) => dispatch(login(username, password)),
   onFetchExceptions: params => dispatch(requestFetchAvailabilityExceptions(params)),
   onAddAvailabilityException: params => dispatch(requestAddAvailabilityException(params)),
   onDeleteAvailabilityException: params => dispatch(requestDeleteAvailabilityException(params)),

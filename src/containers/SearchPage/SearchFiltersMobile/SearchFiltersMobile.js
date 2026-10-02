@@ -102,11 +102,6 @@ class SearchFiltersMobileComponent extends Component {
 
     return (
       <div className={classes}>
-        <div className={css.searchResultSummary}>
-          {listingsAreLoaded && resultsCount > 0 ? resultsFound : null}
-          {listingsAreLoaded && resultsCount === 0 ? noResults : null}
-          {searchInProgress ? loadingResults : null}
-        </div>
         <div className={css.buttons}>
           <PopupOpenerButton isSelected={selectedFiltersCount > 0} toggleOpen={this.openFilters}>
             <FormattedMessage
@@ -123,6 +118,12 @@ class SearchFiltersMobileComponent extends Component {
           ) : null}
         </div>
 
+        <div className={css.searchResultSummary}>
+          {listingsAreLoaded && resultsCount > 0 ? resultsFound : null}
+          {listingsAreLoaded && resultsCount === 0 ? noResults : null}
+          {searchInProgress ? loadingResults : null}
+        </div>
+
         {noResultsInfo ? noResultsInfo : null}
 
         <ModalInMobile
@@ -131,24 +132,45 @@ class SearchFiltersMobileComponent extends Component {
           onClose={this.cancelFilters}
           showAsModalMaxWidth={showAsModalMaxWidth}
           onManageDisableScrolling={onManageDisableScrolling}
-          containerClassName={css.modalContainer}
+          // Without this, the modal rendered in place inside this sticky,
+          // z-indexed filter bar - trapping its position:fixed overlay
+          // inside that ancestor's own (lower) stacking context, so listing
+          // cards further down the DOM painted on top of it (e.g. their
+          // favorite-heart icon showing through the open filters panel).
+          // Portal escapes to document.body, same as Topbar's mobile
+          // search modal.
+          usePortal
+          // .modalContainer's padding is sized for the full-screen mobile
+          // overlay - now that this also renders inline at desktop widths
+          // (no more sidebar), that padding left an empty ~190px gap
+          // whenever the panel is closed and has nothing to pad around.
+          containerClassName={classNames(css.modalContainer, {
+            [css.modalContainerClosed]: !this.state.isFiltersOpenOnMobile,
+          })}
           closeButtonMessage={modalCloseButtonMessage}
         >
-          <div className={css.modalHeadingWrapper}>
-            <span className={css.modalHeading}>{filtersHeading}</span>
-            <button className={css.resetAllButton} onClick={e => this.resetAll(e)}>
-              <FormattedMessage id={'SearchFiltersMobile.resetAll'} />
-            </button>
-          </div>
+          {/* Gated together (heading, filters, footer button) - without
+              this, ModalInMobile's desktop fallback ("just an extra
+              wrapper", always rendered, no hide/show) left an empty
+              "Filter zoeken" panel with its footer bar permanently
+              visible above the viewportMedium breakpoint, now that this
+              is the only way to reach filters (no more sidebar). */}
           {this.state.isFiltersOpenOnMobile ? (
-            <div className={css.filtersWrapper}>{children}</div>
+            <>
+              <div className={css.modalHeadingWrapper}>
+                <span className={css.modalHeading}>{filtersHeading}</span>
+              </div>
+              <div className={css.filtersWrapper}>{children}</div>
+              <div className={css.showListingsContainer}>
+                <button className={css.resetAllButton} onClick={e => this.resetAll(e)}>
+                  <FormattedMessage id={'SearchFiltersMobile.resetAll'} />
+                </button>
+                <Button className={css.showListingsButton} onClick={this.closeFilters}>
+                  {showListingsLabel}
+                </Button>
+              </div>
+            </>
           ) : null}
-
-          <div className={css.showListingsContainer}>
-            <Button className={css.showListingsButton} onClick={this.closeFilters}>
-              {showListingsLabel}
-            </Button>
-          </div>
         </ModalInMobile>
       </div>
     );

@@ -1,0 +1,1 @@
+{{set-translations (asset "content/email-texts.json")}}{{t "DepositReleased.Subject" "Your security deposit for {listingTitle} has been refunded" listingTitle=transaction.listing.title}}

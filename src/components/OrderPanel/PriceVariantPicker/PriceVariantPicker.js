@@ -3,10 +3,31 @@ import { Field } from 'react-final-form';
 
 import { FormattedMessage, useIntl } from '../../../util/reactIntl';
 import { createSlug } from '../../../util/urlHelpers';
+import { formatMoney } from '../../../util/currency';
+import { types as sdkTypes } from '../../../util/sdkLoader';
 
 import { FieldSelect } from '../../../components';
 
 import css from './PriceVariantPicker.module.css';
+
+const { Money } = sdkTypes;
+
+// Formats a price variant's option label as "name (€amount)", so a customer
+// can tell the options apart without guessing blind and picking dates first.
+// Falls back to just the name if the variant is missing a usable price.
+const priceVariantOptionLabel = (pv, marketplaceCurrency, intl) => {
+  const trimmedName = pv?.name?.trim() || pv?.name;
+  const hasPrice = Number.isInteger(pv?.priceInSubunits) && marketplaceCurrency;
+  if (!hasPrice) {
+    return trimmedName;
+  }
+  try {
+    const formattedPrice = formatMoney(intl, new Money(pv.priceInSubunits, marketplaceCurrency));
+    return `${trimmedName} (${formattedPrice})`;
+  } catch (e) {
+    return trimmedName;
+  }
+};
 
 const DEFAULT_PRICE_VARIANT_NAME = 'default-variant-name';
 
@@ -33,7 +54,7 @@ const FieldHidden = props => {
 
 const PriceVariantPicker = props => {
   const intl = useIntl();
-  const { priceVariants, onPriceVariantChange, disabled } = props;
+  const { priceVariants, onPriceVariantChange, disabled, marketplaceCurrency } = props;
   const hasMultiplePriceVariants = priceVariants?.length > 1;
   const hasOnePriceVariant = priceVariants?.length === 1;
 
@@ -53,7 +74,7 @@ const PriceVariantPicker = props => {
       </option>
       {priceVariants.map(pv => (
         <option value={pv.name} key={pv.name} data-slug={createSlug(pv.name)}>
-          {pv.name}
+          {priceVariantOptionLabel(pv, marketplaceCurrency, intl)}
         </option>
       ))}
     </FieldSelect>

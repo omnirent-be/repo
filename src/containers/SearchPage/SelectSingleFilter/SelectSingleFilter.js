@@ -66,7 +66,33 @@ const SelectSingleFilter = props => {
   } = props;
 
   const queryParamName = getQueryParamName(queryParamNames);
-  const hasInitialValues = !!initialValues && !!initialValues[queryParamName];
+
+  // When the tree has a single root option (e.g. a marketplace with only one
+  // top-level category), picking that root is a pointless first step. Show
+  // its children directly and translate between the visible levels and the
+  // real query params (root = level 1, always implied).
+  const singleRoot =
+    isNestedEnum && options?.length === 1 && options[0].suboptions?.length > 0 ? options[0] : null;
+  const levelOf = key => parseInt(key.slice(name.length), 10);
+  const shiftDown = selection =>
+    Object.entries(selection).reduce(
+      (acc, [k, v]) => (levelOf(k) > 1 ? { ...acc, [`${name}${levelOf(k) - 1}`]: v } : acc),
+      {}
+    );
+  const shiftUp = selection =>
+    Object.keys(selection || {}).length === 0 || !selection[`${name}1`]
+      ? {}
+      : Object.entries(selection).reduce(
+          (acc, [k, v]) => ({ ...acc, [`${name}${levelOf(k) + 1}`]: v }),
+          { [`${name}1`]: singleRoot.option }
+        );
+
+  const pickedFromUrl = pickInitialValuesForFieldSelectTree(name, initialValues, isNestedEnum);
+  const visibleOptions = singleRoot ? singleRoot.suboptions : options;
+  const visibleSelection = singleRoot ? shiftDown(pickedFromUrl) : pickedFromUrl;
+  const hasInitialValues = singleRoot
+    ? Object.keys(visibleSelection).length > 0
+    : !!initialValues && !!initialValues[queryParamName];
 
   const classes = classNames(rootClassName || css.root, className);
   const labelClass = hasInitialValues ? css.labelPlainSelected : css.labelPlain;
@@ -75,13 +101,16 @@ const SelectSingleFilter = props => {
   // Pass the initial values with the name key so that
   // they can be passed to the correct field
   const pickedInitialValues = {
-    [name]: pickInitialValuesForFieldSelectTree(name, initialValues, isNestedEnum),
+    [name]: visibleSelection,
   };
 
-  const branchPath = getBranchPath(options, pickedInitialValues[name]);
+  const branchPath = getBranchPath(visibleOptions, visibleSelection);
   const categorySelection = branchPath.map(option => option.label).join('/');
 
-  const handleSubmit = queryParamNames => values => {
+  const handleSubmit = queryParamNames => submittedValues => {
+    const values = singleRoot
+      ? { [name]: shiftUp(submittedValues?.[name]) }
+      : submittedValues;
     const isArray = Array.isArray(queryParamNames);
     const hasMultipleQueryParams = isArray && queryParamNames.length > 1;
     const hasSingleQueryParam = isArray && queryParamNames.length === 1;
@@ -118,7 +147,7 @@ const SelectSingleFilter = props => {
       keepDirtyOnReinitialize
       {...rest}
     >
-      <FieldSelectTree name={name} options={options} />
+      <FieldSelectTree name={name} options={visibleOptions} />
     </FilterPopup>
   ) : (
     <FilterPlain
@@ -133,7 +162,7 @@ const SelectSingleFilter = props => {
       initialValues={pickedInitialValues}
       {...rest}
     >
-      <FieldSelectTree name={name} options={options} />
+      <FieldSelectTree name={name} options={visibleOptions} />
     </FilterPlain>
   );
 };

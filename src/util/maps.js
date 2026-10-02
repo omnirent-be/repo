@@ -213,3 +213,31 @@ export const getMapProviderApiAccess = mapConfig => {
   const isGoogleMapsInUse = mapConfig.mapProvider === 'googleMaps';
   return isGoogleMapsInUse ? mapConfig.googleMapsAPIKey : mapConfig.mapboxAccessToken;
 };
+
+/**
+ * Formats a listing's saved postcode/city/neighborhood (see
+ * GeocoderMapbox.js's extractLocationLabelParts, saved via
+ * EditListingDeliveryPanel.js) into a short, privacy-safe location label,
+ * e.g. "9000 Gent - Ledeberg" or "9000 Gent" when no neighborhood was
+ * resolved. Returns null when there isn't enough data to build one - the
+ * exact street address is never used here on purpose, this is only meant
+ * for public, pre-booking display.
+ *
+ * Prefers the neighborhood (e.g. "Dampoort") since that's the
+ * recognizable, hyperlocal name a renter actually orients by - falls back
+ * to the city/postal code when a listing has no neighborhood saved.
+ *
+ * @param {Object} location
+ * @param {string} [location.postalCode]
+ * @param {string} [location.city]
+ * @param {string} [location.neighborhood]
+ * @returns {string|null}
+ */
+export const formatPostcodeDistrictLabel = location => {
+  const { postalCode, city, neighborhood } = location || {};
+  if (neighborhood) {
+    return neighborhood;
+  }
+  const base = [postalCode, city].filter(Boolean).join(' ');
+  return base || null;
+};

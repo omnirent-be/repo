@@ -168,6 +168,7 @@ const PaymentMethodsPageComponent = props => {
     currentPage: 'PaymentMethodsPage',
     showPaymentMethods,
     showPayoutDetails,
+    currentUser,
   };
 
   return (

@@ -83,6 +83,42 @@ export const minLength = (message, minimumLength) => value => {
   return hasLength && value.length >= minimumLength ? VALID : message;
 };
 
+// Catches the laziest placeholder names a minLength check alone can't (e.g.
+// "aa", "xx", digits) - not a real name-validity check (that's not possible
+// without an identity document), just a floor above pure junk. Used
+// wherever a name gets printed onto something legally consequential (a
+// rental contract, a Stripe Connect account) - see ProfileSettingsForm.js
+// and StripeConnectAccountForm.js.
+const NAME_INVALID_CHARS_RE = /[^a-zA-ZÀ-ÖØ-öø-ÿ' -]/;
+const REPEATED_CHAR_NAME_RE = /^(.)\1*$/i;
+export const validRealName = message => value => {
+  if (!value) {
+    return VALID;
+  }
+  const trimmed = value.trim();
+  return NAME_INVALID_CHARS_RE.test(trimmed) ||
+    REPEATED_CHAR_NAME_RE.test(trimmed.replace(/\s/g, ''))
+    ? message
+    : VALID;
+};
+
+// Loose but not meaningless: real-world phone numbers vary in length/format
+// more than a fixed regex can cleanly cover (extensions, spaces, +32 vs 0
+// prefix, etc.), so this only rejects what's unambiguously wrong - too few
+// digits to be a real number, or characters that can't appear in one -
+// rather than pretending to fully validate a specific country's format. Does
+// NOT check presence - combine with required() where the field is mandatory
+// (see StripeConnectAccountForm.js) or leave unpaired where it's optional
+// (see ProfileSettingsForm.js).
+const PHONE_CHARS_RE = /^[+()0-9 -]+$/;
+export const validPhoneNumber = message => value => {
+  if (!value) {
+    return VALID;
+  }
+  const digitCount = (value.match(/[0-9]/g) || []).length;
+  return digitCount >= 8 && PHONE_CHARS_RE.test(value) ? VALID : message;
+};
+
 export const maxLength = (message, maximumLength) => value => {
   if (!value) {
     return VALID;
@@ -134,6 +170,35 @@ export const emailFormatValid = message => value => {
   return value && EMAIL_RE.test(value) ? VALID : message;
 };
 
+// General IBAN structure (2 letter country code + 2 check digits + up to 30
+// alphanumeric BBAN chars) plus the standard mod-97 checksum - catches
+// typos (transposed digits, wrong length) without needing a per-country
+// format table.
+const IBAN_STRUCTURE_RE = /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/;
+
+const ibanChecksumValid = normalizedIban => {
+  // Move the first 4 characters to the end, then convert every letter to
+  // its position in the alphabet + 9 (A=10, B=11, ...) - the standard
+  // mod-97-10 check from ISO 7064.
+  const rearranged = normalizedIban.slice(4) + normalizedIban.slice(0, 4);
+  const numeric = rearranged.replace(/[A-Z]/g, char => char.charCodeAt(0) - 55);
+  // The numeric string can be far longer than Number can hold exactly, so
+  // the modulo is computed digit-by-digit instead of via a single BigInt/
+  // Number conversion.
+  let remainder = 0;
+  for (let i = 0; i < numeric.length; i++) {
+    remainder = (remainder * 10 + Number(numeric[i])) % 97;
+  }
+  return remainder === 1;
+};
+
+export const validIBAN = message => value => {
+  const normalized = typeof value === 'string' ? value.replace(/\s+/g, '').toUpperCase() : '';
+  return normalized && IBAN_STRUCTURE_RE.test(normalized) && ibanChecksumValid(normalized)
+    ? VALID
+    : message;
+};
+
 export const moneySubUnitAmountAtLeast = (message, minValue) => value => {
   return value instanceof Money && value.amount >= minValue ? VALID : message;
 };
@@ -162,6 +227,25 @@ export const validateInteger = (value, max, min, numberTooSmallMessage, numberTo
 // If URL is passed to this function as null, will return VALID
 export const validateYoutubeURL = (url, message) => {
   return url ? (extractYouTubeID(url) ? VALID : message) : VALID;
+};
+
+// Plain boolean check (not a Final Form validator) for a `type="date"`
+// input's 'YYYY-MM-DD' string, as opposed to ageAtLeast below which expects
+// a {year, month, day} object. Shared between ProfileSettingsForm.js (blocks
+// saving an under-18/invalid birth date) and CheckoutPageTransactionHelpers.js
+// (re-checks it at the checkout gate too, in case a birth date was ever set
+// some other way - the rental contract's signer must be a real adult).
+export const isAtLeastYearsOldFromDateString = (dateString, minYears) => {
+  if (!dateString) {
+    return false;
+  }
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) {
+    return false;
+  }
+  const minYearsAgo = new Date();
+  minYearsAgo.setFullYear(minYearsAgo.getFullYear() - minYears);
+  return date <= minYearsAgo;
 };
 
 export const ageAtLeast = (message, minYears) => value => {

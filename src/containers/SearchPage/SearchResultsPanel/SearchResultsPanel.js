@@ -1,8 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
 
+import { FormattedMessage } from '../../../util/reactIntl';
 import { propTypes } from '../../../util/types';
-import { ListingCard, PaginationLinks } from '../../../components';
+import { ListingCard, IconSpinner } from '../../../components';
+import useVisitorPosition from '../../../hooks/useVisitorPosition';
 
 import css from './SearchResultsPanel.module.css';
 
@@ -15,9 +17,14 @@ import css from './SearchResultsPanel.module.css';
  * @param {string} [props.rootClassName] - Custom class that extends the default class for the root element
  * @param {Array<propTypes.listing>} props.listings - The listings
  * @param {propTypes.pagination} props.pagination - The pagination
- * @param {Object} props.search - The search
  * @param {Function} props.setActiveListing - The function to handle the active listing
  * @param {boolean} [props.isMapVariant] - Whether the map variant is enabled
+ * @param {propTypes.currentUser} [props.currentUser] - Pass together with onToggleFavoriteListing to show favorite buttons on the cards
+ * @param {Array<string>} [props.favoriteListingIds] - Listing ids currentUser has favorited
+ * @param {Function} [props.onToggleFavoriteListing] - (listingId) => Promise
+ * @param {string} [props.favoriteListingIdInProgress] - the listing id currently being toggled
+ * @param {Function} [props.onLoadMore] - Called (with no args) when the "load more" button is clicked, to fetch the next page of results
+ * @param {boolean} [props.loadMoreInProgress] - Whether the next page is currently being fetched
  * @returns {JSX.Element}
  */
 const SearchResultsPanel = props => {
@@ -26,26 +33,19 @@ const SearchResultsPanel = props => {
     rootClassName,
     listings = [],
     pagination,
-    search,
     setActiveListing,
     isMapVariant = true,
-    listingTypeParam,
-    intl,
+    currentUser,
+    favoriteListingIds = [],
+    onToggleFavoriteListing,
+    favoriteListingIdInProgress,
+    onLoadMore,
+    loadMoreInProgress = false,
   } = props;
   const classes = classNames(rootClassName || css.root, className);
-  const pageName = listingTypeParam ? 'SearchPageWithListingType' : 'SearchPage';
-
-  const paginationLinks =
-    pagination && pagination.totalPages > 1 ? (
-      <PaginationLinks
-        className={css.pagination}
-        pageName={pageName}
-        pagePathParams={{ listingType: listingTypeParam }}
-        pageSearchParams={search}
-        pagination={pagination}
-        aria-label={intl.formatMessage({ id: 'SearchResultsPanel.screenreader.pagination' })}
-      />
-    ) : null;
+  const hasMore = !!pagination && pagination.page < pagination.totalPages;
+  // Asked once per page load (not per card) - see useVisitorPosition.js.
+  const visitorPosition = useVisitorPosition();
 
   const cardRenderSizes = isMapVariant => {
     if (isMapVariant) {
@@ -82,12 +82,35 @@ const SearchResultsPanel = props => {
               listing={l}
               renderSizes={cardRenderSizes(isMapVariant)}
               setActiveListing={setActiveListing}
+              currentUser={currentUser}
+              isFavorite={favoriteListingIds.includes(l.id.uuid)}
+              onToggleFavoriteListing={onToggleFavoriteListing}
+              favoriteListingIdInProgress={favoriteListingIdInProgress}
+              visitorPosition={visitorPosition}
             />
           </li>
         ))}
         {props.children}
       </ul>
-      {paginationLinks}
+      {hasMore ? (
+        <div className={css.loadMoreRow}>
+          <button
+            type="button"
+            className={css.loadMoreButton}
+            onClick={onLoadMore}
+            disabled={loadMoreInProgress}
+          >
+            {loadMoreInProgress ? (
+              <>
+                <IconSpinner className={css.loadMoreSpinner} />
+                <FormattedMessage id="SearchResultsPanel.loadingMore" />
+              </>
+            ) : (
+              <FormattedMessage id="SearchResultsPanel.loadMore" />
+            )}
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 };

@@ -1,0 +1,38 @@
+.root {
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.description {
+  color: var(--colorGrey700);
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.statusApproved {
+  color: var(--colorSuccess);
+  font-weight: var(--fontWeightSemiBold);
+  margin-top: 0;
+}
+
+.statusPending {
+  color: var(--colorGrey700);
+  margin-top: 0;
+}
+
+.statusDenied {
+  color: var(--colorFail);
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.error {
+  color: var(--colorFail);
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.submitButton {
+  width: auto;
+  min-width: 200px;
+}

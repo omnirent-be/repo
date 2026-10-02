@@ -1,0 +1,1 @@
+{{set-translations (asset "content/email-texts.json")}}{{t "ExtraDayAccepted.Subject" "Your extra-day request for {listingTitle} was accepted" listingTitle=transaction.listing.title}}

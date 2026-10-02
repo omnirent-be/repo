@@ -40,8 +40,6 @@ describe('Application - node environment', () => {
     const loginPath = '/login';
     const signupPath = '/signup';
     const urlRedirects = {
-      '/l/new': signupPath,
-      '/l/listing-title-slug/1234/new/description': signupPath,
       '/l/listing-title-slug/1234/checkout': signupPath,
       '/profile-settings': loginPath,
       '/inbox': loginPath,
@@ -61,6 +59,23 @@ describe('Application - node environment', () => {
       render(url, context);
       expect(context.url).toEqual(redirectPath);
     });
+  });
+
+  it('does not redirect anonymous visitors away from starting a new listing ("List First, Sign Up Later")', () => {
+    // /l/new itself always redirects (NewListingPage's own component just
+    // forwards to EditListingPage with a placeholder draft id/slug) - but
+    // that redirect target is the wizard's Basics tab, not /signup, since
+    // neither route is auth-gated anymore (see routeConfiguration.js and
+    // EditListingPage.js's own currentUser?.id guard).
+    const newListingContext = {};
+    render('/l/new', newListingContext);
+    expect(newListingContext.url).toEqual(
+      '/l/draft/00000000-0000-0000-0000-000000000000/new/basics'
+    );
+
+    const editListingContext = {};
+    render('/l/listing-title-slug/1234/new/basics', editListingContext);
+    expect(editListingContext.url).toBeUndefined();
   });
 
   it('redirects to correct URLs', () => {

@@ -21,10 +21,17 @@ export const getStateDataForNegotiationProcess = (txInfo, processInfo) => {
     onMakeOfferRedirect,
     onOpenRequestChangesModal,
     onOpenMakeCounterOfferModal,
+    onOpenDepositPaymentModal,
+    onReleaseDeposit,
+    onClaimDeposit,
   } = txInfo;
   const isProviderBanned = transaction?.provider?.attributes?.banned;
   const isCustomerBanned = transaction?.provider?.attributes?.banned;
   const _ = CONDITIONAL_RESOLVER_WILDCARD;
+  const deposit = transaction?.attributes?.protectedData?.deposit;
+  const depositInSubunits = transaction?.listing?.attributes?.publicData?.depositInSubunits;
+  const needsDepositPayment = !!depositInSubunits && !deposit;
+  const canReleaseOrClaimDeposit = deposit?.status === 'held';
 
   const {
     processName,
@@ -57,6 +64,38 @@ export const getStateDataForNegotiationProcess = (txInfo, processInfo) => {
     {
       transition: transitions.ACCEPT_UPDATE,
       translationId: 'TransactionPage.ActivityFeed.default-negotiation.transition.accept-update',
+    },
+    {
+      transition: transitions.CONFIRM_DEPOSIT_HELD,
+      translationId: 'TransactionPage.ActivityFeed.default-negotiation.transition.deposit-held',
+    },
+    {
+      transition: transitions.CONFIRM_DEPOSIT_HELD_DELIVERED,
+      translationId: 'TransactionPage.ActivityFeed.default-negotiation.transition.deposit-held',
+    },
+    {
+      transition: transitions.RECORD_DEPOSIT_RELEASE,
+      translationId: 'TransactionPage.ActivityFeed.default-negotiation.transition.deposit-released',
+    },
+    {
+      transition: transitions.RECORD_DEPOSIT_RELEASE_DELIVERED,
+      translationId: 'TransactionPage.ActivityFeed.default-negotiation.transition.deposit-released',
+    },
+    {
+      transition: transitions.RECORD_DEPOSIT_RELEASE_REVIEWED,
+      translationId: 'TransactionPage.ActivityFeed.default-negotiation.transition.deposit-released',
+    },
+    {
+      transition: transitions.RECORD_DEPOSIT_CLAIM,
+      translationId: 'TransactionPage.ActivityFeed.default-negotiation.transition.deposit-claimed',
+    },
+    {
+      transition: transitions.RECORD_DEPOSIT_CLAIM_DELIVERED,
+      translationId: 'TransactionPage.ActivityFeed.default-negotiation.transition.deposit-claimed',
+    },
+    {
+      transition: transitions.RECORD_DEPOSIT_CLAIM_REVIEWED,
+      translationId: 'TransactionPage.ActivityFeed.default-negotiation.transition.deposit-claimed',
     },
   ];
   const sharedStateData = {
@@ -282,15 +321,51 @@ export const getStateDataForNegotiationProcess = (txInfo, processInfo) => {
       return { ...sharedStateData, showDetailCardHeadings: true, showBreakDown: false };
     })
     .cond([states.OFFER_ACCEPTED, CUSTOMER], () => {
-      return { ...sharedStateData, showDetailCardHeadings: true, showExtraInfo: true };
+      const depositButtonPropsMaybe = needsDepositPayment
+        ? {
+            primaryButtonProps: actionButtonProps(transitions.LINK_DEPOSIT_PAYMENT, CUSTOMER, {
+              onAction: onOpenDepositPaymentModal,
+              actionButtonTranslationId:
+                'TransactionPage.default-negotiation.customer.deposit.payButton',
+              actionButtonTranslationErrorId:
+                'TransactionPage.default-negotiation.customer.deposit.payButtonError',
+            }),
+          }
+        : {};
+      return {
+        ...sharedStateData,
+        showDetailCardHeadings: true,
+        showExtraInfo: true,
+        showActionButtons: needsDepositPayment,
+        ...depositButtonPropsMaybe,
+      };
     })
     .cond([states.OFFER_ACCEPTED, PROVIDER], () => {
+      const depositButtonPropsMaybe = canReleaseOrClaimDeposit
+        ? {
+            secondaryButtonProps: actionButtonProps(transitions.RECORD_DEPOSIT_RELEASE, PROVIDER, {
+              onAction: onReleaseDeposit,
+              actionButtonTranslationId:
+                'TransactionPage.default-negotiation.provider.deposit.releaseButton',
+              actionButtonTranslationErrorId:
+                'TransactionPage.default-negotiation.provider.deposit.releaseButtonError',
+            }),
+            tertiaryButtonProps: actionButtonProps(transitions.RECORD_DEPOSIT_CLAIM, PROVIDER, {
+              onAction: onClaimDeposit,
+              actionButtonTranslationId:
+                'TransactionPage.default-negotiation.provider.deposit.claimButton',
+              actionButtonTranslationErrorId:
+                'TransactionPage.default-negotiation.provider.deposit.claimButtonError',
+            }),
+          }
+        : {};
       return {
         ...sharedStateData,
         showDetailCardHeadings: true,
         showExtraInfo: true,
         showActionButtons: true,
         primaryButtonProps: actionButtonProps(transitions.DELIVER, PROVIDER),
+        ...depositButtonPropsMaybe,
       };
     })
     .cond([states.DELIVERED, CUSTOMER], () => {
@@ -333,11 +408,38 @@ export const getStateDataForNegotiationProcess = (txInfo, processInfo) => {
       };
     })
     .cond([states.DELIVERED, PROVIDER], () => {
+      const depositButtonPropsMaybe = canReleaseOrClaimDeposit
+        ? {
+            primaryButtonProps: actionButtonProps(
+              transitions.RECORD_DEPOSIT_RELEASE_DELIVERED,
+              PROVIDER,
+              {
+                onAction: onReleaseDeposit,
+                actionButtonTranslationId:
+                  'TransactionPage.default-negotiation.provider.deposit.releaseButton',
+                actionButtonTranslationErrorId:
+                  'TransactionPage.default-negotiation.provider.deposit.releaseButtonError',
+              }
+            ),
+            secondaryButtonProps: actionButtonProps(
+              transitions.RECORD_DEPOSIT_CLAIM_DELIVERED,
+              PROVIDER,
+              {
+                onAction: onClaimDeposit,
+                actionButtonTranslationId:
+                  'TransactionPage.default-negotiation.provider.deposit.claimButton',
+                actionButtonTranslationErrorId:
+                  'TransactionPage.default-negotiation.provider.deposit.claimButtonError',
+              }
+            ),
+          }
+        : {};
       return {
         ...sharedStateData,
         showDetailCardHeadings: true,
         showExtraInfo: true,
-        // showActionButtons: true,
+        showActionButtons: canReleaseOrClaimDeposit,
+        ...depositButtonPropsMaybe,
       };
     })
     .cond([states.CHANGES_REQUESTED, CUSTOMER], () => {
@@ -381,6 +483,41 @@ export const getStateDataForNegotiationProcess = (txInfo, processInfo) => {
         showReviewAsSecondLink: true,
         showActionButtons: true,
         primaryButtonProps: leaveReviewProps,
+      };
+    })
+    .cond([states.REVIEWED, PROVIDER], () => {
+      const depositButtonPropsMaybe = canReleaseOrClaimDeposit
+        ? {
+            showActionButtons: true,
+            primaryButtonProps: actionButtonProps(
+              transitions.RECORD_DEPOSIT_RELEASE_REVIEWED,
+              PROVIDER,
+              {
+                onAction: onReleaseDeposit,
+                actionButtonTranslationId:
+                  'TransactionPage.default-negotiation.provider.deposit.releaseButton',
+                actionButtonTranslationErrorId:
+                  'TransactionPage.default-negotiation.provider.deposit.releaseButtonError',
+              }
+            ),
+            secondaryButtonProps: actionButtonProps(
+              transitions.RECORD_DEPOSIT_CLAIM_REVIEWED,
+              PROVIDER,
+              {
+                onAction: onClaimDeposit,
+                actionButtonTranslationId:
+                  'TransactionPage.default-negotiation.provider.deposit.claimButton',
+                actionButtonTranslationErrorId:
+                  'TransactionPage.default-negotiation.provider.deposit.claimButtonError',
+              }
+            ),
+          }
+        : {};
+      return {
+        ...sharedStateData,
+        showDetailCardHeadings: true,
+        showReviews: true,
+        ...depositButtonPropsMaybe,
       };
     })
     .cond([states.REVIEWED, _], () => {

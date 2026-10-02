@@ -129,25 +129,10 @@ class FilterPopupForSidebar extends Component {
   }
 
   positionStyleForContent() {
-    if (this.filter && this.filterContent) {
-      // Render the filter content to the right from the menu
-      // unless there's no space in which case it is rendered
-      // to the left
-      const distanceToRight = window.innerWidth - this.filter.getBoundingClientRect().right;
-      const labelWidth = this.filter.offsetWidth;
-      const contentWidth = this.filterContent.offsetWidth;
-      const contentWidthBiggerThanLabel = contentWidth - labelWidth;
-      const renderToRight = distanceToRight > contentWidthBiggerThanLabel;
-      const contentPlacementOffset = this.props.contentPlacementOffset || 0;
-
-      const offset = renderToRight
-        ? { left: contentPlacementOffset }
-        : { right: contentPlacementOffset };
-      // set a min-width if the content is narrower than the label
-      const minWidth = contentWidth < labelWidth ? { minWidth: labelWidth } : null;
-
-      return { ...offset, ...minWidth };
-    }
+    // No-op: the popup renders in normal document flow now (see .popup in
+    // FilterPopupForSidebar.module.css), so it doesn't need a computed
+    // left/right/minWidth offset the way an absolutely-positioned overlay
+    // would.
     return {};
   }
 

@@ -8,6 +8,7 @@ import { propTypes } from '../../util/types';
 import { PROFILE_PAGE_PENDING_APPROVAL_VARIANT } from '../../util/urlHelpers';
 import { ensureCurrentUser } from '../../util/data';
 import {
+  getExternalReview,
   initialValuesForUserFields,
   isUserAuthorized,
   pickUserFieldsData,
@@ -88,7 +89,22 @@ export const ProfileSettingsPageComponent = props => {
   const publicUserFields = userFields.filter(uf => uf.scope === 'public');
 
   const handleSubmit = (values, userType) => {
-    const { firstName, lastName, displayName, bio: rawBio, ...rest } = values;
+    const {
+      firstName,
+      lastName,
+      displayName,
+      bio: rawBio,
+      externalReviewRating,
+      externalReviewSource,
+      externalReviewCount,
+      externalReviewUrl,
+      phoneNumber,
+      birthDate,
+      addressLine1,
+      addressPostalCode,
+      addressCity,
+      ...rest
+    } = values;
 
     const displayNameMaybe = displayName
       ? { displayName: displayName.trim() }
@@ -97,6 +113,20 @@ export const ProfileSettingsPageComponent = props => {
     // Ensure that the optional bio is a string
     const bio = rawBio || '';
 
+    // The external-review fields are optional and only saved as a group -
+    // without a rating, there's nothing meaningful to show, so the whole
+    // thing is cleared instead of persisting a partial value.
+    const externalReviewMaybe = externalReviewRating
+      ? {
+          externalReview: {
+            rating: Number(externalReviewRating),
+            source: externalReviewSource || 'other',
+            count: externalReviewCount ? Number(externalReviewCount) : 0,
+            url: externalReviewUrl || null,
+          },
+        }
+      : { externalReview: null };
+
     const profile = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
@@ -104,6 +134,24 @@ export const ProfileSettingsPageComponent = props => {
       bio,
       publicData: {
         ...pickUserFieldsData(rest, 'public', userType, userFields),
+        ...externalReviewMaybe,
+      },
+      // Contact/identity details for the rental contract (see
+      // server/api-util/contractPdf.js) - protectedData rather than
+      // publicData, since a phone number, birth date and home address are
+      // only meant to be visible to an actual transaction counterparty,
+      // never to every visitor browsing the marketplace. None of these are
+      // required to save THIS form (see ProfileSettingsForm.js) - only
+      // CheckoutPage.js enforces them, right before booking - so each can
+      // still be empty here.
+      protectedData: {
+        phoneNumber: phoneNumber ? phoneNumber.trim() : null,
+        birthDate: birthDate || null,
+        address: {
+          line1: addressLine1 ? addressLine1.trim() : null,
+          postalCode: addressPostalCode ? addressPostalCode.trim() : null,
+          city: addressCity ? addressCity.trim() : null,
+        },
       },
     };
     const uploadedImage = props.image;
@@ -118,9 +166,19 @@ export const ProfileSettingsPageComponent = props => {
   };
 
   const user = ensureCurrentUser(currentUser);
-  const { firstName, lastName, displayName, bio, publicData } = user?.attributes.profile;
+  const { firstName, lastName, displayName, bio, publicData, protectedData } =
+    user?.attributes.profile;
   // I.e. the status is active, not pending-approval or banned
   const isUnauthorizedUser = currentUser && !isUserAuthorized(currentUser);
+
+  const { phoneNumber, birthDate, address } = protectedData || {};
+  const contactDetailsValuesMaybe = {
+    phoneNumber: phoneNumber || '',
+    birthDate: birthDate || '',
+    addressLine1: address?.line1 || '',
+    addressPostalCode: address?.postalCode || '',
+    addressCity: address?.city || '',
+  };
 
   const { userType } = publicData || {};
   const profileImageId = user.profileImage ? user.profileImage.id : null;
@@ -129,6 +187,16 @@ export const ProfileSettingsPageComponent = props => {
   const isDisplayNameIncluded = userTypeConfig?.defaultUserFields?.displayName !== false;
   // ProfileSettingsForm decides if it's allowed to show the input field.
   const displayNameMaybe = isDisplayNameIncluded && displayName ? { displayName } : {};
+
+  const externalReview = getExternalReview(publicData);
+  const externalReviewValuesMaybe = externalReview
+    ? {
+        externalReviewRating: `${externalReview.rating}`,
+        externalReviewSource: externalReview.source || '',
+        externalReviewCount: externalReview.count ? `${externalReview.count}` : '',
+        externalReviewUrl: externalReview.url || '',
+      }
+    : {};
 
   const profileSettingsForm = user.id ? (
     <ProfileSettingsForm
@@ -141,6 +209,8 @@ export const ProfileSettingsPageComponent = props => {
         bio,
         profileImage: user.profileImage,
         ...initialValuesForUserFields(publicData, 'public', userType, userFields),
+        ...externalReviewValuesMaybe,
+        ...contactDetailsValuesMaybe,
       }}
       profileImage={profileImage}
       onImageUpload={e => onImageUploadHandler(e, onImageUpload)}

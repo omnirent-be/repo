@@ -132,7 +132,14 @@ const TopbarMobileMenu = props => {
             />
           </div>
 
-          <ul className={css.customLinksWrapper}>{extraLinks}</ul>
+          <ul className={css.customLinksWrapper}>
+            {extraLinks}
+            <li>
+              <NamedLink name="FaqPage">
+                <FormattedMessage id="TopbarMobileMenu.faqLink" />
+              </NamedLink>
+            </li>
+          </ul>
 
           <div className={css.spacer} />
         </div>
@@ -162,6 +169,14 @@ const TopbarMobileMenu = props => {
     </li>
   ) : null;
 
+  const balanceLinkMaybe = showCreateListingsLink ? (
+    <li className={classNames(css.navigationLink, currentPageClass('BalancePage'))}>
+      <NamedLink name="BalancePage">
+        <FormattedMessage id="TopbarMobileMenu.balanceLink" />
+      </NamedLink>
+    </li>
+  ) : null;
+
   return (
     <div className={css.root}>
       <AvatarLarge className={css.avatar} user={currentUser} />
@@ -181,6 +196,19 @@ const TopbarMobileMenu = props => {
             </NamedLink>
           </li>
           {manageListingsLinkMaybe}
+          {balanceLinkMaybe}
+          <li className={classNames(css.navigationLink, currentPageClass('ReferralPage'))}>
+            <NamedLink name="ReferralPage">
+              <FormattedMessage id="TopbarMobileMenu.referralLink" />
+            </NamedLink>
+          </li>
+          <li
+            className={classNames(css.navigationLink, currentPageClass('FavoriteListingsPage'))}
+          >
+            <NamedLink name="FavoriteListingsPage">
+              <FormattedMessage id="TopbarMobileMenu.favoriteListingsLink" />
+            </NamedLink>
+          </li>
           <li className={classNames(css.navigationLink, currentPageClass('ProfileSettingsPage'))}>
             <NamedLink name="ProfileSettingsPage">
               <FormattedMessage id="TopbarMobileMenu.profileSettingsLink" />
@@ -192,7 +220,14 @@ const TopbarMobileMenu = props => {
             </NamedLink>
           </li>
         </ul>
-        <ul className={css.customLinksWrapper}>{extraLinks}</ul>
+        <ul className={css.customLinksWrapper}>
+          {extraLinks}
+          <li>
+            <NamedLink name="FaqPage">
+              <FormattedMessage id="TopbarMobileMenu.faqLink" />
+            </NamedLink>
+          </li>
+        </ul>
         <div className={css.spacer} />
       </div>
       <div className={css.footer}>{createListingsLinkMaybe}</div>

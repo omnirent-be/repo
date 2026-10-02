@@ -1,0 +1,187 @@
+@import '../../styles/customMediaQueries.css';
+
+.content {
+  width: 100%;
+  margin: 24px auto 0 auto;
+  max-width: 760px;
+
+  @media (--viewportMedium) {
+    margin: 48px auto 0 auto;
+  }
+
+  @media (--viewportLarge) {
+    margin: 72px auto 96px auto;
+  }
+}
+
+.heading {
+  margin: 0 24px 8px 24px;
+
+  @media (--viewportLarge) {
+    margin: 0 0 8px 0;
+  }
+}
+
+@keyframes howItWorksFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.intro {
+  margin: 0 24px 40px 24px;
+  color: var(--colorGrey600);
+  font-size: 18px;
+  line-height: 1.5;
+  animation: howItWorksFadeIn 0.2s ease;
+
+  @media (--viewportLarge) {
+    margin: 0 0 56px 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.roleTabs {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
+  margin: 0 24px 40px 24px;
+  padding: 4px;
+  border-radius: 999px;
+  background-color: var(--colorGrey50);
+
+  @media (--viewportLarge) {
+    margin: 0 0 48px 0;
+  }
+}
+
+.roleTabsPill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  background-color: var(--marketplaceColor);
+  border-radius: 999px;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+  [data-mode='list'] > & {
+    transform: translateX(100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.roleTab {
+  padding: 9px 20px;
+  border: none;
+  border-radius: 999px;
+  background-color: transparent;
+  appearance: none;
+  cursor: pointer;
+  font-weight: var(--fontWeightMedium);
+  font-size: 15px;
+  white-space: nowrap;
+  color: var(--colorGrey600);
+  position: relative;
+  z-index: 1;
+  transition: color var(--transitionStyle);
+
+  &:hover {
+    color: var(--marketplaceColor);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--marketplaceColor);
+    outline-offset: 2px;
+  }
+}
+
+.roleTabActive {
+  color: var(--colorWhite);
+
+  &:hover {
+    color: var(--colorWhite);
+  }
+}
+
+.section {
+  margin: 0 24px 56px 24px;
+  animation: howItWorksFadeIn 0.2s ease;
+
+  @media (--viewportLarge) {
+    margin: 0 0 64px 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.sectionTitle {
+  margin: 0 0 24px 0;
+}
+
+.stepList {
+  list-style: none;
+  margin: 0 0 32px 0;
+  padding: 0;
+}
+
+.step {
+  display: flex;
+  gap: 20px;
+  padding: 20px 0;
+  border-top: 1px solid var(--colorGrey100);
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.stepNumber {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-weight: var(--fontWeightSemiBold);
+  font-size: 16px;
+}
+
+.stepTitle {
+  margin: 4px 0 6px 0;
+}
+
+.stepText {
+  margin: 0;
+  color: var(--colorGrey600);
+  line-height: 1.5;
+}
+
+.ctaButton {
+  display: inline-block;
+  padding: 12px 28px;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  border-radius: 999px;
+  font-weight: var(--fontWeightSemiBold);
+
+  &:hover {
+    color: var(--colorWhite);
+    background-color: var(--marketplaceColorLight);
+    text-decoration: none;
+  }
+}

@@ -280,14 +280,16 @@ class FilterPlainComponent extends Component {
             initialValues={initialValues}
             keepDirtyOnReinitialize={keepDirtyOnReinitialize}
             clearButton={
-              <button
-                id={`${formId}.clear`}
-                type="button"
-                className={css.clearButton}
-                onClick={this.handleClear}
-              >
-                <FormattedMessage id={'FilterPlain.clear'} />
-              </button>
+              isSelected ? (
+                <button
+                  id={`${formId}.clear`}
+                  type="button"
+                  className={css.clearButton}
+                  onClick={this.handleClear}
+                >
+                  <FormattedMessage id={'FilterPlain.clear'} />
+                </button>
+              ) : null
             }
           >
             {children}

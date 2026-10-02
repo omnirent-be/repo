@@ -30,8 +30,8 @@
   }
 
   & .input {
-    /* Mobile Safari couldn't handle width: calc(50% - 6px); */
-    flex-basis: calc(50vw - 30px);
+    /* Mobile Safari couldn't handle width: calc(50vw - 24px); */
+    flex-basis: calc(50vw - 24px);
     transition: all 0.15s ease-out;
   }
 
@@ -46,7 +46,7 @@
     }
 
     & .input {
-      flex-basis: calc(50% - 6px);
+      flex-basis: 50%;
       transition: all 0.15s ease-out;
     }
   }

@@ -1,0 +1,31 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  margin: 0 24px 16px 24px;
+
+  @media (--viewportLarge) {
+    margin: 0 0 24px 0;
+  }
+}
+
+.barTrack {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--colorGrey100);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 3px;
+  background-color: var(--marketplaceColor);
+  transition: width 0.3s ease-in-out;
+}
+
+.text {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey600);
+  margin: 0;
+}

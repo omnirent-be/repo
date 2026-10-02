@@ -129,25 +129,28 @@ describe('SignupForm', () => {
       screen.getByRole('option', { name: 'Seller' })
     );
 
-    // Test that sign up button is disabled at first
-    expect(screen.getByRole('button', { name: 'SignupForm.signUp' })).toBeDisabled();
-
-    // Type the values to the sign up form
+    // Step 1: login details
     await user.type(
       screen.getByRole('textbox', { name: 'SignupForm.emailLabel' }),
       'joe@example.com'
     );
+    await user.type(screen.getByLabelText('SignupForm.passwordLabel'), 'secret-password');
+    await user.click(screen.getByRole('button', { name: 'SignupFlow.next' }));
+
+    // Step 2: about you
     await user.type(screen.getByRole('textbox', { name: 'SignupForm.firstNameLabel' }), 'Joe');
     await user.type(screen.getByRole('textbox', { name: 'SignupForm.lastNameLabel' }), 'Dunphy');
-    await user.type(screen.getByLabelText('SignupForm.passwordLabel'), 'secret-password');
+    await user.click(screen.getByRole('button', { name: 'SignupFlow.next' }));
+
+    // Step 3: the submit button only exists on the last step
     await user.type(screen.getByLabelText('Text Field'), 'Text value');
 
     // Test that sign up button is still disabled before clicking the checkbox
-    expect(screen.getByRole('button', { name: 'SignupForm.signUp' })).toBeDisabled();
-    fireEvent.click(screen.getByLabelText(/AuthenticationPage.termsAndConditionsAcceptText/i));
+    expect(screen.getByRole('button', { name: 'SignupFlow.submit' })).toBeDisabled();
+    fireEvent.click(screen.getByLabelText(/SignupFlow.termsAccept/i));
 
     // Test that sign up button is enabled after typing the values
-    expect(screen.getByRole('button', { name: 'SignupForm.signUp' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'SignupFlow.submit' })).toBeEnabled();
   });
 
   it('shows custom user fields according to configuration', async () => {

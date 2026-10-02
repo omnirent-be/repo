@@ -47,3 +47,33 @@ export const GoogleLogo = ({ ariaLabelledBy }) => (
     </g>
   </svg>
 );
+
+// NOT itsme's real logo - just a generic placeholder mark (a shield/check,
+// same idea as the app's own identity-verification glyph) for the disabled
+// "coming soon" button in SocialLoginButtons.js. itsme's actual brand mark
+// should replace this once there's a real OIDC partner account to wire up -
+// don't use their trademark without that.
+export const ItsmeMark = ({ ariaLabelledBy }) => (
+  <svg
+    width="20"
+    height="20"
+    viewBox="0 0 20 20"
+    xmlns="http://www.w3.org/2000/svg"
+    role="img"
+    aria-labelledby={ariaLabelledBy}
+  >
+    <path
+      d="M10 1l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V4l7-3z"
+      fill="#F47D30"
+      fillRule="nonzero"
+    />
+    <path
+      d="M6.5 10l2.3 2.3L13.5 7.6"
+      stroke="#fff"
+      strokeWidth="1.6"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);

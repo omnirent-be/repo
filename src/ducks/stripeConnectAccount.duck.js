@@ -10,6 +10,28 @@ import { getStripeAccountTokenInfo } from '../util/stripeConnect';
 ///////////////////////////
 // Create Stripe Account //
 ///////////////////////////
+// Turns the natively-collected account holder name + IBAN into a Stripe
+// bank_account token via Stripe.js (client-side, same mechanism as the
+// account token above - no new backend endpoint or direct Stripe key
+// needed). Returns null when either field is missing, so a caller can
+// still fall back to Stripe's hosted bank-details step for accounts that
+// (for whatever reason) skip this - e.g. the "custom_account_update" link
+// already wired up in StripePayoutPage.js.
+const createBankAccountToken = (stripe, { country, currency, accountHolderName, iban, accountType }) => {
+  if (!accountHolderName || !iban) {
+    return Promise.resolve(null);
+  }
+  return stripe
+    .createToken('bank_account', {
+      country,
+      currency,
+      account_holder_name: accountHolderName,
+      account_holder_type: accountType,
+      account_number: iban.replace(/\s+/g, ''),
+    })
+    .then(response => response.token.id);
+};
+
 const createStripeAccountPayloadCreator = (params, { extra: sdk, rejectWithValue }) => {
   if (typeof window === 'undefined' || !window.Stripe) {
     throw new Error('Stripe must be loaded for submitting PayoutPreferences');
@@ -20,6 +42,16 @@ const createStripeAccountPayloadCreator = (params, { extra: sdk, rejectWithValue
     businessProfileMCC,
     businessProfileURL,
     stripePublishableKey,
+    marketplaceCurrency,
+    accountHolderName,
+    iban,
+    firstName,
+    lastName,
+    dateOfBirth,
+    phone,
+    addressLine1,
+    postalCode,
+    city,
   } = params;
   const stripe = window.Stripe(stripePublishableKey);
 
@@ -30,8 +62,33 @@ const createStripeAccountPayloadCreator = (params, { extra: sdk, rejectWithValue
   // Note: with default processes, both 'card_payments' and 'transfers' are required.
   const requestedCapabilities = ['card_payments', 'transfers'];
 
+  // Collected natively for the same reason as the bank details below - see
+  // StripeConnectAccountForm.js's IndividualIdentityFields. Only sent for
+  // individual accounts; a 'company' account still goes through Stripe's
+  // hosted flow for its own (different) required fields. [year, month, day]
+  // comes from dateOfBirth's <input type="date"> value ('YYYY-MM-DD').
+  const [dobYear, dobMonth, dobDay] = (dateOfBirth || '').split('-');
+  const individualInfoMaybe =
+    accountType === 'individual' && firstName && lastName && dateOfBirth
+      ? {
+          individual: {
+            first_name: firstName,
+            last_name: lastName,
+            dob: { day: Number(dobDay), month: Number(dobMonth), year: Number(dobYear) },
+            phone,
+            address: {
+              line1: addressLine1,
+              postal_code: postalCode,
+              city,
+              country,
+            },
+          },
+        }
+      : {};
+
   const accountInfo = {
     ...getStripeAccountTokenInfo({ country, accountType }),
+    ...individualInfoMaybe,
     tos_shown_and_accepted: true,
   };
 
@@ -52,7 +109,24 @@ const createStripeAccountPayloadCreator = (params, { extra: sdk, rejectWithValue
     })
     .then(response => {
       const stripeAccount = response.data.data;
-      return stripeAccount;
+      // Bank details go through their own token + a separate
+      // stripeAccount.update call (same mechanism updateStripeAccount below
+      // uses) - Sharetribe's Marketplace API only accepts a bankAccountToken
+      // on update, not at creation time.
+      return createBankAccountToken(stripe, {
+        country,
+        currency: marketplaceCurrency,
+        accountHolderName,
+        iban,
+        accountType,
+      }).then(bankAccountToken => {
+        if (!bankAccountToken) {
+          return stripeAccount;
+        }
+        return sdk.stripeAccount
+          .update({ bankAccountToken, requestedCapabilities }, { expand: true })
+          .then(updateResponse => updateResponse.data.data);
+      });
     })
     .catch(err => {
       const e = storableError(err);

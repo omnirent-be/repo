@@ -65,23 +65,25 @@
 }
 
 .desktopIcon {
-  height: var(--topbarHeightDesktop);
+  height: 100%;
   border: none;
   padding-top: 2px;
 
   display: flex;
+  align-items: center;
   width: 24px;
   align-self: stretch;
-  background-color: var(--colorWhite);
+  background-color: transparent;
 }
 
 .desktopInput {
   composes: p from global;
   flex-grow: 1;
   /* Font */
-  height: var(--topbarHeightDesktop);
+  height: 100%;
   line-height: unset;
   border: none;
+  background-color: transparent;
   padding-top: 0;
   padding-bottom: 0;
 
@@ -95,7 +97,6 @@
 
   &:hover,
   &:focus {
-    border-bottom-color: var(--marketplaceColor);
     outline: none;
     border: 0;
     box-shadow: none;
@@ -169,6 +170,21 @@
 .keywordSearchWrapper {
   position: relative;
   display: flex;
+  align-items: center;
+  height: 44px;
+  margin: auto 0;
+  padding: 0 18px 0 16px;
+  background-color: var(--colorGrey50);
+  border: 1px solid var(--colorGrey100);
+  border-radius: 999px;
+  transition: var(--transitionStyleButton);
+
+  &:hover,
+  &:focus-within {
+    border-color: var(--colorGrey300);
+    background-color: var(--colorWhite);
+    box-shadow: var(--boxShadowButton);
+  }
 }
 
 .searchSubmit {

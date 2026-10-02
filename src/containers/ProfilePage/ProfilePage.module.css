@@ -91,7 +91,26 @@
 
 .longWord {
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
+}
+
+.memberSince {
+  composes: p from global;
+  margin: -6px 0 12px 0;
+  font-size: 14px;
+  color: var(--colorGrey500);
+}
+
+.badgeRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px 0;
+}
+
+.externalReviewBadge {
+  margin: 0;
 }
 
 .bio {

@@ -65,6 +65,42 @@ const placeBounds = prediction => {
 
 export const GeocoderAttribution = () => null;
 
+// Pulls a readable "postcode - wijk" label's raw parts out of a Mapbox
+// feature's context array (each entry looks like {id: 'postcode.123',
+// text: '9000'}). Used to save a privacy-safe location label - see
+// EditListingDeliveryPanel.js - alongside the exact address, so the public
+// search page can show e.g. "9000 Gent - Ledeberg" without ever exposing the
+// street/house number.
+const extractLocationLabelParts = prediction => {
+  const context = prediction?.context || [];
+  const findText = idPrefix => context.find(c => c.id?.startsWith(idPrefix))?.text || null;
+  return {
+    postalCode: findText('postcode.'),
+    city: findText('place.'),
+    neighborhood: findText('neighborhood.') || findText('locality.'),
+  };
+};
+
+// Mapbox's own `countries` request param is a soft bias, not a hard filter:
+// for address-level results near a border, it still returns matches from
+// the neighboring country (e.g. searching "eupen" returns German addresses
+// on "Eupener Straße" even with countries: ['BE']). Filter predictions
+// ourselves against each feature's country context as a hard guarantee.
+const matchesCountryLimit = (prediction, countryLimit) => {
+  if (!countryLimit || countryLimit.length === 0) {
+    return true;
+  }
+  const allowedCodes = countryLimit.map(code => code.toLowerCase());
+
+  if (prediction.place_type?.includes('country')) {
+    const countryCode = prediction.properties?.short_code?.toLowerCase();
+    return !countryCode || allowedCodes.includes(countryCode);
+  }
+
+  const countryContext = (prediction.context || []).find(c => c.id?.startsWith('country.'));
+  return !!countryContext && allowedCodes.includes(countryContext.short_code?.toLowerCase());
+};
+
 /**
  * A forward geocoding (place name -> coordinates) implementation
  * using the Mapbox Geocoding API.
@@ -96,21 +132,32 @@ class GeocoderMapbox {
    * and an array of predictions. The format of the predictions is
    * only relevant for the `getPlaceDetails` function below.
    */
-  getPlacePredictions(search, countryLimit, locale) {
+  getPlacePredictions(search, countryLimit, locale, placeTypes) {
     const limitCountriesMaybe = countryLimit ? { countries: countryLimit } : {};
+    // Some fields (e.g. a listing's city) only need a city/town result, not a
+    // full street address - callers can restrict results to specific Mapbox
+    // place types (e.g. ['place', 'locality']) via placeTypes.
+    const limitTypesMaybe = placeTypes ? { types: placeTypes } : {};
+    // Mapbox's max is 10. Ask for more than the 5 we show, since some may
+    // get dropped by the country-context filter below (see matchesCountryLimit).
+    const requestLimit = countryLimit ? 10 : 5;
 
     return this.getClient()
       .geocoding.forwardGeocode({
         query: search,
-        limit: 5,
+        limit: requestLimit,
         ...limitCountriesMaybe,
+        ...limitTypesMaybe,
         language: [locale],
       })
       .send()
       .then(response => {
+        const predictions = response.body.features
+          .filter(prediction => matchesCountryLimit(prediction, countryLimit))
+          .slice(0, 5);
         return {
           search,
-          predictions: response.body.features,
+          predictions,
         };
       });
   }
@@ -160,6 +207,7 @@ class GeocoderMapbox {
       address: this.getPredictionAddress(prediction),
       origin: placeOrigin(prediction),
       bounds: placeBounds(prediction),
+      ...extractLocationLabelParts(prediction),
     });
   }
 }

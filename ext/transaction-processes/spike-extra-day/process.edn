@@ -1,0 +1,6 @@
+{:format :v3,
+ :transitions
+ [{:name :transition/spike,
+   :actor :actor.role/customer,
+   :actions [],
+   :to :state/done}]}

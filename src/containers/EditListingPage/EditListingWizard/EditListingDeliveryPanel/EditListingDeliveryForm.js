@@ -7,6 +7,7 @@ import appSettings from '../../../../config/settings';
 import { FormattedMessage, useIntl } from '../../../../util/reactIntl';
 import { propTypes } from '../../../../util/types';
 import { displayDeliveryPickup, displayDeliveryShipping } from '../../../../util/configHelpers';
+import { isBookingProcessAlias, isNegotiationProcessAlias } from '../../../../transactions/transaction';
 import {
   autocompleteSearchRequired,
   autocompletePlaceSelected,
@@ -22,6 +23,7 @@ import {
   FieldCurrencyInput,
   FieldTextInput,
   FieldCheckbox,
+  FieldRadioButton,
 } from '../../../../components';
 
 // Import modules from this directory
@@ -90,8 +92,20 @@ export const EditListingDeliveryForm = props => (
       pauseValidation(false);
       useEffect(() => resumeValidation(), [values]);
 
-      const displayShipping = displayDeliveryShipping(listingTypeConfig);
-      const displayPickup = displayDeliveryPickup(listingTypeConfig);
+      // OmniRent's daily-rental AND request-quote listing types both have
+      // Console's own defaultListingFields.pickup/shipping turned off (that
+      // toggle controls Sharetribe's built-in, non-booking delivery step -
+      // it was switched off since that generic step didn't fit a rental/
+      // quote process, in favor of this custom one with its own km-based
+      // pricing). So for those two, this custom step must not be gated
+      // behind those same flags, or it renders completely empty. Other
+      // listing types (e.g. a plain "sell an item" type) keep respecting
+      // the Console flags as originally designed.
+      const isBooking = isBookingProcessAlias(listingTypeConfig?.transactionType?.alias);
+      const isNegotiation = isNegotiationProcessAlias(listingTypeConfig?.transactionType?.alias);
+      const displayShipping =
+        isBooking || isNegotiation || displayDeliveryShipping(listingTypeConfig);
+      const displayPickup = isBooking || isNegotiation || displayDeliveryPickup(listingTypeConfig);
       const displayMultipleDelivery = displayShipping && displayPickup;
       const shippingEnabled = displayShipping && values.deliveryOptions?.includes('shipping');
       const pickupEnabled = displayPickup && values.deliveryOptions?.includes('pickup');
@@ -107,7 +121,11 @@ export const EditListingDeliveryForm = props => (
         id: 'EditListingDeliveryForm.optionalText',
       });
 
-      const { updateListingError, showListingsError } = fetchErrors || {};
+      // publishListingError/showListingsError only ever matter when this
+      // form is the wizard's last tab - true for default-booking (see
+      // EditListingWizard.js's tabsForListingType), harmless no-op
+      // otherwise since that error simply never gets set.
+      const { updateListingError, showListingsError, publishListingError } = fetchErrors || {};
 
       const classes = classNames(css.root, className);
       const submitReady = (updated && pristine) || ready;
@@ -247,6 +265,26 @@ export const EditListingDeliveryForm = props => (
               key={shippingEnabled ? 'oneItemValidation' : 'noOneItemValidation'}
             />
 
+            <FieldCurrencyInput
+              id={
+                formId ? `${formId}.deliveryPricePerKmInSubunits` : 'deliveryPricePerKmInSubunits'
+              }
+              name="deliveryPricePerKmInSubunits"
+              className={css.input}
+              label={intl.formatMessage({
+                id: 'EditListingDeliveryForm.pricePerKmLabel',
+              })}
+              placeholder={intl.formatMessage({
+                id: 'EditListingDeliveryForm.pricePerKmPlaceholder',
+              })}
+              currencyConfig={currencyConfig}
+              disabled={!shippingEnabled}
+              hideErrorMessage
+            />
+            <p className={classNames(css.optionalText, { [css.hidden]: !shippingEnabled })}>
+              <FormattedMessage id="EditListingDeliveryForm.pricePerKmHint" />
+            </p>
+
             {allowOrdersOfMultipleItems ? (
               <FieldCurrencyInput
                 id={
@@ -284,6 +322,48 @@ export const EditListingDeliveryForm = props => (
               />
             ) : null}
           </div>
+
+          <div className={css.sectionContainer}>
+            <h3 className={css.sectionTitle}>
+              <FormattedMessage id="EditListingDeliveryForm.bookingModeHeading" />
+            </h3>
+            {/* Modus B ("Direct Boeken") isn't wired to anything yet - real
+                instant booking needs changes to the transaction process
+                itself (.edn) plus a Sharetribe CLI redeploy, deliberately
+                out of scope here (see the session plan). This field is
+                shown but never submitted (not read in onSubmit below /
+                EditListingDeliveryPanel.js), so it has no publicData
+                effect - "request" is the only mode that actually applies. */}
+            <FieldRadioButton
+              id={`${formId}.bookingMode-request`}
+              className={css.bookingModeRadio}
+              name="bookingMode"
+              value="request"
+              label={intl.formatMessage({ id: 'EditListingDeliveryForm.bookingModeRequestLabel' })}
+            />
+            <p className={css.bookingModeHint}>
+              <FormattedMessage id="EditListingDeliveryForm.bookingModeRequestHint" />
+            </p>
+            <div className={css.bookingModeDisabled}>
+              <FieldRadioButton
+                id={`${formId}.bookingMode-instant`}
+                className={css.bookingModeRadio}
+                name="bookingMode"
+                value="instant"
+                disabled
+                label={intl.formatMessage({ id: 'EditListingDeliveryForm.bookingModeInstantLabel' })}
+              />
+              <p className={css.bookingModeHint}>
+                <FormattedMessage id="EditListingDeliveryForm.bookingModeInstantHint" />
+              </p>
+            </div>
+          </div>
+
+          {publishListingError ? (
+            <p className={css.error}>
+              <FormattedMessage id="EditListingDeliveryForm.publishListingFailed" />
+            </p>
+          ) : null}
 
           <Button
             className={css.submitButton}

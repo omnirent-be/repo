@@ -3,7 +3,7 @@
   word-break: break-all;
   /* use break-word if available */
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
 }
 
 .media {

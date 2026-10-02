@@ -18,7 +18,7 @@
 }
 
 .heading {
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
 }
 
 .stripeConnectAccountForm {

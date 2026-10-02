@@ -1,5 +1,5 @@
 import { displayPrice, isPriceVariationsEnabled } from '../../util/configHelpers';
-import { formatMoney } from '../../util/currency';
+import { formatMoney, formatMoneyWhole } from '../../util/currency';
 import { richText } from '../../util/richText';
 import { isBookingProcessAlias } from '../../transactions/transaction';
 
@@ -9,8 +9,11 @@ const MIN_LENGTH_FOR_LONG_WORDS = 10;
 
 const priceData = (price, currency, intl) => {
   if (price && price.currency === currency) {
-    const formattedPrice = formatMoney(intl, price);
-    return { formattedPrice, priceTooltip: formattedPrice };
+    // No decimals on the card itself (a prominent "€ 100" reads faster
+    // than "€ 100,00") - the tooltip keeps the exact amount.
+    const formattedPrice = formatMoneyWhole(intl, price);
+    const priceTooltip = formatMoney(intl, price);
+    return { formattedPrice, priceTooltip };
   } else if (price) {
     return {
       formattedPrice: intl.formatMessage(
@@ -73,10 +76,17 @@ export const getListingCardTranslations = (listing, config, intl) => {
   // Single formatted price line (amount + per-unit if applicable); used for both card aria and price block
   const priceValue = <span className={css.priceValue}>{formattedPrice}</span>;
   const pricePerUnit = isBookable ? <span className={css.perUnit}>{perUnitString}</span> : '';
+  // A listing can legitimately have no price at all - either because this
+  // particular listing hasn't had one set yet, or because its listing type
+  // has the price field disabled entirely (e.g. a "price on request" /
+  // negotiation listing type). Either way, show "Price on request" instead
+  // of leaving the price line blank - this intentionally ignores showPrice,
+  // since a type with the price field off is exactly the "ask for a price"
+  // case, not a reason to hide the line.
   const priceMessage =
     showPrice && formattedPrice != null
       ? intl.formatMessage({ id: priceMessageId }, { priceValue, pricePerUnit })
-      : '';
+      : intl.formatMessage({ id: 'ListingCard.priceOnRequest' });
 
   const cardAriaLabel =
     priceMessage.length > 0

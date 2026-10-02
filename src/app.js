@@ -90,6 +90,36 @@ const localeMessages = isTestEnv
   ? Object.fromEntries(Object.entries(defaultMessages).map(([key]) => [key, key]))
   : addMissingTranslations(defaultMessages, messagesInLocale);
 
+// Console-hosted translation.json always wins over defaultMessages by design
+// (see comment above) - but OmniRent's hosted translations still carry the
+// old "zitplaats(en)"/"plaats(en)" wording for the rental-quantity feature,
+// which was deliberately renamed to "Aantal"/"stuk(s)" this session, and
+// there is no Console write access this session to fix it at the source.
+// Force these specific keys to always use the current local value.
+const FORCED_LOCAL_MESSAGE_KEYS = [
+  'BookingDatesForm.seatsTitle',
+  'BookingFixedDurationForm.seatsTitle',
+  'BookingTimeForm.seatsTitle',
+  'EditListingAvailabilityPanel.WeeklyCalendar.seats',
+  'FieldSeatsInput.seatsLabel',
+  'FieldSeatsInput.seatsPlaceholder',
+  'FilterComponent.seatsLabel',
+  'InboxPage.seats',
+  'OrderBreakdown.baseUnitDaySeats',
+  'OrderBreakdown.baseUnitFixedBookingSeats',
+  'OrderBreakdown.baseUnitHourSeats',
+  'OrderBreakdown.baseUnitNightSeats',
+  'TopbarSearchForm.placeholder',
+];
+const forcedLocalMessages = FORCED_LOCAL_MESSAGE_KEYS.reduce((messages, key) => {
+  return localeMessages[key] != null ? { ...messages, [key]: localeMessages[key] } : messages;
+}, {});
+const buildMessages = hostedTranslations => ({
+  ...localeMessages,
+  ...hostedTranslations,
+  ...forcedLocalMessages,
+});
+
 const Configurations = props => {
   const { appConfig, children } = props;
   const routeConfig = routeConfiguration(appConfig.layout, appConfig?.accessControl);
@@ -198,7 +228,7 @@ export const ClientApp = props => {
     return (
       <MaintenanceModeError
         locale={appConfig.localization.locale}
-        messages={{ ...localeMessages, ...hostedTranslations }}
+        messages={buildMessages(hostedTranslations)}
       />
     );
   }
@@ -217,7 +247,7 @@ export const ClientApp = props => {
     <Configurations appConfig={appConfig}>
       <IntlProvider
         locale={appConfig.localization.locale}
-        messages={{ ...localeMessages, ...hostedTranslations }}
+        messages={buildMessages(hostedTranslations)}
         textComponent="span"
       >
         <Provider store={store}>
@@ -254,7 +284,7 @@ export const ServerApp = props => {
     return (
       <MaintenanceModeError
         locale={appConfig.localization.locale}
-        messages={{ ...localeMessages, ...hostedTranslations }}
+        messages={buildMessages(hostedTranslations)}
         helmetContext={helmetContext}
       />
     );
@@ -265,7 +295,7 @@ export const ServerApp = props => {
     <Configurations appConfig={appConfig}>
       <IntlProvider
         locale={appConfig.localization.locale}
-        messages={{ ...localeMessages, ...hostedTranslations }}
+        messages={buildMessages(hostedTranslations)}
         textComponent="span"
       >
         <Provider store={store}>

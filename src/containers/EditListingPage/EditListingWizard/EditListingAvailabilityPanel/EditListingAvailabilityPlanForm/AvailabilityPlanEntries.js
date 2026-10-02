@@ -12,8 +12,6 @@ import {
   IconDelete,
 } from '../../../../../components';
 
-import FieldSeatsInput from '../FieldSeatsInput/FieldSeatsInput';
-
 import css from './AvailabilityPlanEntries.module.css';
 
 const HOURS = Array(24).fill();
@@ -194,7 +192,6 @@ const getEntryBoundaries = (entries, findStartHours) => index => {
  * @param {Array<AvailabilityPlanEntry>} props.entries - AvailabilityPlan entries: [['Mon[0]']: ]]
  * @param {Function} props.onRemove - a function to remove plan entry
  * @param {String} props.unitType - 'hour', 'day', 'night'
- * @param {Boolean} props.useMultipleSeats - true if availabilityType is 'multipleSeats'
  * @param {ReactIntl} props.intl - React Intl instance
  * @returns {JSX.Element} The component that allows selecting plan entries
  */
@@ -209,7 +206,6 @@ const TimeRangeSelects = props => {
     entries,
     onRemove,
     unitType,
-    useMultipleSeats,
     intl,
   } = props;
   return (
@@ -267,20 +263,7 @@ const TimeRangeSelects = props => {
           </div>
         </div>
       </div>
-      {useMultipleSeats ? (
-        <div className={css.segment}>
-          <FieldSeatsInput
-            id={`${name}.seats`}
-            name={`${name}.seats`}
-            inputRootClass={css.seatsInput}
-            rootClassName={css.seatsField}
-            unitType={unitType}
-            intl={intl}
-          />
-        </div>
-      ) : (
-        <FieldHidden name={`${name}.seats`} value={1} />
-      )}
+      <FieldHidden name={`${name}.seats`} />
       <div className={css.fieldArrayDelete} onClick={onRemove} style={{ cursor: 'pointer' }}>
         <IconDelete rootClassName={css.deleteIcon} />
         <FormattedMessage id="EditListingAvailabilityPlanForm.delete" />
@@ -320,35 +303,8 @@ const TimeRangeHidden = props => {
     <div className={css.timeRangeHidden}>
       <FieldHidden name={`${name}.startTime`} />
       <FieldHidden name={`${name}.endTime`} />
+      <FieldHidden name={`${name}.seats`} />
     </div>
-  );
-};
-
-/**
- * Show input element to add the number of seats and include hidden inputs for time range.
- *
- * @component
- * @param {Object} props - The component props
- * @param {string} props.name - the name of the form field/input. E.g. 'Mon[0]'
- * @param {String} props.unitType - 'hour', 'day', 'night'
- * @param {ReactIntl} props.intl - React Intl instance
- * @returns {JSX.Element} component rendering an input field for seats count and hidden form fields for 'startTime' and 'endTime'.
- */
-const SeatsWithTimeRangeHidden = props => {
-  const { name, unitType, intl } = props;
-  return (
-    <>
-      <TimeRangeHidden name={name} />
-
-      <FieldSeatsInput
-        id={`${name}.seats`}
-        name={`${name}.seats`}
-        inputRootClass={css.seatsInput}
-        rootClassName={css.seatsField}
-        unitType={unitType}
-        intl={intl}
-      />
-    </>
   );
 };
 
@@ -359,15 +315,23 @@ const SeatsWithTimeRangeHidden = props => {
  * @param {Object} props - The component props.
  * @param {string} props.dayOfWeek - the shorthand for the day of week. E.g. 'Mon'.
  * @param {Boolean} props.useFullDays - enforce full days (used with 'day' and 'night' unit types).
- * @param {Boolean} props.useMultipleSeats - true if availabilityType is 'multipleSeats'.
  * @param {String} props.unitType - 'hour', 'day', 'night'.
  * @param {Object} props.values - form values for the availability plan entries.
  * @param {*} props.formApi - React Final Form api ('form').
  * @param {ReactIntl} props.intl - React Intl instance.
+ * @param {Number} [props.defaultSeats] - quantity to default new days to (from the "Aantal beschikbaar" field set at listing creation).
  * @returns {JSX.Element} The field elements for the form.
  */
 const AvailabilityPlanEntries = props => {
-  const { dayOfWeek, useFullDays, useMultipleSeats, unitType, values, formApi, intl } = props;
+  const {
+    dayOfWeek,
+    useFullDays,
+    unitType,
+    values,
+    formApi,
+    intl,
+    defaultSeats,
+  } = props;
   const entries = values[dayOfWeek];
   const hasEntries = entries && entries[0];
   const getEntryStartTimes = getEntryBoundaries(entries, true);
@@ -393,7 +357,7 @@ const AvailabilityPlanEntries = props => {
             // 'day' and 'night' units use full days
             if (useFullDays) {
               if (isChecked) {
-                const seats = useMultipleSeats ? { seats: 1 } : { seats: 1 };
+                const seats = { seats: defaultSeats || 1 };
                 formApi.mutators.push(dayOfWeek, {
                   startTime: '00:00',
                   endTime: '24:00',
@@ -405,7 +369,7 @@ const AvailabilityPlanEntries = props => {
             } else {
               const shouldAddEntry = isChecked && !hasEntries;
               if (shouldAddEntry) {
-                const seats = useMultipleSeats ? { seats: 1 } : { seats: 1 };
+                const seats = { seats: defaultSeats || 1 };
                 // The 'hour' unit is not initialized with any value,
                 // because user need to pick them themselves.
                 formApi.mutators.push(dayOfWeek, { startTime: null, endTime: null, ...seats });
@@ -436,21 +400,13 @@ const AvailabilityPlanEntries = props => {
 
                 // If full days (00:00 - 24:00) are used we'll hide the start time and end time fields.
                 // This affects only day & night unit types by default.
-                return useFullDays && useMultipleSeats ? (
-                  <SeatsWithTimeRangeHidden
-                    name={name}
-                    key={name}
-                    unitType={unitType}
-                    intl={intl}
-                  />
-                ) : useFullDays ? (
+                return useFullDays ? (
                   <TimeRangeHidden name={name} key={name} />
                 ) : (
                   <TimeRangeSelects
                     key={name}
                     name={name}
                     index={index}
-                    useMultipleSeats={useMultipleSeats}
                     availableStartHours={availableStartHours}
                     availableEndHours={availableEndHours}
                     isTimeSetFn={isTimeSetFn}
@@ -476,7 +432,9 @@ const AvailabilityPlanEntries = props => {
                 <InlineTextButton
                   type="button"
                   className={css.buttonAddNew}
-                  onClick={() => fields.push({ startTime: null, endTime: null })}
+                  onClick={() =>
+                    fields.push({ startTime: null, endTime: null, seats: defaultSeats || 1 })
+                  }
                 >
                   <FormattedMessage id="EditListingAvailabilityPlanForm.addAnother" />
                 </InlineTextButton>

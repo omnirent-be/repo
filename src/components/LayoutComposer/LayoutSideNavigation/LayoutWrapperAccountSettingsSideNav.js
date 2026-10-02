@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 
 import { FormattedMessage } from '../../../util/reactIntl';
 
-import { TabNav } from '../../../components';
+import { TabNav, NotificationBadge } from '../../../components';
 
 import { createGlobalState } from './hookGlobalState';
 
@@ -90,7 +90,15 @@ const LayoutWrapperAccountSettingsSideNav = props => {
     }
   }, [mounted]);
 
-  const { currentPage, showPaymentMethods, showPayoutDetails } = accountSettingsNavProps;
+  const { currentPage, showPaymentMethods, showPayoutDetails, currentUser } = accountSettingsNavProps;
+
+  // Nudge the customer toward the identity verification section (on
+  // ManageAccountPage) when it hasn't been completed yet - 'pending' is
+  // left alone since there's nothing left for the user to do there.
+  const identityVerificationStatus =
+    currentUser?.attributes?.profile?.protectedData?.identityVerification?.status;
+  const needsIdentityVerification =
+    !identityVerificationStatus || identityVerificationStatus === 'denied';
   const payoutDetailsMaybe = showPayoutDetails
     ? [
         {
@@ -139,7 +147,12 @@ const LayoutWrapperAccountSettingsSideNav = props => {
     ...payoutDetailsMaybe,
     ...paymentMethodsMaybe,
     {
-      text: <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.manageAccountTabTitle" />,
+      text: (
+        <span>
+          <FormattedMessage id="LayoutWrapperAccountSettingsSideNav.manageAccountTabTitle" />
+          {needsIdentityVerification ? <NotificationBadge count="!" /> : null}
+        </span>
+      ),
       selected: currentPage === 'ManageAccountPage',
       id: 'ManageAccountPageTab',
       linkProps: {

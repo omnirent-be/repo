@@ -1,0 +1,712 @@
+@import '../../../styles/customMediaQueries.css';
+
+@keyframes landingHeroFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes landingHeroFloat {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  50% {
+    transform: translate(-16px, 20px);
+  }
+}
+
+@keyframes landingHeroPulseDot {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.root {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--colorGrey50);
+  background-image: radial-gradient(
+      ellipse 720px 480px at 88% -12%,
+      color-mix(in srgb, var(--marketplaceColor) 16%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 520px 420px at -6% 108%,
+      color-mix(in srgb, var(--marketplaceColorDark) 20%, transparent),
+      transparent 65%
+    );
+  padding: 48px 24px 56px 24px;
+
+  @media (--viewportMedium) {
+    padding: 72px 24px 88px 24px;
+  }
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+  animation: landingHeroFloat 14s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.blobOne {
+  composes: blob;
+  top: -120px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
+  background-color: color-mix(in srgb, var(--marketplaceColor) 30%, transparent);
+
+  @media (--viewportMedium) {
+    width: 440px;
+    height: 440px;
+  }
+}
+
+.blobTwo {
+  composes: blob;
+  bottom: -140px;
+  left: -100px;
+  width: 280px;
+  height: 280px;
+  background-color: color-mix(in srgb, var(--marketplaceColorDark) 26%, transparent);
+  animation-delay: -7s;
+
+  @media (--viewportMedium) {
+    width: 380px;
+    height: 380px;
+  }
+}
+
+.grid {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @media (--viewportLarge) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+    gap: 56px;
+    align-items: center;
+  }
+}
+
+.inner {
+  max-width: 800px;
+
+  @media (--viewportLarge) {
+    max-width: none;
+  }
+}
+
+.imageColumn {
+  position: relative;
+  margin-top: 40px;
+  animation: landingHeroFadeIn 0.3s ease;
+
+  @media (--viewportLarge) {
+    margin-top: 0;
+    height: 480px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.imageFrame {
+  position: relative;
+  height: 220px;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px -20px color-mix(in srgb, var(--marketplaceColorDark) 45%, transparent),
+    var(--boxShadowListingCard);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--colorWhite) 35%, transparent);
+    pointer-events: none;
+  }
+
+  @media (--viewportMedium) {
+    height: 340px;
+  }
+
+  @media (--viewportLarge) {
+    height: 100%;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 32px 70px -18px color-mix(in srgb, var(--marketplaceColorDark) 50%, transparent),
+        var(--boxShadowListingCard);
+    }
+  }
+}
+
+/* Every photo (whether it's the one static fallback or several real listing
+   photos) stacks in the same spot and cross-fades - only the active one is
+   visible and clickable. This also means the frame's height (set above) no
+   longer comes from an in-flow <img>, since all slides are absolutely
+   positioned. */
+.heroSlide {
+  position: absolute;
+  inset: 0;
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.2s ease;
+}
+
+.heroSlideActive {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.heroSlideLink {
+  cursor: pointer;
+}
+
+.heroImage {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 65%;
+  transition: transform 0.6s ease;
+
+  .imageFrame:hover & {
+    transform: scale(1.04);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.viewListingCta {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background-color: var(--colorWhite);
+  box-shadow: var(--boxShadowLight);
+  color: var(--marketplaceColor);
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+
+  .heroSlideLink:hover & {
+    background-color: var(--marketplaceColor);
+    color: var(--colorWhite);
+    transform: translateY(-2px);
+  }
+
+  @media (--viewportMedium) {
+    right: 24px;
+    bottom: 24px;
+    padding: 11px 18px;
+    font-size: 14px;
+  }
+}
+
+.viewListingArrow {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+
+  .heroSlideLink:hover & {
+    transform: translateX(2px);
+  }
+}
+
+.viewListingTitle {
+  max-width: 120px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  @media (--viewportMedium) {
+    max-width: 160px;
+  }
+}
+
+.viewListingPrice {
+  font-weight: var(--fontWeightBold);
+  white-space: nowrap;
+}
+
+.viewListingDivider {
+  width: 1px;
+  height: 14px;
+  background-color: currentColor;
+  opacity: 0.3;
+}
+
+.featuredBadge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 1;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--marketplaceColorDark) 55%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--colorWhite);
+  font-size: 12px;
+  font-weight: var(--fontWeightSemiBold);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  transition: transform 0.25s ease;
+
+  .heroSlideLink:hover & {
+    transform: translateY(-2px);
+  }
+
+  @media (--viewportMedium) {
+    top: 24px;
+    right: 24px;
+  }
+}
+
+/* Top-left, mirroring the "Uitgelicht" badge on the top-right - this keeps
+   the whole bottom edge free for the "Bekijk advertentie" button, so the
+   two pills never collide on narrow screens. */
+.heroArrow {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--marketplaceColorDark) 45%, transparent);
+  backdrop-filter: blur(4px);
+  color: var(--colorWhite);
+  cursor: pointer;
+  appearance: none;
+  transform: translateY(-50%);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+
+  & svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--marketplaceColorDark) 70%, transparent);
+  }
+
+  @media (--viewportMedium) {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+.heroArrowPrev {
+  left: 12px;
+
+  @media (--viewportMedium) {
+    left: 16px;
+  }
+}
+
+.heroArrowNext {
+  right: 12px;
+
+  @media (--viewportMedium) {
+    right: 16px;
+  }
+}
+
+.photoDots {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  z-index: 1;
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--marketplaceColorDark) 45%, transparent);
+  backdrop-filter: blur(4px);
+
+  @media (--viewportMedium) {
+    left: 24px;
+    bottom: 24px;
+  }
+}
+
+.photoDot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: color-mix(in srgb, var(--colorWhite) 55%, transparent);
+  appearance: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    background-color: var(--colorWhite);
+  }
+}
+
+.photoDotActive {
+  background-color: var(--colorWhite);
+  transform: scale(1.3);
+}
+
+.countBadge {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 10px 12px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--colorWhite) 92%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--boxShadowLight);
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+  animation: landingHeroFadeIn 0.4s ease 0.15s both;
+
+  @media (--viewportMedium) {
+    left: 24px;
+    top: 24px;
+    padding: 11px 18px 11px 13px;
+    font-size: 14px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.countBadgeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--marketplaceColor);
+  animation: landingHeroPulseDot 2.2s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.countBadgeNumber {
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightBold);
+}
+
+.heading {
+  margin: 0;
+  font-size: 34px;
+  font-weight: var(--fontWeightBold);
+  line-height: 1.12;
+  color: var(--colorGrey700);
+  animation: landingHeroFadeIn 0.2s ease;
+
+  @media (--viewportMedium) {
+    font-size: 52px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.headingAccent {
+  position: relative;
+  display: inline-block;
+  font-style: italic;
+  color: var(--marketplaceColor);
+  z-index: 0;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    bottom: 6px;
+    height: 0.4em;
+    background-color: color-mix(in srgb, var(--marketplaceColor) 20%, transparent);
+    border-radius: 4px;
+    z-index: -1;
+  }
+}
+
+.lede {
+  margin: 20px 0 0 0;
+  max-width: 46ch;
+  color: var(--colorGrey600);
+  font-size: 17px;
+  line-height: 1.6;
+  animation: landingHeroFadeIn 0.2s ease;
+
+  @media (--viewportMedium) {
+    font-size: 18px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.searchCardWrap {
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 24px;
+  animation: landingHeroFadeIn 0.2s ease;
+
+  /* A soft glow behind the (shared, unmodified) SearchCTA card, so it reads
+     as elevated/floating rather than flat against the hero background. */
+  &::before {
+    content: '';
+    position: absolute;
+    left: -12px;
+    right: -12px;
+    top: -12px;
+    bottom: -12px;
+    background: radial-gradient(
+      ellipse at 20% 30%,
+      color-mix(in srgb, var(--marketplaceColor) 14%, transparent),
+      transparent 70%
+    );
+    z-index: -1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/* The combined huren/verhuren module: RoleTabs sit directly above the body
+   (SearchCTA's own card, or QuickListForm's matching one below), grouped
+   via proximity/spacing rather than a single shared box - SearchCTA is a
+   shared PageBuilder primitive (also usable from hosted CMS pages via
+   Console), so its own card styling (background/shadow/radius/margin)
+   isn't something to override from here. */
+.actionModule {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.actionModuleTabs {
+  display: inline-flex;
+  padding: 4px;
+  gap: 2px;
+  border-radius: 999px;
+  background-color: var(--colorWhite);
+  box-shadow: var(--boxShadowLight);
+}
+
+.actionModuleTab {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  appearance: none;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: var(--fontWeightSemiBold);
+  font-size: 14px;
+  color: var(--colorGrey600);
+  transition: background-color var(--transitionStyle), color var(--transitionStyle);
+
+  &:hover {
+    color: var(--marketplaceColor);
+  }
+}
+
+.actionModuleTabActive {
+  color: var(--colorWhite);
+  background-color: var(--marketplaceColor);
+
+  &:hover {
+    color: var(--colorWhite);
+  }
+}
+
+.actionModuleBody {
+  width: 100%;
+}
+
+.quickListForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+  margin-top: 24px;
+  padding: 20px;
+  background-color: var(--colorWhite);
+  border-radius: 8px;
+  box-shadow: var(--boxShadowPopup);
+}
+
+.quickListInput {
+  composes: marketplaceSmallFontStyles from global;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 8px;
+  color: var(--colorGrey700);
+
+  &::placeholder {
+    color: var(--colorGrey300);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--marketplaceColor);
+  }
+}
+
+.quickListButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 24px;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-weight: var(--fontWeightSemiBold);
+  border-radius: 8px;
+
+  &:hover {
+    background-color: var(--marketplaceColorDark);
+    color: var(--colorWhite);
+    text-decoration: none;
+  }
+}
+
+.trustRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 4px;
+  margin: 14px 0 0 0;
+  padding: 0;
+  animation: landingHeroFadeIn 0.2s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.trustItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey600);
+  white-space: nowrap;
+
+  @media (--viewportMedium) {
+    font-size: 14px;
+  }
+}
+
+.trustSeparator {
+  color: var(--colorGrey300);
+}
+
+.activityTicker {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  overflow: hidden;
+  background-color: var(--colorGrey100);
+  border-bottom: 1px solid var(--colorGrey100);
+}
+
+/* Positioned out of flow so its (intentionally oversized, for the
+   marquee loop) content can never affect the width of this component's
+   ancestors - the classic flexbox/grid "min-content blowout" trap. */
+.activityTrack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: max-content;
+  gap: 40px;
+  padding: 0 20px;
+  animation: activityScroll 30s linear infinite;
+}
+
+.activityTicker:hover .activityTrack {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activityTrack {
+    animation: none;
+  }
+}
+
+@keyframes activityScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--colorGrey600);
+  padding: 0 20px;
+}
+
+.activityDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--marketplaceColor);
+  flex-shrink: 0;
+}

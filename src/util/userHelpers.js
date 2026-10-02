@@ -130,6 +130,39 @@ export const getPropsForCustomUserFieldInputs = (
 };
 
 /**
+ * Reads a user's self-reported external review score (e.g. "4.8 on Google,
+ * 27 reviews") from their public profile data. This is a fixed-shape field
+ * (not part of the config-driven custom user fields system, since a decimal
+ * rating doesn't fit that system's schema types), written by
+ * ProfileSettingsPage and read by ProfilePage and ListingPage's UserCard.
+ *
+ * @param {Object} publicData - profile.publicData of a user entity
+ * @returns {Object|null} { rating, source, count, url } or null if unset
+ */
+export const getExternalReview = publicData => {
+  const externalReview = publicData?.externalReview;
+  return externalReview?.rating ? externalReview : null;
+};
+
+/**
+ * Reads the year a user joined the marketplace, straight from Sharetribe's
+ * own `createdAt` timestamp on the user entity - real, always present,
+ * nothing to configure. Used for a "member since {year}" trust signal on
+ * profiles and listing pages.
+ *
+ * @param {Object} user - a user or currentUser API entity
+ * @returns {number|null} the four-digit year, or null if unavailable
+ */
+export const getMemberSinceYear = user => {
+  const createdAt = user?.attributes?.createdAt;
+  if (!createdAt) {
+    return null;
+  }
+  const year = new Date(createdAt).getFullYear();
+  return Number.isNaN(year) ? null : year;
+};
+
+/**
  * Check if currentUser has permission to post listings.
  * Defined in currentUser's effectivePermissionSet relationship:
  * https://www.sharetribe.com/api-reference/marketplace.html#currentuser-permissionset

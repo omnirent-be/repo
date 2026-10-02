@@ -11,6 +11,20 @@
   z-index: 0;
 }
 
+.stepIndicator {
+  margin: 0;
+  padding: 10px 24px;
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey600);
+  background-color: var(--colorWhite);
+  border-top: 1px solid var(--colorGrey100);
+
+  @media (--viewportLarge) {
+    padding: 10px 36px;
+  }
+}
+
 .tabsContainer {
   flex-grow: 1;
   /* Layout */

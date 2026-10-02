@@ -1,6 +1,7 @@
 .layout {
   min-height: 100vh;
   grid-template-rows: auto 1fr auto;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .topbar {
@@ -11,6 +12,8 @@
 
 .main {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   scroll-margin-top: var(--topbarHeight);
   @media (--viewportMedium) {
     scroll-margin-top: var(--topbarHeightDesktop);

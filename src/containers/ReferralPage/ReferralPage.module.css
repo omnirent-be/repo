@@ -1,0 +1,91 @@
+@import '../../styles/customMediaQueries.css';
+
+.content {
+  width: 100%;
+  margin: 24px auto 0 auto;
+  max-width: 600px;
+
+  @media (--viewportMedium) {
+    margin: 48px auto 0 auto;
+  }
+
+  @media (--viewportLarge) {
+    margin: 72px auto 0 auto;
+  }
+}
+
+.heading {
+  margin: 0 24px 12px 24px;
+
+  @media (--viewportLarge) {
+    margin: 0 0 12px 0;
+  }
+}
+
+.description {
+  margin: 0 24px 24px 24px;
+  color: var(--colorGrey600);
+
+  @media (--viewportLarge) {
+    margin: 0 0 24px 0;
+  }
+}
+
+.linkRow {
+  display: flex;
+  gap: 8px;
+  margin: 0 24px 24px 24px;
+
+  @media (--viewportLarge) {
+    margin: 0 0 24px 0;
+  }
+}
+
+.linkInput {
+  flex: 1;
+  min-width: 0;
+  padding: 0 16px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 6px;
+  background-color: var(--colorGrey50);
+  color: var(--colorGrey700);
+  font-size: 14px;
+}
+
+.copyButton {
+  width: auto;
+  min-height: 0;
+  padding: 0 20px;
+  flex-shrink: 0;
+}
+
+.creditCard {
+  margin: 0 24px 48px 24px;
+  padding: 24px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 12px;
+  background-color: var(--colorWhite);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  @media (--viewportLarge) {
+    margin: 0 0 48px 0;
+  }
+}
+
+.creditLabel {
+  color: var(--colorGrey600);
+  font-size: 14px;
+}
+
+.creditAmount {
+  font-size: 32px;
+  font-weight: var(--fontWeightBold);
+}
+
+.creditNotice {
+  margin-top: 8px;
+  color: var(--colorGrey500);
+  font-size: 13px;
+}

@@ -68,13 +68,13 @@ const TermsAndConditions = props => {
           {
             key: 'tos-and-privacy',
             label: intl.formatMessage(
-              { id: 'AuthenticationPage.termsAndConditionsAcceptText' },
+              { id: 'SignupFlow.termsAccept' },
               { termsLink, privacyLink }
             ),
           },
         ]}
         validate={requiredFieldArrayCheckbox(
-          intl.formatMessage({ id: 'AuthenticationPage.termsAndConditionsAcceptRequired' })
+          intl.formatMessage({ id: 'SignupFlow.termsRequired' })
         )}
       />
     </div>

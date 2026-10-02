@@ -33,15 +33,163 @@
 }
 
 .firstNameRoot {
-  width: calc(34% - 9px);
+  width: calc(50% - 9px);
 }
 
 .lastNameRoot {
-  width: calc(66% - 9px);
+  width: calc(50% - 9px);
 }
 
 .password {
   composes: marketplaceModalPasswordMargins from global;
+}
+
+.accountTypeRow {
+  margin-top: 24px;
+
+  @media (--viewportMedium) {
+    margin-top: 32px;
+  }
+}
+
+.accountTypeLabel {
+  composes: h5 from global;
+  display: block;
+  color: var(--colorGrey700);
+  margin-bottom: 8px;
+}
+
+.accountTypeSwitch {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: 999px;
+  background-color: var(--colorGrey50);
+  border: 1px solid var(--colorGrey100);
+}
+
+.accountTypePill {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 999px;
+  background-color: var(--marketplaceColor);
+  transition: transform 0.25s ease;
+}
+
+.accountTypeOption {
+  position: relative;
+  z-index: 1;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  appearance: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey600);
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+
+.accountTypeOptionActive {
+  color: var(--colorWhite);
+}
+
+.perks {
+  list-style: none;
+  margin: 4px 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  font-size: 13px;
+  color: var(--colorGrey600);
+}
+
+.perk {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.perkCheck {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-size: 10px;
+  font-weight: var(--fontWeightBold);
+}
+
+.passwordField {
+  position: relative;
+  margin-top: 24px;
+
+  @media (--viewportMedium) {
+    margin-top: 32px;
+  }
+}
+
+.passwordField .password {
+  margin: 0;
+}
+
+.passwordToggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.passwordHint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  color: var(--colorGrey500);
+}
+
+.passwordHintOk {
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightSemiBold);
+}
+
+.passwordHintIcon {
+  width: 14px;
+  text-align: center;
+}
+
+.companyFields {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: var(--colorGrey50);
+  border-radius: var(--borderRadius);
+
+  @media (--viewportMedium) {
+    margin-top: 32px;
+  }
 }
 
 .bottomWrapper {
@@ -57,5 +205,42 @@
 
   @media (--viewportMedium) {
     padding: 8px 0;
+  }
+}
+
+/* ---- steps ---- */
+.stepPanel[hidden] {
+  display: none;
+}
+
+.stepIntro {
+  margin: 24px 0 0 0;
+  font-size: 16px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+}
+
+.fieldNote {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  color: var(--colorGrey500);
+}
+
+.backButton {
+  display: block;
+  margin: 12px auto 0 auto;
+  padding: 8px 12px;
+  border: 0;
+  background: transparent;
+  appearance: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey600);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--marketplaceColor);
+    text-decoration: underline;
   }
 }

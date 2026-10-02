@@ -73,6 +73,7 @@ export const PasswordChangePageComponent = props => {
     currentPage: 'PasswordChangePage',
     showPaymentMethods,
     showPayoutDetails,
+    currentUser,
   };
 
   return (

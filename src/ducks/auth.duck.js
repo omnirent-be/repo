@@ -4,6 +4,7 @@ import { storableError } from '../util/errors';
 import { clearCurrentUser, fetchCurrentUser } from './user.duck';
 import { createUserWithIdp } from '../util/api';
 import { clearStoredReferralData } from '../util/webStorageHelpers';
+import { clearReferralCode } from '../util/referral';
 
 const authenticated = authInfo => authInfo?.isAnonymous === false;
 const loggedInAs = authInfo => authInfo?.isLoggedInAs === true;
@@ -114,6 +115,7 @@ const signupThunk = createAsyncThunk(
       .then(() => {
         // Clear potential referral data from session storage
         clearStoredReferralData();
+        clearReferralCode();
         return params;
       })
       .catch(e => {
@@ -144,6 +146,7 @@ const signupWithIdpThunk = createAsyncThunk(
       .then(() => {
         // Clear potential referral data from session storage
         clearStoredReferralData();
+        clearReferralCode();
         return params;
       })
       .catch(e => {

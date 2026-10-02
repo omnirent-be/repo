@@ -62,6 +62,52 @@ export const transitions = {
   EXPIRE_CUSTOMER_REVIEW_PERIOD: 'transition/expire-customer-review-period',
   EXPIRE_PROVIDER_REVIEW_PERIOD: 'transition/expire-provider-review-period',
   EXPIRE_REVIEW_PERIOD: 'transition/expire-review-period',
+
+  // A customer can request one or more extra days on an already accepted
+  // booking. Unlike a plain protectedData change, this needs its own real
+  // booking (calendar reservation) - Sharetribe's update-booking action
+  // re-validates a transaction's ENTIRE range on every call, including the
+  // part it already owns, so it can't be used to grow an already-accepted
+  // booking without conflicting with itself. So the extra day is a
+  // genuinely separate, linked transaction on the extra-day-payment
+  // process (server/api/extra-day/request.js creates it), with its own
+  // booking, its own Stripe payment, and its own provider accept/decline -
+  // all plain (non-privileged) transitions on that transaction, called
+  // directly via the SDK (see TransactionPage.duck.js's
+  // acceptExtraDay/declineExtraDay/confirmExtraDayPayment). These
+  // self-loop transitions on the MAIN transaction only mirror that
+  // sub-transaction's status onto protectedData here, so it's visible on
+  // the original booking.
+  // PROVIDER_SET_EXTRA_DAY_PRICE is unused (manual pricing was replaced by
+  // automatic pricing) but left defined in process.edn since transactions
+  // already using it can't have their process definition retroactively
+  // trimmed.
+  REQUEST_EXTRA_DAY: 'transition/request-extra-day',
+  PROVIDER_SET_EXTRA_DAY_PRICE: 'transition/provider-set-extra-day-price',
+  CANCEL_EXTRA_DAY_REQUEST: 'transition/cancel-extra-day-request',
+  ACCEPT_EXTRA_DAY: 'transition/accept-extra-day',
+  DECLINE_EXTRA_DAY: 'transition/decline-extra-day',
+  LINK_EXTRA_DAY_PAYMENT: 'transition/link-extra-day-payment',
+  CONFIRM_EXTRA_DAY_PAID: 'transition/confirm-extra-day-paid',
+
+  // Security deposit ("borg"). The actual hold/refund/payout happens on a
+  // separate, linked deposit-hold transaction (see server/api/deposit/*.js
+  // and ext/transaction-processes/deposit-hold). These self-loop
+  // transitions only mirror that outcome onto protectedData here, so the
+  // deposit's status is visible on the booking itself. Since the provider
+  // may release or claim the deposit any time after the booking is
+  // delivered (not necessarily while still "accepted"), the release/claim
+  // transitions are duplicated per reachable state - see process.edn.
+  LINK_DEPOSIT_PAYMENT: 'transition/link-deposit-payment',
+  CONFIRM_DEPOSIT_HELD: 'transition/confirm-deposit-held',
+  RECORD_DEPOSIT_RELEASE: 'transition/record-deposit-release',
+  RECORD_DEPOSIT_CLAIM: 'transition/record-deposit-claim',
+  LINK_DEPOSIT_PAYMENT_DELIVERED: 'transition/link-deposit-payment-delivered',
+  CONFIRM_DEPOSIT_HELD_DELIVERED: 'transition/confirm-deposit-held-delivered',
+  RECORD_DEPOSIT_RELEASE_DELIVERED: 'transition/record-deposit-release-delivered',
+  RECORD_DEPOSIT_CLAIM_DELIVERED: 'transition/record-deposit-claim-delivered',
+  RECORD_DEPOSIT_RELEASE_REVIEWED: 'transition/record-deposit-release-reviewed',
+  RECORD_DEPOSIT_CLAIM_REVIEWED: 'transition/record-deposit-claim-reviewed',
 };
 
 /**
@@ -146,6 +192,17 @@ export const graph = {
         [transitions.CANCEL]: states.CANCELED,
         [transitions.COMPLETE]: states.DELIVERED,
         [transitions.OPERATOR_COMPLETE]: states.DELIVERED,
+        [transitions.REQUEST_EXTRA_DAY]: states.ACCEPTED,
+        [transitions.PROVIDER_SET_EXTRA_DAY_PRICE]: states.ACCEPTED,
+        [transitions.CANCEL_EXTRA_DAY_REQUEST]: states.ACCEPTED,
+        [transitions.ACCEPT_EXTRA_DAY]: states.ACCEPTED,
+        [transitions.DECLINE_EXTRA_DAY]: states.ACCEPTED,
+        [transitions.LINK_EXTRA_DAY_PAYMENT]: states.ACCEPTED,
+        [transitions.CONFIRM_EXTRA_DAY_PAID]: states.ACCEPTED,
+        [transitions.LINK_DEPOSIT_PAYMENT]: states.ACCEPTED,
+        [transitions.CONFIRM_DEPOSIT_HELD]: states.ACCEPTED,
+        [transitions.RECORD_DEPOSIT_RELEASE]: states.ACCEPTED,
+        [transitions.RECORD_DEPOSIT_CLAIM]: states.ACCEPTED,
       },
     },
 
@@ -155,6 +212,10 @@ export const graph = {
         [transitions.EXPIRE_REVIEW_PERIOD]: states.REVIEWED,
         [transitions.REVIEW_1_BY_CUSTOMER]: states.REVIEWED_BY_CUSTOMER,
         [transitions.REVIEW_1_BY_PROVIDER]: states.REVIEWED_BY_PROVIDER,
+        [transitions.LINK_DEPOSIT_PAYMENT_DELIVERED]: states.DELIVERED,
+        [transitions.CONFIRM_DEPOSIT_HELD_DELIVERED]: states.DELIVERED,
+        [transitions.RECORD_DEPOSIT_RELEASE_DELIVERED]: states.DELIVERED,
+        [transitions.RECORD_DEPOSIT_CLAIM_DELIVERED]: states.DELIVERED,
       },
     },
 
@@ -170,7 +231,12 @@ export const graph = {
         [transitions.EXPIRE_CUSTOMER_REVIEW_PERIOD]: states.REVIEWED,
       },
     },
-    [states.REVIEWED]: { type: 'final' },
+    [states.REVIEWED]: {
+      on: {
+        [transitions.RECORD_DEPOSIT_RELEASE_REVIEWED]: states.REVIEWED,
+        [transitions.RECORD_DEPOSIT_CLAIM_REVIEWED]: states.REVIEWED,
+      },
+    },
   },
 };
 
@@ -192,6 +258,19 @@ export const isRelevantPastTransition = transition => {
     transitions.REVIEW_1_BY_PROVIDER,
     transitions.REVIEW_2_BY_CUSTOMER,
     transitions.REVIEW_2_BY_PROVIDER,
+    transitions.REQUEST_EXTRA_DAY,
+    transitions.PROVIDER_SET_EXTRA_DAY_PRICE,
+    transitions.ACCEPT_EXTRA_DAY,
+    transitions.DECLINE_EXTRA_DAY,
+    transitions.CONFIRM_EXTRA_DAY_PAID,
+    transitions.CONFIRM_DEPOSIT_HELD,
+    transitions.CONFIRM_DEPOSIT_HELD_DELIVERED,
+    transitions.RECORD_DEPOSIT_RELEASE,
+    transitions.RECORD_DEPOSIT_RELEASE_DELIVERED,
+    transitions.RECORD_DEPOSIT_RELEASE_REVIEWED,
+    transitions.RECORD_DEPOSIT_CLAIM,
+    transitions.RECORD_DEPOSIT_CLAIM_DELIVERED,
+    transitions.RECORD_DEPOSIT_CLAIM_REVIEWED,
   ].includes(transition);
 };
 
@@ -214,9 +293,15 @@ export const isProviderReview = transition => {
 // should go through the local API endpoints, or if using JS SDK is
 // enough.
 export const isPrivileged = transition => {
-  return [transitions.REQUEST_PAYMENT, transitions.REQUEST_PAYMENT_AFTER_INQUIRY].includes(
-    transition
-  );
+  return [
+    transitions.REQUEST_PAYMENT,
+    transitions.REQUEST_PAYMENT_AFTER_INQUIRY,
+    // REQUEST_EXTRA_DAY and PROVIDER_SET_EXTRA_DAY_PRICE are unused (see
+    // the comment above their definitions) but left here for transactions
+    // still bound to older process versions that used them.
+    transitions.REQUEST_EXTRA_DAY,
+    transitions.PROVIDER_SET_EXTRA_DAY_PRICE,
+  ].includes(transition);
 };
 
 // Check when transaction is completed (booking over)

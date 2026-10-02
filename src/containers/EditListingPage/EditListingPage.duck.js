@@ -209,6 +209,48 @@ export const compareAndSetStock = (listingId, oldTotal, newTotal) => (dispatch, 
   return dispatch(setStockThunk({ listingId, oldTotal, newTotal }));
 };
 
+///////////////////////
+// Comparable Prices //
+///////////////////////
+
+// Looks up published listings of the same listing type (and category, when known)
+// to give the provider a price range while they're filling in the Pricing tab.
+// Read-only, public listing data only - no other users' contact info exposed.
+export const fetchComparablePricesThunk = createAsyncThunk(
+  'EditListingPage/fetchComparablePrices',
+  ({ listingType, categoryLevel1, excludeListingId }, { extra: sdk }) => {
+    const categoryParams = categoryLevel1 ? { pub_categoryLevel1: categoryLevel1 } : {};
+    return sdk.listings
+      .query({
+        pub_listingType: listingType,
+        ...categoryParams,
+        perPage: 50,
+        'fields.listing': ['price'],
+      })
+      .then(response => {
+        const amounts = response.data.data
+          .filter(l => l.id.uuid !== excludeListingId)
+          .map(l => l.attributes.price)
+          .filter(price => price && Number.isInteger(price.amount))
+          .map(price => price.amount);
+
+        if (amounts.length === 0) {
+          return { count: 0 };
+        }
+
+        const currency = response.data.data[0].attributes.price.currency;
+        const sum = amounts.reduce((total, amount) => total + amount, 0);
+        return {
+          count: amounts.length,
+          min: Math.min(...amounts),
+          max: Math.max(...amounts),
+          avg: Math.round(sum / amounts.length),
+          currency,
+        };
+      });
+  }
+);
+
 // Helper function to make compareAndSetStock call if stock update is needed.
 const updateStockOfListingMaybe = (listingId, stockTotals, dispatch) => {
   const { oldTotal, newTotal } = stockTotals || {};

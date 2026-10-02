@@ -10,7 +10,11 @@ import {
   daysBetween,
   getStartOf,
 } from '../../util/dates';
-import { constructQueryParamName, isOriginInUse } from '../../util/search';
+import {
+  constructQueryParamName,
+  expandKeywordsWithSynonyms,
+  isOriginInUse,
+} from '../../util/search';
 import { hasPermissionToViewData, isUserAuthorized } from '../../util/userHelpers';
 import { parse } from '../../util/urlHelpers';
 import { getReferralParams } from '../../util/webStorageHelpers';
@@ -293,6 +297,10 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
       return !validReferralSources.includes(key);
     })
   );
+  if (apiParamsRaw.keywords) {
+    // Broaden the search to related products, e.g. "wijnton" also matches "wijnvaatje".
+    apiParamsRaw.keywords = expandKeywordsWithSynonyms(apiParamsRaw.keywords);
+  }
 
   const params = {
     // The params that are related to listing fields and categories are prepared here.
@@ -355,6 +363,10 @@ const searchPageSlice = createSlice({
     pagination: null,
     searchParams: null,
     searchInProgress: false,
+    // Separate from searchInProgress so infinite-scroll's "loading next
+    // page" spinner never hides/replaces the results already on screen -
+    // searchInProgress is reserved for a fresh search (filters/sort/page 1).
+    loadMoreInProgress: false,
     searchListingsError: null,
     currentPageResultIds: [],
     activeListingId: null,
@@ -368,18 +380,32 @@ const searchPageSlice = createSlice({
     // Search Listings
     builder
       .addCase(searchListings.pending, (state, action) => {
+        const isLoadMore = !!action.meta.arg.isLoadMore;
         state.searchParams = action.meta.arg.searchParams;
-        state.searchInProgress = true;
         state.searchListingsError = null;
+        if (isLoadMore) {
+          state.loadMoreInProgress = true;
+        } else {
+          state.searchInProgress = true;
+        }
       })
       .addCase(searchListings.fulfilled, (state, action) => {
-        state.currentPageResultIds = resultIds(action.payload.data);
+        const isLoadMore = !!action.meta.arg.isLoadMore;
+        const newIds = resultIds(action.payload.data);
+        // Infinite scroll appends the next page's results to what's already
+        // shown; a fresh search (new filters/sort, or page 1 on load)
+        // replaces them.
+        state.currentPageResultIds = isLoadMore
+          ? [...state.currentPageResultIds, ...newIds]
+          : newIds;
         state.pagination = action.payload.data.meta;
         state.searchInProgress = false;
+        state.loadMoreInProgress = false;
       })
       .addCase(searchListings.rejected, (state, action) => {
         console.error(action.payload);
         state.searchInProgress = false;
+        state.loadMoreInProgress = false;
         state.searchListingsError = action.payload;
       });
   },
@@ -449,8 +475,24 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
         'publicData.shippingEnabled',
         'publicData.priceVariationsEnabled',
         'publicData.priceVariants',
+        // ListingCard.js already reads these (location label, deposit
+        // badge, delivery-method badge) - without requesting them here,
+        // Sharetribe's sparse fieldset silently omits them and the card
+        // renders as if no listing had that data at all.
+        'publicData.location',
+        'publicData.depositInSubunits',
+        'publicData.deliveryOptions',
       ],
-      'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
+      'fields.user': [
+        'profile.displayName',
+        'profile.abbreviatedName',
+        // Self-reported rating badge (see getExternalReview in
+        // userHelpers.js) - a real platform-computed aggregate rating
+        // would need a separate reviews.query call per provider, which
+        // doesn't scale to a results grid; this is the zero-extra-call
+        // alternative already used elsewhere (UserCard.js, ProfilePage.js).
+        'profile.publicData.externalReview',
+      ],
       'fields.image': [
         'variants.scaled-small',
         'variants.scaled-medium',
@@ -459,10 +501,45 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
       ],
       ...createImageVariantConfig(`${variantPrefix}`, 400, aspectRatio),
       ...createImageVariantConfig(`${variantPrefix}-2x`, 800, aspectRatio),
-      'limit.images': 1,
+      // Raised from 1 so the card can show a swipeable mini-gallery
+      // instead of a single static photo.
+      'limit.images': 4,
     },
     config,
   });
 
   return dispatch(searchListingsCall);
+};
+
+// ================ Infinite scroll: load more ================ //
+
+/**
+ * Fetches the next page of the current search (same filters/sort as the
+ * last `searchListings` call, just `page + 1`) and appends it to the
+ * results already on screen - see `isLoadMore` handling in the slice above.
+ *
+ * Deliberately dispatched directly (not via `loadData`/routing) so it never
+ * touches the URL or history: a `page` query param change would re-trigger
+ * `loadData` on location change and scroll the window back to the top,
+ * which would fight the infinite-scroll UX. `searchParams` (the exact
+ * params object used for the current page, incl. perPage/fields/etc.) is
+ * already kept in state from the last search, so only `page` needs to change.
+ *
+ * @param {Object} config - marketplace config (not stored in Redux state, so the caller must pass it - see useConfiguration())
+ */
+export const loadMoreSearchResults = config => (dispatch, getState) => {
+  const { searchParams, pagination, searchInProgress, loadMoreInProgress } = getState().SearchPage;
+  const hasMore = !!pagination && pagination.page < pagination.totalPages;
+
+  if (!hasMore || !searchParams || searchInProgress || loadMoreInProgress) {
+    return Promise.resolve();
+  }
+
+  return dispatch(
+    searchListings({
+      searchParams: { ...searchParams, page: pagination.page + 1 },
+      config,
+      isLoadMore: true,
+    })
+  );
 };

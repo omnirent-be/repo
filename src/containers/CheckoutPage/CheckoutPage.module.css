@@ -213,6 +213,22 @@
   }
 }
 
+.profileIncompleteNotice {
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  border-radius: var(--borderRadius);
+  background-color: var(--colorGrey50);
+  border: 1px solid var(--colorGrey100);
+}
+
+.profileIncompleteLink {
+  composes: buttonPrimary from global;
+  display: inline-block;
+  width: auto;
+  padding: 0 24px;
+  min-height: 40px;
+}
+
 .paymentContainer {
   flex-grow: 1;
   display: flex;
@@ -349,6 +365,78 @@
     padding-bottom: 20px;
     margin: 0 48px;
   }
+}
+
+.couponCode {
+  padding: 0 24px 20px 24px;
+
+  @media (--viewportLarge) {
+    padding: 0 48px 20px 48px;
+  }
+}
+
+.couponCodeLabel {
+  display: block;
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  color: var(--colorGrey700);
+}
+
+.couponCodeRow {
+  display: flex;
+  gap: 8px;
+}
+
+.couponCodeHint {
+  display: block;
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  font-weight: var(--fontWeightRegular);
+  color: var(--colorGrey500);
+}
+
+.couponCodeInput {
+  flex-grow: 1;
+  min-width: 0;
+  padding: 0 12px;
+  height: 40px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 4px;
+  font-size: 14px;
+
+  &:focus {
+    border-color: var(--marketplaceColor);
+    outline: none;
+  }
+}
+
+.couponCodeButton {
+  flex-shrink: 0;
+  padding: 0 18px;
+  height: 40px;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--colorGrey100);
+  color: var(--colorGrey700);
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--colorGrey200);
+  }
+}
+
+.couponCodeApplied {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  color: var(--colorSuccess);
+}
+
+.couponCodeInvalid {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  color: var(--colorFail);
 }
 
 /* ChekcoutPageWithInquiryProcess */

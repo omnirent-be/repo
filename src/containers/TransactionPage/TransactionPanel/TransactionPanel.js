@@ -6,6 +6,7 @@ import { propTypes } from '../../../util/types';
 import { userDisplayNameAsString } from '../../../util/data';
 import { createSlug } from '../../../util/urlHelpers';
 import { displayPrice } from '../../../util/configHelpers';
+import { isBookingProcess } from '../../../transactions/transaction';
 
 import { AvatarLarge, NamedLink, UserDisplayName } from '../../../components';
 
@@ -16,9 +17,13 @@ import DetailCardHeadingsMaybe from './DetailCardHeadingsMaybe';
 import DetailCardImage from './DetailCardImage';
 import DeliveryInfoMaybe from './DeliveryInfoMaybe';
 import BookingLocationMaybe from './BookingLocationMaybe';
+import ContractDownloadMaybe from './ContractDownloadMaybe';
+import ContractSignatureMaybe from './ContractSignatureMaybe';
 import FeedSection from './FeedSection';
 import DiminishedActionButtonMaybe from './DiminishedActionButtonMaybe';
+import HandoverChecklist from '../HandoverChecklist/HandoverChecklist';
 import PanelHeading from './PanelHeading';
+import BookingExtrasSummary from './BookingExtrasSummary';
 
 import css from './TransactionPanel.module.css';
 
@@ -87,6 +92,9 @@ const allowShowingExtraInfo = (showExtraInfo, transactionPartyInfo) => {
  * @param {React.ReactNode} props.sendMessageForm - Pre-rendered SendMessageForm (or null when messaging is not allowed)
  * @param {stateDataShape} props.stateData - The state data
  * @param {boolean} props.showBookingLocation - Whether the booking location is shown
+ * @param {boolean} props.showContractDownload - Whether the rental agreement PDF download link is shown
+ * @param {Function} [props.onSignContract] - (typedName) => Promise, places the current user's e-signature
+ * @param {boolean} [props.sendMessageInProgress] - Whether a message (incl. a signature) is currently being sent
  * @param {React.ReactNode} props.activityFeed - The activity feed
  * @param {Function} props.actionButtons - The action buttons function
  * @param {React.ReactNode} props.orderBreakdown - The order breakdown
@@ -101,6 +109,7 @@ export class TransactionPanelComponent extends Component {
       rootClassName,
       className,
       currentUser,
+      transactionId,
       transactionRole,
       listing,
       customer,
@@ -118,6 +127,9 @@ export class TransactionPanelComponent extends Component {
       intl,
       stateData = {},
       showBookingLocation = false,
+      showContractDownload = false,
+      onSignContract,
+      sendMessageInProgress,
       requestQuote,
       offer,
       fileAttachments,
@@ -130,6 +142,7 @@ export class TransactionPanelComponent extends Component {
       hasViewingRights,
       transactionFieldsComponent,
       sendMessageForm,
+      canAttachPhotos,
     } = this.props;
 
     const hasTransitions = transitions.length > 0;
@@ -227,6 +240,12 @@ export class TransactionPanelComponent extends Component {
               listingDeleted={listingDeleted}
             />
 
+            <HandoverChecklist
+              isBookingProcess={isBookingProcess(stateData.processName)}
+              processState={stateData.processState}
+              canAttachPhotos={canAttachPhotos}
+            />
+
             {requestQuote}
             {offer}
             {transactionFieldsComponent}
@@ -242,6 +261,13 @@ export class TransactionPanelComponent extends Component {
                       priceVariantName={priceVariantName}
                     />
                   ) : null}
+                  <BookingExtrasSummary
+                    protectedData={protectedData}
+                    listing={listing}
+                    isCustomer={isCustomer}
+                    currency={config.currency}
+                    intl={intl}
+                  />
                   <DiminishedActionButtonMaybe
                     id="mobile_disputeOrderButton"
                     showButton={showDiminishedButton}
@@ -274,6 +300,20 @@ export class TransactionPanelComponent extends Component {
                   className={css.deliveryInfoSection}
                   listing={listing}
                   showBookingLocation={showBookingLocation}
+                />
+                <ContractDownloadMaybe
+                  className={css.deliveryInfoSection}
+                  transactionId={transactionId}
+                  showContractDownload={showContractDownload}
+                />
+                <ContractSignatureMaybe
+                  className={css.deliveryInfoSection}
+                  transactionId={transactionId}
+                  showContractDownload={showContractDownload}
+                  currentUser={currentUser}
+                  messages={messages}
+                  onSignContract={onSignContract}
+                  sendMessageInProgress={sendMessageInProgress}
                 />
               </div>
             ) : null}
@@ -342,6 +382,13 @@ export class TransactionPanelComponent extends Component {
                     priceVariantName={priceVariantName}
                   />
                 ) : null}
+                <BookingExtrasSummary
+                  protectedData={protectedData}
+                  listing={listing}
+                  isCustomer={isCustomer}
+                  currency={config.currency}
+                  intl={intl}
+                />
 
                 {stateData.showActionButtons ? (
                   <div className={css.desktopActionButtons}>{actionButtons('desktop')}</div>

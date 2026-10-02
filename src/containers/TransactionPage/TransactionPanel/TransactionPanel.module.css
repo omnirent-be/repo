@@ -371,6 +371,24 @@
   }
 }
 
+.bookingExtras {
+  margin-top: 12px;
+}
+
+.bookingExtraRow {
+  composes: marketplaceTinyFontStyles from global;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+  background-color: var(--colorGrey50);
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
 .sectionHeading {
   composes: p from global;
   font-weight: var(--fontWeightBold);
@@ -423,13 +441,14 @@
 
 .longWord {
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
 }
 
 /* Passed-in props for FeedSection subcomponent */
 .bookingLocationContainer,
 .deliveryInfoContainer,
 .inquiryMessageContainer,
+.contractDownloadContainer,
 .feedContainer {
   margin: 24px 24px 0 24px;
 
@@ -440,6 +459,68 @@
   @media (--viewportLarge) {
     margin: 24px 0 0 0;
   }
+}
+
+.contractDownloadLink {
+  composes: h5 from global;
+  display: inline-block;
+  margin: 0;
+}
+
+.contractSignatureLabel {
+  display: block;
+  margin: 0 0 6px 0;
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+}
+
+.contractSignatureRow {
+  display: flex;
+  gap: 8px;
+}
+
+.contractSignatureInput {
+  flex-grow: 1;
+  min-width: 0;
+  padding: 0 12px;
+  height: 40px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 4px;
+  font-size: 14px;
+
+  &:focus {
+    border-color: var(--marketplaceColor);
+    outline: none;
+  }
+}
+
+.contractSignatureButton {
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 20px;
+}
+
+.contractSignatureSpinner {
+  width: 18px;
+  height: 18px;
+  stroke: var(--colorWhite);
+}
+
+.contractSignatureHint {
+  display: block;
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  color: var(--colorGrey500);
+}
+
+.contractSignatureConfirmed {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--colorSuccess) 10%, transparent);
+  color: var(--colorSuccess);
+  font-size: 14px;
 }
 
 .sendingMessageNotAllowed {

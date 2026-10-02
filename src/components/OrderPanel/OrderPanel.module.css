@@ -75,6 +75,29 @@
   color: var(--marketplaceColor);
 }
 
+.tieredPriceTable {
+  margin: 8px 24px 20px 24px;
+  padding: 12px 14px;
+  background-color: var(--colorGrey50);
+  border-radius: var(--borderRadius);
+
+  @media (--viewportMedium) {
+    margin: 8px 0 20px 0;
+  }
+}
+
+.tieredPriceRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 14px;
+  color: var(--colorGrey700);
+
+  & span:last-child {
+    font-weight: var(--fontWeightSemiBold);
+  }
+}
+
 .author {
   composes: p from global;
   margin: 0px 24px 32px 24px;
@@ -217,6 +240,7 @@
   justify-content: center;
   gap: unset;
 }
+
 
 .priceValueInCTA {
   /* Font */

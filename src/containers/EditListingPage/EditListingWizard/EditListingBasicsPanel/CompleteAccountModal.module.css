@@ -1,0 +1,41 @@
+.root {
+  display: flex;
+  flex-direction: column;
+}
+
+.heading {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.form {
+  margin-bottom: 0;
+}
+
+.error {
+  color: var(--colorFail);
+  margin-bottom: 16px;
+}
+
+.switchMode {
+  margin-top: 24px;
+}
+
+.switchModeLink {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightSemiBold);
+  cursor: pointer;
+}
+
+.switchModeLink:hover {
+  text-decoration: underline;
+}

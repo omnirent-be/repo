@@ -132,6 +132,80 @@ export const transitionPrivileged = body => {
   return post('/api/transition-privileged', body);
 };
 
+// Request one or more extra days on an already accepted booking. Creates
+// a separate, linked extra-day booking transaction (its own reservation
+// and payment) priced automatically from the listing's own extra-day
+// price (or its normal daily price as a fallback). The provider accepts
+// or declines it directly on that transaction (a plain, non-privileged
+// transition - see TransactionPage.duck.js's acceptExtraDay/declineExtraDay).
+//
+// See `server/api/extra-day/request.js` to see what data should be
+// sent in the body.
+export const requestExtraDay = body => {
+  return post('/api/extra-day/request', body);
+};
+
+// Initiate the linked deposit-hold transaction for an accepted booking
+// whose listing has a security deposit configured.
+//
+// See `server/api/deposit/initiate-hold.js` to see what data should be
+// sent in the body.
+export const initiateDepositHold = body => {
+  return post('/api/deposit/initiate-hold', body);
+};
+
+// Provider releases (fully refunds to the customer) a held security
+// deposit.
+//
+// See `server/api/deposit/release.js` to see what data should be sent
+// in the body.
+export const releaseDeposit = body => {
+  return post('/api/deposit/release', body);
+};
+
+// Provider claims (fully pays out to themselves) a held security
+// deposit.
+//
+// See `server/api/deposit/claim.js` to see what data should be sent in
+// the body.
+export const claimDeposit = body => {
+  return post('/api/deposit/claim', body);
+};
+
+// Marks the current user's referral as converted (for the operator's manual
+// payout report) if this is their first completed booking and they signed
+// up via a referral link. Safe to call unconditionally after every
+// checkout - it's a no-op otherwise.
+//
+// See `server/api/referral/mark-conversion.js`.
+export const markReferralConversion = () => {
+  return post('/api/referral/mark-conversion', {});
+};
+
+// URL for downloading the PDF rental agreement for a confirmed (accepted
+// or later) booking transaction - not a fetch helper since this is meant
+// to be used directly as a link href/window.location target, so the
+// browser handles the file download itself.
+//
+// `mode: 'paper'` requests the variant meant to be printed and physically
+// signed: it restores the blank paraaf lines on pages 1-5 instead of the
+// default digital-confirmation line, since those lines would otherwise
+// never actually get filled in (nobody signs a PDF viewed on screen with a
+// pen). See `server/api/contract.js`.
+export const contractDownloadUrl = (transactionId, mode) => {
+  const query = mode ? `?mode=${mode}` : '';
+  return `${apiBaseUrl()}/api/contract/${transactionId}${query}`;
+};
+
+// Starts an iDenfy identity verification session for the current user and
+// returns { redirectUrl } - the caller should send the browser there.
+//
+// See `server/api/idenfy/initiate.js`. Requires IDENFY_API_KEY and
+// IDENFY_API_SECRET to be configured server-side.
+export const initiateIdentityVerification = () => {
+  return post('/api/idenfy/initiate', {});
+};
+
 // Create user with identity provider (e.g. Facebook or Google)
 //
 // If loginWithIdp api call fails and user can't authenticate to Marketplace API with idp

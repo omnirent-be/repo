@@ -153,7 +153,8 @@ export const handleSubmitValuesForPriceVariants = (
           ...publicData,
           priceVariants: priceVariants.map(variant => {
             const { name, bookingLengthInMinutes, price: variantPrice } = variant;
-            const nameMaybe = shouldIncludeName && name ? { name } : {};
+            const trimmedName = name?.trim();
+            const nameMaybe = shouldIncludeName && trimmedName ? { name: trimmedName } : {};
             const bookingLengthInMinutesMaybe = isFixedUnitType ? { bookingLengthInMinutes } : {};
             return {
               ...nameMaybe,

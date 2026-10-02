@@ -6,8 +6,9 @@ import { FormattedMessage } from '../../../util/reactIntl';
 import { richText } from '../../../util/richText';
 import { ensureUser, ensureCurrentUser } from '../../../util/data';
 import { propTypes } from '../../../util/types';
+import { getExternalReview, getMemberSinceYear } from '../../../util/userHelpers';
 
-import { AvatarLarge, NamedLink, InlineTextButton } from '../../../components';
+import { AvatarLarge, NamedLink, InlineTextButton, ExternalReviewBadge } from '../../../components';
 
 import css from './UserCard.module.css';
 
@@ -97,7 +98,9 @@ const UserCard = props => {
   const ensuredCurrentUser = ensureCurrentUser(currentUser);
   const isCurrentUser =
     ensuredUser.id && ensuredCurrentUser.id && ensuredUser.id.uuid === ensuredCurrentUser.id.uuid;
-  const { displayName, bio } = ensuredUser.attributes.profile;
+  const { displayName, bio, publicData } = ensuredUser.attributes.profile;
+  const externalReview = getExternalReview(publicData);
+  const memberSinceYear = getMemberSinceYear(ensuredUser);
 
   const handleContactUserClick = () => {
     onContactUser(user);
@@ -160,6 +163,17 @@ const UserCard = props => {
             <FormattedMessage id="UserCard.heading" values={{ name: displayName }} />
             {editProfileDesktop}
           </div>
+          {memberSinceYear ? (
+            <p className={css.memberSince}>
+              <FormattedMessage id="UserCard.memberSince" values={{ year: memberSinceYear }} />
+            </p>
+          ) : null}
+          {externalReview ? (
+            <ExternalReviewBadge
+              externalReview={externalReview}
+              className={css.externalReviewBadge}
+            />
+          ) : null}
           {hasBio ? <ExpandableBio className={css.desktopBio} bio={bio} /> : null}
           {links}
         </div>

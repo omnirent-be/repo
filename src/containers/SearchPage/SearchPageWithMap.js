@@ -6,13 +6,15 @@ import classNames from 'classnames';
 import { isOriginInUse } from '../../util/search';
 import { parse } from '../../util/urlHelpers';
 import { createResourceLocatorString, pathByRouteName } from '../../util/routes';
+import { useConfiguration } from '../../context/configurationContext';
 import { makeGetListingsByIdSelector } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
+import { toggleFavoriteListing, getFavoriteListingIds } from '../../ducks/user.duck';
 
 import { ModalInMobile, Page } from '../../components';
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
 
-import { setActiveListing } from './SearchPage.duck';
+import { setActiveListing, loadMoreSearchResults } from './SearchPage.duck';
 import {
   initialValues,
   validUrlQueryParamsFromProps,
@@ -226,7 +228,13 @@ export class SearchPageComponent extends Component {
       config,
       params: currentPathParams = {},
       currentUser,
+      onToggleFavoriteListing,
+      favoriteListingIdInProgress,
+      onLoadMore,
+      loadMoreInProgress,
     } = this.props;
+
+    const favoriteListingIds = getFavoriteListingIds(currentUser);
 
     const {
       listingTypePathParam,
@@ -453,6 +461,12 @@ export class SearchPageComponent extends Component {
                   isMapVariant
                   listingTypeParam={listingTypePathParam}
                   intl={intl}
+                  currentUser={currentUser}
+                  favoriteListingIds={favoriteListingIds}
+                  onToggleFavoriteListing={onToggleFavoriteListing}
+                  favoriteListingIdInProgress={favoriteListingIdInProgress}
+                  onLoadMore={onLoadMore}
+                  loadMoreInProgress={loadMoreInProgress}
                 />
               </div>
             )}
@@ -500,12 +514,14 @@ export class SearchPageComponent extends Component {
  */
 const SearchPage = props => {
   const dispatch = useDispatch();
+  const config = useConfiguration();
   const selectListingsById = useMemo(makeGetListingsByIdSelector, []);
 
   const currentUser = useSelector(state => state.user?.currentUser);
   const {
     pagination,
     searchInProgress,
+    loadMoreInProgress,
     searchListingsError,
     searchParams,
     activeListingId,
@@ -514,6 +530,9 @@ const SearchPage = props => {
     selectListingsById(state, state.SearchPage.currentPageResultIds)
   );
   const scrollingDisabled = useSelector(state => isScrollingDisabled(state));
+  const favoriteListingIdInProgress = useSelector(
+    state => state.user?.favoriteListingIdInProgress
+  );
 
   const onManageDisableScrolling = useCallback(
     (componentId, disableScrolling) =>
@@ -522,6 +541,14 @@ const SearchPage = props => {
   );
   const onActivateListing = useCallback(listingId => dispatch(setActiveListing(listingId)), [
     dispatch,
+  ]);
+  const onToggleFavoriteListing = useCallback(
+    listingId => dispatch(toggleFavoriteListing(listingId)),
+    [dispatch]
+  );
+  const onLoadMore = useCallback(() => dispatch(loadMoreSearchResults(config)), [
+    dispatch,
+    config,
   ]);
 
   return (
@@ -532,7 +559,11 @@ const SearchPage = props => {
       listings={listings}
       pagination={pagination}
       scrollingDisabled={scrollingDisabled}
+      favoriteListingIdInProgress={favoriteListingIdInProgress}
+      onToggleFavoriteListing={onToggleFavoriteListing}
       searchInProgress={searchInProgress}
+      loadMoreInProgress={loadMoreInProgress}
+      onLoadMore={onLoadMore}
       searchListingsError={searchListingsError}
       searchParams={searchParams}
       activeListingId={activeListingId}

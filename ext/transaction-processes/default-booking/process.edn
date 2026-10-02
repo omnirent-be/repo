@@ -114,6 +114,70 @@
     {:name :action/cancel-booking}],
    :from :state/accepted,
    :to :state/cancelled}
+  {:name :transition/request-extra-day,
+   :actor :actor.role/customer,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/update-booking}],
+   :from :state/accepted,
+   :to :state/accepted,
+   :privileged? true}
+  {:name :transition/provider-set-extra-day-price,
+   :actor :actor.role/provider,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/update-booking}],
+   :from :state/accepted,
+   :to :state/accepted,
+   :privileged? true}
+  {:name :transition/cancel-extra-day-request,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/accepted,
+   :to :state/accepted}
+  {:name :transition/accept-extra-day,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/accepted,
+   :to :state/accepted}
+  {:name :transition/decline-extra-day,
+   :actor :actor.role/provider,
+   :actions
+   [{:name :action/update-protected-data}
+    {:name :action/update-booking}],
+   :from :state/accepted,
+   :to :state/accepted,
+   :privileged? true}
+  {:name :transition/link-extra-day-payment,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/accepted,
+   :to :state/accepted}
+  {:name :transition/confirm-extra-day-paid,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/accepted,
+   :to :state/accepted}
+  {:name :transition/link-deposit-payment,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/accepted,
+   :to :state/accepted}
+  {:name :transition/confirm-deposit-held,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/accepted,
+   :to :state/accepted}
+  {:name :transition/record-deposit-release,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/accepted,
+   :to :state/accepted}
+  {:name :transition/record-deposit-claim,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/accepted,
+   :to :state/accepted}
   {:name :transition/review-1-by-provider,
    :actor :actor.role/provider,
    :actions [{:name :action/post-review-by-provider}],
@@ -158,6 +222,36 @@
     [{:fn/timepoint [:time/booking-end]} {:fn/period ["P7D"]}]},
    :actions [{:name :action/publish-reviews}],
    :from :state/reviewed-by-provider,
+   :to :state/reviewed}
+  {:name :transition/link-deposit-payment-delivered,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/delivered,
+   :to :state/delivered}
+  {:name :transition/confirm-deposit-held-delivered,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/delivered,
+   :to :state/delivered}
+  {:name :transition/record-deposit-release-delivered,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/delivered,
+   :to :state/delivered}
+  {:name :transition/record-deposit-claim-delivered,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/delivered,
+   :to :state/delivered}
+  {:name :transition/record-deposit-release-reviewed,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/reviewed,
+   :to :state/reviewed}
+  {:name :transition/record-deposit-claim-reviewed,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/reviewed,
    :to :state/reviewed}],
  :notifications
  [{:name :notification/booking-new-request,
@@ -231,4 +325,12 @@
   {:name :notification/review-by-customer-second,
    :on :transition/review-2-by-customer,
    :to :actor.role/provider,
-   :template :booking-review-by-other-party-published}]}
+   :template :booking-review-by-other-party-published}
+  {:name :notification/extra-day-requested,
+   :on :transition/request-extra-day,
+   :to :actor.role/provider,
+   :template :extra-day-requested}
+  {:name :notification/extra-day-price-set,
+   :on :transition/provider-set-extra-day-price,
+   :to :actor.role/customer,
+   :template :extra-day-price-set}]}

@@ -17,6 +17,7 @@ const KeywordSearchField = props => {
   return (
     <div className={keywordSearchWrapperClasses}>
       <button
+        type="submit"
         className={css.searchSubmit}
         aria-label={intl.formatMessage({ id: 'TopbarDesktop.screenreader.search' })}
       >

@@ -27,6 +27,7 @@ import {
   OFFER,
   REQUEST,
   isBookingProcess,
+  isBookingProcessAlias,
   isNegotiationProcess,
   isPurchaseProcess,
   resolveLatestProcessName,
@@ -163,7 +164,13 @@ export const getDerivedRenderData = ({
   const listingPathParamType = isDraftVariant
     ? LISTING_PAGE_PARAM_TYPE_DRAFT
     : LISTING_PAGE_PARAM_TYPE_EDIT;
-  const listingTab = isDraftVariant ? 'photos' : 'details';
+  // default-booking listings (OmniRent's only real listing type) start
+  // their draft-continuation wizard on 'basics' instead of 'photos' - see
+  // EditListingWizard.js's tabsForListingType.
+  const isBookableListing = isBookingProcessAlias(
+    currentListing.attributes.publicData?.transactionProcessAlias
+  );
+  const listingTab = isDraftVariant ? (isBookableListing ? 'basics' : 'photos') : 'details';
 
   const {
     description = '',

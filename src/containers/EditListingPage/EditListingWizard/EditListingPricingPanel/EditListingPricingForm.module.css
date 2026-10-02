@@ -28,6 +28,71 @@
   }
 }
 
+.comparablePrices {
+  margin: -12px 0 24px 0;
+  padding: 14px 16px;
+  background-color: var(--colorGrey50);
+  border-radius: var(--borderRadius);
+
+  @media (--viewportMedium) {
+    margin-bottom: 32px;
+  }
+}
+
+.comparablePricesTitle {
+  composes: textSmall from global;
+  display: block;
+  margin-bottom: 6px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+}
+
+.multiDayPreview {
+  margin: -12px 0 24px 0;
+  padding: 14px 16px;
+  background-color: var(--colorGrey50);
+  border-radius: var(--borderRadius);
+
+  @media (--viewportMedium) {
+    margin-bottom: 32px;
+  }
+}
+
+.multiDayPreviewTitle {
+  composes: textSmall from global;
+  display: block;
+  margin-bottom: 6px;
+  color: var(--colorGrey600);
+}
+
+.multiDayPreviewRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+}
+
+.depositSuggestionHint,
+.fieldHint {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey400);
+  margin-top: -16px;
+  margin-bottom: 24px;
+}
+
+/* Same hint styling as .fieldHint, but with a normal (positive) top margin -
+   .fieldHint's -16px is tuned to sit right under a tall FieldCurrencyInput/
+   FieldTextInput and pull the hint up into that input's own bottom
+   whitespace. A FieldCheckbox has no such whitespace, so reusing -16px there
+   pulled the hint text up into the checkbox's own label line instead. */
+.checkboxHint {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey400);
+  margin-top: 4px;
+  margin-bottom: 24px;
+}
+
 .submitButton {
   margin-top: auto;
   margin-bottom: 24px;

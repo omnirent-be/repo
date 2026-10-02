@@ -1,0 +1,84 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  composes: marketplaceModalBaseStyles from global;
+  padding-top: 70px;
+
+  @media (--viewportMedium) {
+    flex-basis: 567px;
+    min-height: 687px;
+  }
+}
+
+.modalContent {
+  flex-grow: 1;
+}
+
+.modalIcon {
+  composes: marketplaceModalIconStyles from global;
+}
+
+.modalTitle {
+  composes: marketplaceModalTitleStyles from global;
+}
+
+.modalMessage {
+  composes: marketplaceModalParagraphStyles from global;
+}
+
+.formRoot {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+  margin-top: 24px;
+}
+
+.errorPlaceholder {
+  color: var(--colorFail);
+
+  @media (--viewportMedium) {
+    margin: 0;
+    width: 100%;
+    min-height: 32px;
+  }
+}
+
+.submitButton {
+  margin-top: auto;
+  margin-bottom: 96px;
+  flex-shrink: 0;
+
+  @media (--viewportMedium) {
+    display: inline-block;
+    width: 100%;
+    margin-top: 36px;
+    margin-bottom: 0;
+  }
+}
+
+.paymentLabel {
+  composes: h5 from global;
+  margin: 0 0 8px 0;
+}
+
+.card {
+  composes: marketplaceInputStyles from global;
+
+  @media (--viewportMedium) {
+    padding: 11px 0 11px 16px;
+  }
+}
+
+.cardError {
+  border: var(--borderErrorField);
+}
+
+.error {
+  color: var(--colorFail);
+  font-size: 13px;
+}
+
+.spinner {
+  margin: 48px auto;
+}

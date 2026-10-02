@@ -50,6 +50,8 @@ import MakeOfferForm from './MakeOfferForm/MakeOfferForm.js';
 
 import { makeOffer } from './MakeOfferPage.duck.js';
 
+import { pickQuoteOfferData } from '../../util/quote.js';
+import { QuoteRequestSummary } from '../../components/QuoteSystem/QuoteSystem.js';
 import css from './MakeOfferPage.module.css';
 
 const { UUID } = sdkTypes;
@@ -91,7 +93,7 @@ const handleSubmit = (submitting, setSubmitting, props, transactionFieldConfigs)
   const searchParams = parse(location.search);
   const transactionId = searchParams.transactionId;
 
-  const { providerDefaultMessage, quote } = values;
+  const { providerDefaultMessage, quote, quoteTransportFee } = values;
 
   const { listingType, transactionProcessAlias, unitType } = listing?.attributes?.publicData || {};
 
@@ -99,11 +101,20 @@ const handleSubmit = (submitting, setSubmitting, props, transactionFieldConfigs)
   const isRequest = unitType === REQUEST;
   const isCurrentUserCustomer = isOwnListing && isRequest;
 
+  // The customer is charged the material rental price plus transport/
+  // service fee as one total (there's no separate line item for it in
+  // default-negotiation's process) - see pickQuoteOfferData for why the
+  // transport fee is still also recorded on its own in protectedData, so
+  // it can be broken back out for display.
+  const transportFeeAmount = quoteTransportFee?.amount || 0;
+  const offerInSubunits = (quote?.amount || 0) + transportFeeAmount;
+
   // These are the inquiry parameters for the (one and only) transition
   const makeOfferParams = {
     listingId: listing?.id,
     protectedData: {
       ...(providerDefaultMessage ? { providerDefaultMessage } : {}),
+      ...pickQuoteOfferData(values),
       ...getTransactionTypeData(listingType, unitType, config),
       ...pickTransactionFieldsData(
         values,
@@ -112,8 +123,8 @@ const handleSubmit = (submitting, setSubmitting, props, transactionFieldConfigs)
         transactionFieldConfigs
       ),
     },
-    offerInSubunits: quote?.amount,
-    currency: quote?.currency,
+    offerInSubunits,
+    currency: quote?.currency || quoteTransportFee?.currency,
   };
   const isPrivilegedTransition = true;
 
@@ -247,6 +258,11 @@ const MakeOfferPageComponent = props => {
             listingLocation={publicData?.location}
             intl={intl}
             sectionHeadingClassName={css.locationHeading}
+          />
+
+          <QuoteRequestSummary
+            protectedData={transaction?.attributes?.protectedData}
+            className={css.requestSummary}
           />
 
           <section className={css.paymentContainer}>

@@ -140,6 +140,38 @@ export const fetchReviewsThunk = createAsyncThunk(
   }
 );
 
+///////////////////////////////
+// Fetch More From Provider  //
+///////////////////////////////
+const MORE_FROM_PROVIDER_COUNT = 4;
+
+export const fetchMoreFromProviderThunk = createAsyncThunk(
+  'ListingPage/fetchMoreFromProvider',
+  ({ authorId, excludeListingId, config }, { rejectWithValue, extra: sdk }) => {
+    const { aspectWidth = 1, aspectHeight = 1, variantPrefix = 'listing-card' } =
+      config.layout.listingImage;
+    const aspectRatio = aspectHeight / aspectWidth;
+
+    return sdk.listings
+      .query({
+        author_id: authorId,
+        perPage: MORE_FROM_PROVIDER_COUNT + 1,
+        include: ['author', 'images'],
+        'fields.image': [`variants.${variantPrefix}`, `variants.${variantPrefix}-2x`],
+        ...createImageVariantConfig(`${variantPrefix}`, 400, aspectRatio),
+        ...createImageVariantConfig(`${variantPrefix}-2x`, 800, aspectRatio),
+      })
+      .then(response => {
+        return denormalisedResponseEntities(response)
+          .filter(l => l.id.uuid !== excludeListingId)
+          .slice(0, MORE_FROM_PROVIDER_COUNT);
+      })
+      .catch(e => {
+        return rejectWithValue(storableError(e));
+      });
+  }
+);
+
 export const fetchReviews = listingId => (dispatch, getState, sdk) => {
   return dispatch(fetchReviewsThunk({ listingId })).unwrap();
 };

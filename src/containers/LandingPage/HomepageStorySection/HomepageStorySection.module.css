@@ -1,0 +1,224 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  background-color: var(--colorWhite);
+}
+
+.story {
+  background-color: var(--marketplaceColor);
+  background-image: radial-gradient(
+    ellipse 640px 420px at 100% 0%,
+    color-mix(in srgb, var(--colorWhite) 9%, transparent),
+    transparent 65%
+  );
+  padding: 64px 24px;
+
+  @media (--viewportLarge) {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 72px;
+    align-items: start;
+    padding: 104px max(32px, calc((100% - 1120px) / 2));
+  }
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--colorWhite) 70%, transparent);
+}
+
+.heading {
+  margin: 12px 0 0 0;
+  color: var(--colorWhite);
+  font-size: 34px;
+  line-height: 1.12;
+
+  @media (--viewportMedium) {
+    font-size: 46px;
+  }
+}
+
+.lede {
+  margin: 20px 0 0 0;
+  max-width: 44ch;
+  font-size: 17px;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--colorWhite) 82%, transparent);
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.ctaPrimary,
+.ctaGhost {
+  display: inline-block;
+  padding: 12px 26px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: var(--fontWeightSemiBold);
+
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.ctaPrimary {
+  background-color: var(--colorWhite);
+  color: var(--marketplaceColor);
+
+  &:hover {
+    background-color: var(--colorGrey50);
+    color: var(--marketplaceColor);
+  }
+}
+
+.ctaGhost {
+  border: 1px solid color-mix(in srgb, var(--colorWhite) 45%, transparent);
+  color: var(--colorWhite);
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--colorWhite) 10%, transparent);
+    color: var(--colorWhite);
+  }
+}
+
+.beats {
+  list-style: none;
+  margin: 48px 0 0 0;
+  padding: 0 0 0 28px;
+  border-left: 2px solid color-mix(in srgb, var(--colorWhite) 22%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+
+  @media (--viewportLarge) {
+    margin-top: 8px;
+    padding-left: 40px;
+    gap: 44px;
+  }
+}
+
+.beat {
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: -35px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--colorWhite);
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--colorWhite) 20%, transparent);
+
+    @media (--viewportLarge) {
+      left: -47px;
+    }
+  }
+}
+
+.beatLabel {
+  font-size: 12px;
+  font-weight: var(--fontWeightSemiBold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--colorWhite) 62%, transparent);
+}
+
+.beatTitle {
+  margin: 6px 0 8px 0;
+  font-size: 22px;
+  line-height: 1.25;
+  color: var(--colorWhite);
+}
+
+.beatText {
+  margin: 0;
+  max-width: 52ch;
+  font-size: 16px;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--colorWhite) 80%, transparent);
+}
+
+.trust {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 56px 24px 72px 24px;
+
+  @media (--viewportMedium) {
+    padding: 72px 32px 96px 32px;
+  }
+}
+
+.trustHeading {
+  margin: 0 0 28px 0;
+  font-size: 20px;
+  text-align: center;
+  color: var(--colorGrey700);
+}
+
+.trustGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (--viewportLarge) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.trustCard {
+  padding: 24px 22px;
+  background-color: var(--colorGrey50);
+  border-radius: 16px;
+  transition: transform var(--transitionStyle), box-shadow var(--transitionStyle);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 28px rgba(36, 42, 30, 0.08);
+  }
+}
+
+.trustIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: 16px;
+  background-color: var(--colorSuccessSubtle);
+  color: var(--colorSuccessDark);
+}
+
+.trustIconSvg {
+  width: 24px;
+  height: 24px;
+}
+
+.trustTitle {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  color: var(--colorGrey700);
+}
+
+.trustText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--colorGrey600);
+}

@@ -11,6 +11,7 @@ import { createResourceLocatorString } from '../../../util/routes';
 
 // Import modules from this directory
 import EditListingAvailabilityPanel from './EditListingAvailabilityPanel/EditListingAvailabilityPanel';
+import EditListingBasicsPanel from './EditListingBasicsPanel/EditListingBasicsPanel';
 import EditListingDetailsPanel from './EditListingDetailsPanel/EditListingDetailsPanel';
 import EditListingDeliveryPanel from './EditListingDeliveryPanel/EditListingDeliveryPanel';
 import EditListingFilesPanel from './EditListingFilesPanel/EditListingFilesPanel';
@@ -18,11 +19,14 @@ import EditListingLocationPanel from './EditListingLocationPanel/EditListingLoca
 import EditListingPhotosPanel from './EditListingPhotosPanel/EditListingPhotosPanel';
 import EditListingPricingPanel from './EditListingPricingPanel/EditListingPricingPanel';
 import EditListingPricingAndStockPanel from './EditListingPricingAndStockPanel/EditListingPricingAndStockPanel';
+import EditListingRentalDetailsPanel from './EditListingRentalDetailsPanel/EditListingRentalDetailsPanel';
 import EditListingStylePanel from './EditListingStylePanel/EditListingStylePanel';
 
 import css from './EditListingWizardTab.module.css';
 
 export const DETAILS = 'details';
+export const BASICS = 'basics';
+export const RENTAL_DETAILS = 'rental-details';
 export const PRICING = 'pricing';
 export const PRICING_AND_STOCK = 'pricing-and-stock';
 export const DELIVERY = 'delivery';
@@ -35,6 +39,8 @@ export const STYLE = 'style';
 // EditListingWizardTab component supports these tabs
 export const SUPPORTED_TABS = [
   DETAILS,
+  BASICS,
+  RENTAL_DETAILS,
   PRICING,
   PRICING_AND_STOCK,
   DELIVERY,
@@ -124,6 +130,7 @@ const EditListingWizardTab = props => {
     hasPendingFileUploads,
     allFilesUploadedAndVerified,
     filesRequired,
+    basicsAuthProps,
   } = props;
 
   const { type } = params;
@@ -135,8 +142,22 @@ const EditListingWizardTab = props => {
 
   // New listing flow has automatic redirects to new tab on the wizard
   // and the last panel calls publishListing API endpoint.
+  //
+  // CRITICAL: `marketplaceTabs` here is a stale prop - it reflects the tab
+  // list computed BEFORE this submit, not after. For the very first submit
+  // of a brand-new listing, the listing type isn't persisted yet at render
+  // time, so EditListingWizard.js hands down `TABS_DETAILS_ONLY = [BASICS]`
+  // (a single-tab placeholder) rather than the real per-process tab list.
+  // Without the `tab !== BASICS` guard below, `tab === marketplaceTabs[0]`
+  // would be true right after that first submit and this would call
+  // handlePublishListing() immediately - publishing an empty listing with
+  // only a title and a photo, skipping price/deposit/replacement value
+  // entirely. BASICS is never the last tab of any real process (see
+  // tabsForListingType in EditListingWizard.js), so it must never be
+  // treated as one here regardless of what `marketplaceTabs` says.
   const automaticRedirectsForNewListingFlow = (tab, listingId) => {
-    if (tab !== marketplaceTabs[marketplaceTabs.length - 1]) {
+    const isLastTab = tab !== BASICS && tab === marketplaceTabs[marketplaceTabs.length - 1];
+    if (!isLastTab) {
       // Create listing flow: smooth scrolling polyfill to scroll to correct tab
       handleCreateFlowTabScrolling(false);
 
@@ -218,6 +239,29 @@ const EditListingWizardTab = props => {
         <EditListingDetailsPanel
           {...panelProps(DETAILS)}
           onListingTypeChange={onListingTypeChange}
+          config={config}
+        />
+      );
+    }
+    case BASICS: {
+      return (
+        <EditListingBasicsPanel
+          {...panelProps(BASICS)}
+          onListingTypeChange={onListingTypeChange}
+          listingImageConfig={config.layout.listingImage}
+          images={images}
+          onImageUpload={onImageUpload}
+          onRemoveImage={onRemoveImage}
+          config={config}
+          {...basicsAuthProps}
+        />
+      );
+    }
+    case RENTAL_DETAILS: {
+      return (
+        <EditListingRentalDetailsPanel
+          {...panelProps(RENTAL_DETAILS)}
+          marketplaceCurrency={config.currency}
           config={config}
         />
       );

@@ -62,7 +62,7 @@
 
 .longWord {
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
 }
 
 .showMore {
@@ -125,6 +125,17 @@
     justify-content: space-between;
     align-items: baseline;
   }
+}
+
+.memberSince {
+  composes: p from global;
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  color: var(--colorGrey500);
+}
+
+.externalReviewBadge {
+  margin: 10px 0 0 0;
 }
 
 .editProfileDesktop {

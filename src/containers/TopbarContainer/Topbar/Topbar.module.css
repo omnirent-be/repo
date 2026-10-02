@@ -8,6 +8,61 @@
   position: relative;
 }
 
+.promoBanner {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 12px;
+  padding: 6px 16px;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  text-align: center;
+
+  @media (--viewportMedium) {
+    flex-wrap: wrap;
+    gap: 6px 24px;
+    padding: 8px 24px;
+    font-size: 14px;
+  }
+}
+
+/* On phones only the first message stays: the banner must not eat the screen. */
+.promoBannerLink {
+  display: none;
+  color: var(--colorWhite);
+  text-decoration: underline;
+
+  @media (--viewportMedium) {
+    display: inline;
+  }
+
+  &:hover {
+    color: var(--colorWhite);
+    text-decoration: none;
+  }
+}
+
+.promoBannerClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.promoBannerCloseIcon {
+  fill: var(--colorWhite);
+  stroke: var(--colorWhite);
+}
+
 /* Skip to main content link - visually hidden until focused */
 .skipToMainContent {
   /* Position it off-screen by default */
@@ -173,21 +228,13 @@
 .rootSearchIcon {
   stroke: var(--colorGrey700);
 }
+.rootInboxIcon {
+  color: var(--colorGrey700);
+}
 
 .searchContainer {
   position: relative;
   height: 100%;
-  margin-top: 94px;
-}
-
-.mobileHelp {
-  color: var(--colorGrey600);
-  margin: 0 24px;
-
-  /* Absolute position to avoid affecting the layout of the autocomplete
-   predictions list */
-  position: absolute;
-  top: 73px;
 }
 
 /* ================ Modal ================ */

@@ -725,7 +725,14 @@ const testMessages = Object.fromEntries(Object.entries(messages).map(([key]) => 
 
 // Provide all the context for components that connect to the Redux
 // store, i18n, router, etc.
-export const TestProvider = ({ children, initialState, config, routeConfiguration, messages }) => {
+export const TestProvider = ({
+  children,
+  initialState,
+  config,
+  routeConfiguration,
+  messages,
+  initialEntries,
+}) => {
   const store = configureStore({ initialState: initialState || {} });
   const hostedConfig = config || getHostedConfiguration();
 
@@ -738,7 +745,7 @@ export const TestProvider = ({ children, initialState, config, routeConfiguratio
         <IntlProvider locale="en" messages={mergedMessages} textComponent="span">
           <Provider store={store}>
             <HelmetProvider>
-              <MemoryRouter>{children}</MemoryRouter>
+              <MemoryRouter initialEntries={initialEntries || ['/']}>{children}</MemoryRouter>
             </HelmetProvider>
           </Provider>
         </IntlProvider>
@@ -762,7 +769,15 @@ export const TestProvider = ({ children, initialState, config, routeConfiguratio
 
 export const renderWithProviders = (
   ui,
-  { initialState, config, routeConfiguration, withPortals, messages, ...renderOptions } = {}
+  {
+    initialState,
+    config,
+    routeConfiguration,
+    withPortals,
+    messages,
+    initialEntries,
+    ...renderOptions
+  } = {}
 ) => {
   const Wrapper = ({ children }) => {
     return (
@@ -771,6 +786,7 @@ export const renderWithProviders = (
         config={config}
         routeConfiguration={routeConfiguration}
         messages={messages}
+        initialEntries={initialEntries}
       >
         {children}
       </TestProvider>
@@ -785,6 +801,7 @@ export const renderWithProviders = (
             config={config}
             routeConfiguration={routeConfiguration}
             messages={messages}
+            initialEntries={initialEntries}
           >
             {children}
           </TestProvider>

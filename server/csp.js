@@ -150,9 +150,13 @@ exports.csp = (reportUri, reportOnly) => {
   // const { imgSrc = [self] } = defaultDirectives;
   // const exampleImgSrc = imgSrc.concat('my-custom-domain.example.com');
 
+  // Meta (Facebook) Pixel
+  const { connectSrc = [self], imgSrc = [self], scriptSrc = [self] } = defaultDirectives;
+
   const customDirectives = {
-    // Example: Add custom directive override
-    // imgSrc: exampleImgSrc,
+    connectSrc: connectSrc.concat('connect.facebook.net', 'www.facebook.com'),
+    imgSrc: imgSrc.concat('www.facebook.com'),
+    scriptSrc: scriptSrc.concat('connect.facebook.net'),
   };
 
   // ================ END CUSTOM CSP URLs ================ //

@@ -157,7 +157,7 @@ describe('ConfirmSignupForm', () => {
 
     // Test that sign up button is still disabled before clicking the checkbox
     expect(screen.getByRole('button', { name: 'ConfirmSignupForm.signUp' })).toBeDisabled();
-    fireEvent.click(screen.getByLabelText(/AuthenticationPage.termsAndConditionsAcceptText/i));
+    fireEvent.click(screen.getByLabelText(/SignupFlow.termsAccept/i));
 
     // Test that sign up button is enabled after typing the final value and selecting the checkbox
     expect(screen.getByRole('button', { name: 'ConfirmSignupForm.signUp' })).toBeEnabled();

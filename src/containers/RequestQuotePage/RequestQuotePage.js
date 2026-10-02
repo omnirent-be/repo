@@ -23,6 +23,7 @@ import {
 } from '../../transactions/transaction.js';
 import { requireListingImage } from '../../util/configHelpers.js';
 import { pickTransactionFieldsData } from '../../util/fieldHelpers.js';
+import { pickQuoteRequestData } from '../../util/quote.js';
 
 // Import global thunk functions
 import { getMarketplaceEntities } from '../../ducks/marketplaceData.duck.js';
@@ -76,6 +77,7 @@ const handleSubmit = (submitting, setSubmitting, props, transactionFieldConfigs)
     listingId: listing?.id,
     protectedData: {
       ...(customerDefaultMessage ? { customerDefaultMessage } : {}),
+      ...pickQuoteRequestData(values),
       ...getTransactionTypeData(listingType, unitType, config),
       ...pickTransactionFieldsData(values, 'protected', true, transactionFieldConfigs),
     },

@@ -1,0 +1,291 @@
+@import '../../../styles/customMediaQueries.css';
+
+/* Mathematically centers the capsule within the Topbar, independent of how
+   wide its flex siblings (logo, links) are - a plain flex row would push it
+   off-center whenever those two sides are uneven widths. TopbarDesktop's
+   own .root needs position:relative for this to center within the topbar
+   rather than some further-up ancestor. */
+.outsideClickWrapper {
+  display: none;
+
+  @media (--viewportMedium) {
+    display: block;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: var(--zIndexPopup);
+  }
+}
+
+.mobileOutsideClickWrapper {
+  display: block;
+  width: 100%;
+}
+
+.root {
+  display: flex;
+  align-items: stretch;
+  background-color: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  border-radius: 999px;
+  box-shadow: var(--boxShadow);
+  padding: 4px;
+  min-width: 320px;
+  max-width: 640px;
+  cursor: pointer;
+  transition: box-shadow var(--transitionStyle), background-color var(--transitionStyle);
+
+  &:hover {
+    box-shadow: var(--boxShadowPopup);
+  }
+}
+
+/* The expanded state: a visibly bigger bar (the blueprint's ~66px/wider
+   target), light grey so the active segment's own white sub-pill stands
+   out against it. */
+.rootExpanded {
+  min-width: 420px;
+  max-width: 760px;
+  padding: 6px;
+  background-color: var(--colorGrey50);
+  cursor: default;
+  box-shadow: var(--boxShadowPopup);
+
+  &:hover {
+    box-shadow: var(--boxShadowPopup);
+  }
+}
+
+.segment {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6px 20px;
+  border-radius: 999px;
+  transition: background-color var(--transitionStyle), box-shadow var(--transitionStyle);
+
+  &:hover {
+    background-color: var(--colorGrey50);
+  }
+}
+
+.rootExpanded .segment {
+  padding: 8px 24px;
+
+  &:hover {
+    background-color: transparent;
+  }
+}
+
+.rootExpanded .segmentActive {
+  background-color: var(--colorWhite);
+  box-shadow: var(--boxShadowLight);
+
+  &:hover {
+    background-color: var(--colorWhite);
+  }
+}
+
+.segmentLabel {
+  composes: marketplaceTinyFontStyles from global;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorGrey700);
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.segmentInput,
+.segmentSelect,
+.segmentValue {
+  composes: marketplaceSmallFontStyles from global;
+  display: block;
+  border: none;
+  outline: none;
+  background: none;
+  padding: 0;
+  color: var(--colorGrey700);
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.segmentInput {
+  cursor: text;
+
+  &::placeholder {
+    color: var(--colorGrey300);
+  }
+}
+
+.segmentSelect {
+  appearance: none;
+  cursor: pointer;
+}
+
+.segmentValue {
+  cursor: pointer;
+}
+
+.divider {
+  width: 1px;
+  background-color: var(--colorGrey100);
+  margin: 10px 0;
+}
+
+.rootExpanded .divider {
+  display: none;
+}
+
+/* Shared panel shape for every segment's expanded-state popover (quick
+   keywords, region list, date range calendar). */
+.popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: var(--zIndexPopup);
+  min-width: 280px;
+  background-color: var(--colorWhite);
+  border-radius: var(--borderRadiusMedium);
+  box-shadow: var(--boxShadowPopup);
+  padding: 16px;
+}
+
+.datePickerPopup {
+  composes: popover;
+}
+
+.quickOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quickOptionButton {
+  composes: marketplaceSmallFontStyles from global;
+  text-align: left;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--borderRadiusMedium);
+  background: none;
+  color: var(--colorGrey700);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: var(--colorGrey50);
+  }
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 220px;
+}
+
+.optionListItem {
+  composes: marketplaceSmallFontStyles from global;
+  text-align: left;
+  padding: 10px 12px;
+  border: none;
+  border-radius: var(--borderRadiusMedium);
+  background: none;
+  color: var(--colorGrey700);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background-color: var(--colorGrey50);
+  }
+}
+
+.optionListItemActive {
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+
+  &:hover {
+    background-color: var(--marketplaceColor);
+  }
+}
+
+.submitButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  cursor: pointer;
+  transition: background-color var(--transitionStyle);
+
+  &:hover {
+    background-color: var(--marketplaceColorDark);
+  }
+}
+
+.submitIcon {
+  width: 16px;
+  height: 16px;
+  stroke: var(--colorWhite);
+}
+
+/* Dims and blurs the rest of the page while the capsule is expanded - also
+   the click target that collapses it again. Sits above regular page
+   content (including the topbar itself) but below the capsule. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(2px);
+}
+
+/* Variant used inside the Topbar's mobile search modal (TopbarMobileSearch
+   in Topbar.js) - passed as rootClassName, replacing .root entirely, since
+   .root is hidden below viewportMedium (this is the dedicated mobile UI). */
+.mobileRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+}
+
+.mobileRoot .segment {
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadiusMedium);
+  padding: 8px 16px;
+
+  &:hover {
+    background-color: transparent;
+  }
+}
+
+.mobileRoot .divider {
+  display: none;
+}
+
+.mobileRoot .datePickerPopup {
+  position: static;
+  box-shadow: none;
+  padding: 16px 0 0 0;
+}
+
+.mobileRoot .submitButton {
+  width: 100%;
+  border-radius: var(--borderRadiusMedium);
+  margin-top: 8px;
+}

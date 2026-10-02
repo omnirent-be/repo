@@ -1,6 +1,7 @@
 import React from 'react';
 import classNames from 'classnames';
-import { LinkedLogo } from '../../../../components';
+import { FormattedMessage } from '../../../../util/reactIntl';
+import { LinkedLogo, NamedLink } from '../../../../components';
 
 import Field from '../../Field';
 import BlockBuilder from '../../BlockBuilder';
@@ -17,6 +18,16 @@ const GRID_CONFIG = [
   { contentCss: css.contentCol4, gridCss: css.gridCol4 },
 ];
 const MAX_MOBILE_SCREEN_WIDTH = 1024;
+
+// Code-defined links, so key pages (incl. Contact) are always reachable from
+// the footer without depending on what's configured in Console. Search and
+// New listing are left out on purpose: the CTA band above already links them.
+const DISCOVER_LINKS = [
+  { name: 'HowItWorksPage', labelId: 'SectionFooter.link.howItWorks' },
+  { name: 'FaqPage', labelId: 'SectionFooter.link.faq' },
+  { name: 'ReferralPage', labelId: 'SectionFooter.link.referral' },
+  { name: 'ContactPage', labelId: 'SectionFooter.link.contact' },
+];
 
 const getIndex = numberOfColumns => numberOfColumns - 1;
 
@@ -78,7 +89,6 @@ const SectionFooter = props => {
     socialMediaLinks = [],
     slogan,
     appearance,
-    copyright,
     blocks = [],
     options,
     linkLogoToExternalSite,
@@ -113,9 +123,30 @@ const SectionFooter = props => {
       appearance={appearance}
       options={fieldOptions}
     >
+      <div className={css.ctaBand}>
+        <div className={css.ctaInner}>
+          <div>
+            <h2 className={css.ctaTitle}>
+              <FormattedMessage id="SectionFooter.cta.title" />
+            </h2>
+            <p className={css.ctaText}>
+              <FormattedMessage id="SectionFooter.cta.text" />
+            </p>
+          </div>
+          <div className={css.ctaButtons}>
+            <NamedLink name="SearchPage" className={css.ctaPrimary}>
+              <FormattedMessage id="SectionFooter.cta.rent" />
+            </NamedLink>
+            <NamedLink name="NewListingPage" className={css.ctaGhost}>
+              <FormattedMessage id="SectionFooter.cta.list" />
+            </NamedLink>
+          </div>
+        </div>
+      </div>
+
       <div className={css.footer}>
         <div className={classNames(css.content, getContentCss(numberOfColumns))}>
-          <div>
+          <div className={css.brand}>
             <LinkedLogo
               rootClassName={css.logoLink}
               logoClassName={css.logoWrapper}
@@ -123,24 +154,44 @@ const SectionFooter = props => {
               linkToExternalSite={linkLogoToExternalSite}
               layout={logoLayout}
             />
-          </div>
-          <div className={css.sloganMobile}>
             <Field data={slogan} className={css.slogan} />
-          </div>
-          <div className={css.detailsInfo}>
-            <div className={css.sloganDesktop}>
-              <Field data={slogan} className={css.slogan} />
-            </div>
             {showSocialMediaLinks ? (
               <div className={css.icons}>
                 <BlockBuilder blocks={linksWithBlockId} sectionId={sectionId} options={options} />
               </div>
             ) : null}
-            <Field data={copyright} className={css.copyright} />
           </div>
+
+          <nav className={css.discover} aria-label="OmniRent">
+            <h3 className={css.columnTitle}>
+              <FormattedMessage id="SectionFooter.discover" />
+            </h3>
+            <ul className={css.discoverList}>
+              {DISCOVER_LINKS.map(link => (
+                <li key={link.name}>
+                  <NamedLink name={link.name} className={css.discoverLink}>
+                    <FormattedMessage id={link.labelId} />
+                  </NamedLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+
           <div className={classNames(css.grid, getGridCss(numberOfColumns))}>
             <BlockBuilder blocks={blocks} sectionId={sectionId} options={options} />
           </div>
+        </div>
+
+        <div className={css.bottom}>
+          <span className={css.copyright}>
+            <FormattedMessage
+              id="SectionFooter.copyright"
+              values={{ year: new Date().getFullYear() }}
+            />
+          </span>
+          <a className={css.toTop} href="#">
+            <FormattedMessage id="SectionFooter.toTop" />
+          </a>
         </div>
       </div>
     </SectionContainer>

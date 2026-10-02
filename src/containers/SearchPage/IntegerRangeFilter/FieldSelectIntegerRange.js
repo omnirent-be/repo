@@ -195,20 +195,76 @@ const RangeInput = props => {
 
   const validHandles = getValidHandles(values, fieldValues, defaultMinValue, defaultMaxValue);
 
-  return (
+  const slider = (
+    <div className={css.sliderWrapper}>
+      <RangeSlider
+        min={defaultMinValue}
+        max={defaultMaxValue}
+        ariaLabels={getHandleLabels(validHandles)}
+        step={step}
+        handles={validHandles}
+        onChange={handles => {
+          handleSliderChange({ minValue: handles[0], maxValue: handles[1] });
+        }}
+      />
+    </div>
+  );
+
+  return isInSideBar ? (
     <div className={classes}>
-      <div className={classNames(css.contentWrapper, { [css.contentWrapperSidebar]: isInSideBar })}>
-        <div className={css.inputsWrapper}>
-          {!isInSideBar ? (
-            <span className={css.labelPopup}>
-              {intl.formatMessage({ id: 'IntegerRangeFilter.rangeInputsLabel' })}
-            </span>
-          ) : null}
+      {slider}
+      <div className={css.minMaxWrapper}>
+        <label className={css.minMaxGroup} htmlFor={`${name}_min`}>
+          <span className={css.minMaxLabel}>
+            {intl.formatMessage({ id: 'IntegerRangeFilter.minLabel' })}
+          </span>
           <input
-            className={classNames(css.minValue, {
-              [css.valueInSidebar]: isInSideBar,
-              [css.invalidInput]: isMinInvalid,
-            })}
+            className={classNames(css.minMaxInput, { [css.invalidInput]: isMinInvalid })}
+            inputMode="numeric"
+            pattern="\d*"
+            id={`${name}_min`}
+            name={`${name}_min`}
+            min={defaultMinValue}
+            max={defaultMaxValue}
+            placeholder={defaultMinValue}
+            value={fieldValues.minValue}
+            onChange={handleMinValueChange}
+            onBlur={handleMinValueBlur}
+            aria-invalid={isMinInvalid}
+            aria-label={labelForRangeInput(fieldValues.minValue, 'min')}
+          ></input>
+        </label>
+        <label className={css.minMaxGroup} htmlFor={`${name}_max`}>
+          <span className={css.minMaxLabel}>
+            {intl.formatMessage({ id: 'IntegerRangeFilter.maxLabel' })}
+          </span>
+          <input
+            className={classNames(css.minMaxInput, { [css.invalidInput]: isMaxInvalid })}
+            inputMode="numeric"
+            pattern="\d*"
+            id={`${name}_max`}
+            name={`${name}_max`}
+            min={defaultMinValue}
+            max={defaultMaxValue}
+            placeholder={defaultMaxValue}
+            value={fieldValues.maxValue}
+            onChange={handleMaxValueChange}
+            onBlur={handleMaxValueBlur}
+            aria-invalid={isMaxInvalid}
+            aria-label={labelForRangeInput(fieldValues.maxValue, 'max')}
+          ></input>
+        </label>
+      </div>
+    </div>
+  ) : (
+    <div className={classes}>
+      <div className={css.contentWrapper}>
+        <div className={css.inputsWrapper}>
+          <span className={css.labelPopup}>
+            {intl.formatMessage({ id: 'IntegerRangeFilter.rangeInputsLabel' })}
+          </span>
+          <input
+            className={classNames(css.minValue, { [css.invalidInput]: isMinInvalid })}
             inputMode="numeric"
             pattern="\d*"
             name={`${name}_min`}
@@ -223,10 +279,7 @@ const RangeInput = props => {
           ></input>
           <span className={css.valueSeparator}>-</span>
           <input
-            className={classNames(css.maxValue, {
-              [css.valueInSidebar]: isInSideBar,
-              [css.invalidInput]: isMaxInvalid,
-            })}
+            className={classNames(css.maxValue, { [css.invalidInput]: isMaxInvalid })}
             inputMode="numeric"
             pattern="\d*"
             name={`${name}_max`}
@@ -241,18 +294,7 @@ const RangeInput = props => {
           ></input>
         </div>
       </div>
-      <div className={css.sliderWrapper}>
-        <RangeSlider
-          min={defaultMinValue}
-          max={defaultMaxValue}
-          ariaLabels={getHandleLabels(validHandles)}
-          step={step}
-          handles={validHandles}
-          onChange={handles => {
-            handleSliderChange({ minValue: handles[0], maxValue: handles[1] });
-          }}
-        />
-      </div>
+      {slider}
     </div>
   );
 };

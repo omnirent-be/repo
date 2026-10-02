@@ -3,8 +3,13 @@ import { findRouteByRouteName } from '../../util/routes';
 import { ensureStripeCustomer, ensureTransaction } from '../../util/data';
 import { minutesBetween } from '../../util/dates';
 import { formatMoney } from '../../util/currency';
+import { isAtLeastYearsOldFromDateString } from '../../util/validators';
 import { NEGOTIATION_PROCESS_NAME, resolveLatestProcessName } from '../../transactions/transaction';
 import { storeData } from './CheckoutPageSessionHelpers';
+
+// Kept in sync with ProfileSettingsForm.js's own MINIMUM_RENTER_AGE_YEARS -
+// a rental contract's signer must be an adult.
+const MINIMUM_RENTER_AGE_YEARS = 18;
 
 /**
  * Extract relevant transaction type data from listing type
@@ -118,6 +123,25 @@ export const getShippingDetailsMaybe = formValues => {
         },
       }
     : {};
+};
+
+// Whether the current (huurder) user's own profile has the contact/identity
+// details a rental contract needs (see ProfileSettingsForm.js's
+// contactDetails fields, saved to protectedData) - blocks checkout until
+// filled in, since otherwise the generated contract permanently has blank
+// fields for something the customer could always have provided (unlike,
+// say, the verhuurder's KBO number, which genuinely doesn't apply to a
+// particulier).
+export const isCustomerProfileCompleteForCheckout = currentUser => {
+  const protectedData = currentUser?.attributes?.profile?.protectedData || {};
+  const { phoneNumber, birthDate, address } = protectedData;
+  return !!(
+    phoneNumber &&
+    address?.line1 &&
+    address?.postalCode &&
+    address?.city &&
+    isAtLeastYearsOldFromDateString(birthDate, MINIMUM_RENTER_AGE_YEARS)
+  );
 };
 
 /**

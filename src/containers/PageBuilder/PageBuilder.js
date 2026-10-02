@@ -109,6 +109,16 @@ const PageBuilder = props => {
     options,
     currentPage,
     featuredListings,
+    // Optional extra content rendered inside <Main>, right after the
+    // CMS-managed sections and before the footer. Lets a specific page
+    // (e.g. LandingPage) add a fixed, code-defined section without that
+    // section needing to exist in the hosted page-asset content.
+    mainContentAppend,
+    // Same idea as mainContentAppend, but rendered before the CMS-managed
+    // sections - lets a page replace a specific hosted section (e.g. the
+    // "hero" section, filtered out of pageAssetsData by the caller) with a
+    // fixed, code-defined one instead.
+    mainContentPrepend,
     ...pageProps
   } = props;
 
@@ -138,11 +148,13 @@ const PageBuilder = props => {
                 <TopbarContainer currentPage={currentPage} />
               </Topbar>
               <Main as="main" id="main-content" className={css.main}>
+                {mainContentPrepend}
                 {sections.length === 0 && inProgress ? (
                   <LoadingSpinner />
                 ) : (
                   <SectionBuilder sections={sections} options={{ ...options, featuredListings }} />
                 )}
+                {mainContentAppend}
               </Main>
               <Footer>
                 <FooterContainer />

@@ -2,7 +2,7 @@
 
 .longWord {
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
 }
 
 .message,
@@ -75,7 +75,7 @@
   text-decoration: underline;
 
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
 
   &:hover {
     text-decoration: none;

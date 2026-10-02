@@ -1,0 +1,45 @@
+.root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.piece {
+  position: absolute;
+  top: -10px;
+  width: 8px;
+  height: 14px;
+  opacity: 0.9;
+  animation-name: fall;
+  animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  animation-fill-mode: forwards;
+}
+
+.shapeRect {
+  border-radius: 1px;
+}
+
+.shapeCircle {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+@keyframes fall {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(var(--drift), 100vh, 0) rotate(var(--rotation));
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    display: none;
+  }
+}

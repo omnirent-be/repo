@@ -21,6 +21,7 @@ const createListingLinkConfigMaybe = (intl, showLink) =>
       ]
     : [];
 
+
 /**
  * Group links to 2 groups:
  * - priorityLinks (Those primary links that fit into current width of the TopbarDesktop.)

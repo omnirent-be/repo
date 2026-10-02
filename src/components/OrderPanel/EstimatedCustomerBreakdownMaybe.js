@@ -40,7 +40,7 @@ import css from './OrderPanel.module.css';
 
 const { Money, UUID } = sdkTypes;
 
-const estimatedTotalPrice = (lineItems, marketplaceCurrency) => {
+export const estimatedTotalPrice = (lineItems, marketplaceCurrency) => {
   const numericTotalPrice = lineItems.reduce((sum, lineItem) => {
     const numericPrice = convertMoneyToNumber(lineItem.lineTotal);
     return new Decimal(numericPrice).add(sum);

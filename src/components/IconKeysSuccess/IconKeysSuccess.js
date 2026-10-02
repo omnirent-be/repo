@@ -14,7 +14,7 @@ import css from './IconKeysSuccess.module.css';
 const IconKeysSuccess = props => {
   const { className } = props;
   return (
-    <svg className={className} width="52" height="60" xmlns="http://www.w3.org/2000/svg">
+    <svg className={className} width="52" height="60" viewBox="0 0 52 60" xmlns="http://www.w3.org/2000/svg">
       <g transform="translate(2 2)" fill="none" fillRule="evenodd">
         <path
           className={css.strokeMarketplaceColor}

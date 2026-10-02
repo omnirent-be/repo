@@ -111,6 +111,7 @@ export const ContactDetailsPageComponent = props => {
     currentPage: 'ContactDetailsPage',
     showPaymentMethods,
     showPayoutDetails,
+    currentUser,
   };
 
   return (

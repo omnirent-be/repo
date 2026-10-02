@@ -159,7 +159,9 @@
   word-break: break-all;
   /* use break-word if available */
   word-break: break-word;
-  hyphens: auto;
+  /* Automatic hyphenation produces ugly mid-word splits in short nav/footer
+     links (e.g. "Gebruiksvoorwaar-den") - only break if it truly doesn't fit. */
+  hyphens: none;
 }
 
 /**

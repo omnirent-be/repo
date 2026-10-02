@@ -42,9 +42,40 @@ const PriceFilter = props => {
     initialValues,
     queryParamNames,
     getAriaLabel = () => {},
+    min = 0,
+    max,
     ...rest
   } = props;
   const intl = useIntl();
+
+  // Quick-select buttons for the most common price bands, shown above the
+  // slider - same onSubmit path as dragging the slider, just a one-click
+  // shortcut to the three ranges renters reach for most.
+  const quickRanges = hasValue(max)
+    ? [
+        {
+          key: 'under30',
+          label: intl.formatMessage({ id: 'PriceFilter.quickRangeUnder' }, { max: 30 }),
+          minValue: min,
+          maxValue: 30,
+        },
+        {
+          key: '30to75',
+          label: intl.formatMessage(
+            { id: 'PriceFilter.quickRangeBetween' },
+            { min: 30, max: 75 }
+          ),
+          minValue: 30,
+          maxValue: 75,
+        },
+        {
+          key: 'over75',
+          label: intl.formatMessage({ id: 'PriceFilter.quickRangeOver' }, { min: 75 }),
+          minValue: 75,
+          maxValue: max,
+        },
+      ]
+    : null;
 
   // Format function to convert minValue and maxValue to currency strings
   const formatValidRangeValues = rangeValues => {
@@ -95,11 +126,15 @@ const PriceFilter = props => {
   return (
     <IntegerRangeFilter
       label={currentLabel}
+      description={intl.formatMessage({ id: 'PriceFilter.description' })}
       initialValues={initialValues}
       formatValidRangeValues={formatValidRangeValues}
       queryParamNames={queryParamNames}
       getLabelForRangeInput={getLabelForRangeInput}
       getAriaLabel={() => getAriaLabel(label, formattedRangeForAriaLabel)}
+      min={min}
+      max={max}
+      quickRanges={quickRanges}
       {...rest}
     />
   );

@@ -24,6 +24,7 @@ import TopbarContainer from '../TopbarContainer/TopbarContainer';
 import FooterContainer from '../FooterContainer/FooterContainer';
 
 import DeleteAccountForm from './DeleteAccountForm/DeleteAccountForm';
+import IdentityVerificationSection from './IdentityVerificationSection/IdentityVerificationSection';
 
 import { deleteAccount, resetPassword, updateProfile } from './ManageAccountPage.duck';
 import css from './ManageAccountPage.module.css';
@@ -114,6 +115,7 @@ export const ManageAccountPageComponent = props => {
     currentPage: 'ManageAccountPage',
     showPaymentMethods,
     showPayoutDetails,
+    currentUser,
   };
 
   return (
@@ -159,10 +161,18 @@ export const ManageAccountPageComponent = props => {
                 intl={intl}
               />
               <hr className={css.accountPageDivider} />
-              <H4 as="h3" className={css.deleteAccountSubtitle}>
-                <FormattedMessage id="ManageAccountPage.deleteAccountSubtitle" />
-              </H4>
             </>
+          ) : null}
+          {user.id ? (
+            <>
+              <IdentityVerificationSection currentUser={currentUser} />
+              <hr className={css.accountPageDivider} />
+            </>
+          ) : null}
+          {user.id ? (
+            <H4 as="h3" className={css.deleteAccountSubtitle}>
+              <FormattedMessage id="ManageAccountPage.deleteAccountSubtitle" />
+            </H4>
           ) : null}
           {user.id ? (
             <DeleteAccountForm

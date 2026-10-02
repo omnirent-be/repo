@@ -52,7 +52,7 @@
 
   /* Break long words into multiple lines to avoid overflow */
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
   font-size: 20px;
 
   @media (min-width: 375px) {
@@ -206,7 +206,7 @@
   word-break: break-all;
   /* use break-word if available */
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
 }
 
 /* Helper links */
@@ -253,4 +253,52 @@
 }
 
 .confirmInfoText {
+}
+
+.verifySteps {
+  list-style: none;
+  margin: 20px 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.verifyStep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--colorGrey600);
+}
+
+.verifyStepNumber {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-size: 12px;
+  font-weight: var(--fontWeightBold);
+}
+
+.openMailbox {
+  display: block;
+  margin-top: 24px;
+  padding: 14px 20px;
+  border-radius: 999px;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  text-align: center;
+  font-weight: var(--fontWeightSemiBold);
+
+  &:hover {
+    background-color: var(--marketplaceColorLight);
+    color: var(--colorWhite);
+    text-decoration: none;
+  }
 }

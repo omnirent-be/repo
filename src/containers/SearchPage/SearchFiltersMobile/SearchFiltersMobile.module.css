@@ -47,14 +47,43 @@
 }
 
 .modalContainer {
+  position: relative;
   width: 100%;
   padding: 94px 0;
   margin: 0 24px;
+
+  /* The filters panel now opens as a real dialog at every width (not just
+     mobile - see MODAL_BREAKPOINT in SearchPageWithGrid.js), so it needs
+     its own centered/boxed desktop look instead of Modal's default
+     full-bleed-on-mobile styles, which containerClassName replaces
+     entirely (see Modal.js). */
+  @media (--viewportMedium) {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    margin: 7.5vh auto;
+    padding: 0;
+    overflow-y: auto;
+    background-color: var(--colorWhite);
+    border-radius: var(--borderRadius);
+    border-bottom: 8px solid var(--marketplaceColor);
+  }
+}
+
+.modalContainerClosed {
+  padding: 0;
+  margin: 0;
 }
 
 .modalHeadingWrapper {
   padding-bottom: 31px;
   border-bottom: 1px solid var(--colorGrey100);
+
+  @media (--viewportMedium) {
+    padding: 32px 32px 24px 32px;
+  }
 }
 
 .modalHeading {
@@ -63,20 +92,20 @@
 }
 
 .resetAllButton {
-  composes: h5 from global;
+  composes: marketplaceSmallFontStyles from global;
   font-weight: var(--fontWeightMedium);
-  color: var(--colorGrey600);
+  color: var(--colorGrey700);
+  text-decoration: underline;
 
   /* Layout */
-  display: inline;
-  float: right;
-  margin: 8px 0 0 0;
+  margin: 0;
   padding: 0;
 
   /* Override button styles */
   outline: none;
   text-align: left;
   border: none;
+  background: none;
   cursor: pointer;
 
   &:focus,
@@ -92,6 +121,10 @@
    * under the mobile safari bottom bar or the "Show results"
    * button bar */
   padding-bottom: 220px;
+
+  @media (--viewportMedium) {
+    padding: 0 32px 24px 32px;
+  }
 }
 
 .showListingsContainer {
@@ -99,16 +132,37 @@
   bottom: 0;
   left: 0;
 
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
   width: 100vw;
   padding: 18px 24px;
 
   background: var(--colorWhite);
   box-shadow: 0 -2px 4px 0 rgba(0, 0, 0, 0.1);
   z-index: 11;
+
+  /* Desktop: the panel is now a boxed, scrollable dialog (.modalContainer)
+     rather than a full-bleed mobile screen, so this footer should stick to
+     the bottom of that box, not the viewport. */
+  @media (--viewportMedium) {
+    position: sticky;
+    width: 100%;
+    padding: 18px 32px;
+  }
 }
 
 .showListingsButton {
-  background-color: var(--marketplaceColor);
+  width: auto;
+  flex-shrink: 0;
+  background-color: var(--colorGrey700);
   display: inline-block;
-  border-radius: 3px;
+  padding: 0 24px;
+  border-radius: 999px;
+
+  &:hover {
+    background-color: var(--colorBlack);
+  }
 }

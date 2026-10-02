@@ -17,3 +17,9 @@ export const googleAnalyticsId = process.env.REACT_APP_GOOGLE_ANALYTICS_ID;
 // You can add multiple domains separated by comma
 // E.g. REACT_APP_PLAUSIBLE_DOMAINS=example1.com,example2.com
 export const plausibleDomains = process.env.REACT_APP_PLAUSIBLE_DOMAINS;
+
+// Optional
+// Meta (Facebook) Pixel id, from Meta Events Manager.
+// Note: Meta Pixel is a marketing/tracking cookie, so it should not be loaded
+// before the visitor has given cookie consent, depending on jurisdiction (e.g. EU countries).
+export const facebookPixelId = process.env.REACT_APP_FACEBOOK_PIXEL_ID;

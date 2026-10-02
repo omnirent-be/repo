@@ -1,0 +1,129 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  background-color: color-mix(in srgb, var(--marketplaceColor) 6%, var(--colorWhite));
+  padding: 48px 32px;
+
+  @media (--viewportMedium) {
+    padding: 64px 32px;
+  }
+}
+
+.inner {
+  max-width: var(--contentMaxWidthPages);
+  margin: 0 auto;
+}
+
+.textColumn {
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--marketplaceColor);
+}
+
+.heading {
+  margin: 10px 0 12px 0;
+}
+
+.intro {
+  margin: 0 auto 32px auto;
+  max-width: 50ch;
+  color: var(--colorGrey600);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.itemGrid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.itemButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background-color: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  color: var(--colorGrey700);
+  font-weight: var(--fontWeightSemiBold);
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transitionStyleButton);
+
+  &:hover {
+    border-color: var(--marketplaceColor);
+  }
+}
+
+.itemButtonSelected {
+  background-color: var(--marketplaceColor);
+  border-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+
+  &:hover {
+    background-color: var(--marketplaceColorLight);
+    border-color: var(--marketplaceColorLight);
+  }
+}
+
+.itemIcon {
+  font-size: 16px;
+}
+
+.resultCard {
+  padding: 24px 28px;
+  border-radius: 16px;
+  background-color: var(--colorWhite);
+  margin-bottom: 24px;
+}
+
+.resultText {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  color: var(--colorGrey700);
+}
+
+.resultAmount {
+  color: var(--marketplaceColor);
+}
+
+.resultTextEmpty {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  color: var(--colorGrey400);
+}
+
+.disclaimer {
+  margin: 0;
+  font-size: 12px;
+  color: var(--colorGrey400);
+}
+
+.cta {
+  display: inline-block;
+  padding: 13px 28px;
+  border-radius: 999px;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-weight: var(--fontWeightSemiBold);
+  font-size: 15px;
+
+  &:hover {
+    background-color: var(--marketplaceColorLight);
+    color: var(--colorWhite);
+    text-decoration: none;
+  }
+}

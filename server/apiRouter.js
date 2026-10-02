@@ -16,6 +16,15 @@ const transactionLineItems = require('./api/transaction-line-items');
 const initiatePrivileged = require('./api/initiate-privileged');
 const transitionPrivileged = require('./api/transition-privileged');
 const deleteAccount = require('./api/delete-account');
+const extraDayRequest = require('./api/extra-day/request');
+const depositInitiateHold = require('./api/deposit/initiate-hold');
+const depositRelease = require('./api/deposit/release');
+const depositClaim = require('./api/deposit/claim');
+const idenfyInitiate = require('./api/idenfy/initiate');
+const idenfyCallback = require('./api/idenfy/callback');
+const markReferralConversion = require('./api/referral/mark-conversion');
+const referralAdminReport = require('./api/referral/admin-report');
+const contract = require('./api/contract');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -56,6 +65,17 @@ router.post('/transaction-line-items', transactionLineItems);
 router.post('/initiate-privileged', initiatePrivileged);
 router.post('/transition-privileged', transitionPrivileged);
 router.post('/delete-account', deleteAccount);
+router.post('/extra-day/request', extraDayRequest);
+router.post('/deposit/initiate-hold', depositInitiateHold);
+router.post('/deposit/release', depositRelease);
+router.post('/deposit/claim', depositClaim);
+router.post('/referral/mark-conversion', markReferralConversion);
+router.get('/referral/admin-report', referralAdminReport);
+router.get('/contract/:transactionId', contract);
+router.post('/idenfy/initiate', idenfyInitiate);
+// Raw body needed here for HMAC signature verification - see
+// server/api/idenfy/callback.js and server/api-util/idenfy.js.
+router.post('/idenfy/callback', bodyParser.raw({ type: 'application/json' }), idenfyCallback);
 
 // Create user with identity provider (e.g. Facebook or Google)
 // This endpoint is called to create a new user after user has confirmed

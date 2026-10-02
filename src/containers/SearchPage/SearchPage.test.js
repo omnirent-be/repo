@@ -296,8 +296,15 @@ const getSearchParams = config => {
       'publicData.shippingEnabled',
       'publicData.priceVariationsEnabled',
       'publicData.priceVariants',
+      'publicData.location',
+      'publicData.depositInSubunits',
+      'publicData.deliveryOptions',
     ],
-    'fields.user': ['profile.displayName', 'profile.abbreviatedName'],
+    'fields.user': [
+      'profile.displayName',
+      'profile.abbreviatedName',
+      'profile.publicData.externalReview',
+    ],
     'fields.image': [
       'variants.scaled-small',
       'variants.scaled-medium',
@@ -306,7 +313,7 @@ const getSearchParams = config => {
     ],
     ...createImageVariantConfig(`${variantPrefix}`, 400, aspectRatio),
     ...createImageVariantConfig(`${variantPrefix}-2x`, 800, aspectRatio),
-    'limit.images': 1,
+    'limit.images': 4,
   };
 };
 
@@ -331,24 +338,25 @@ describe('SearchPage', () => {
         initialState,
         config,
         routeConfiguration,
+        initialEntries: ['/s'],
         messages: { 'FieldSelectTree.screenreader.option': 'Choose {optionName}.' },
       }
     );
 
     await waitFor(() => {
-      // Has main search in Topbar and it's a location search.
-      expect(getByPlaceholderText('TopbarSearchForm.placeholder')).toBeInTheDocument();
-      expect(screen.getByTestId('location-search')).toBeInTheDocument();
+      // Has main search capsule in Topbar.
+      expect(getByText('SearchCapsule.keywordsLabel')).toBeInTheDocument();
 
       // Has filter column
       expect(screen.getByTestId('filterColumnAside')).toBeInTheDocument();
       // Does not have search map container
       expect(screen.queryByTestId('searchMapContainer')).not.toBeInTheDocument();
 
-      // Has SortBy component
-      expect(getByText('MainPanelHeader.sortBy')).toBeInTheDocument();
-      expect(getAllByText('Newest')).toHaveLength(4); // desktop and mobile dropdowns & selected
-      expect(getAllByText('Oldest')).toHaveLength(2); // desktop and mobile dropdowns
+      // Has SortBy component - only one now (in SearchFiltersMobile, shown
+      // at every width since the desktop sidebar/MainPanelHeader were
+      // removed as redundant, see SearchPageWithGrid.js)
+      expect(getAllByText('Newest')).toHaveLength(2); // dropdown & selected
+      expect(getAllByText('Oldest')).toHaveLength(1); // dropdown
 
       // Has no Cat filter (primary filter tied to 'Cats' category)
       expect(queryByText('Cat')).not.toBeInTheDocument();
@@ -361,14 +369,11 @@ describe('SearchPage', () => {
       expect(getByText('Enum 1')).toBeInTheDocument();
       expect(getByText('Enum 2')).toBeInTheDocument();
 
-      // Has Category filter
-      expect(getByText('FilterComponent.categoryLabel')).toBeInTheDocument();
-      expect(getByText('Dogs')).toBeInTheDocument();
-      expect(queryByText('Poodle')).not.toBeInTheDocument();
-      expect(getByText('Cats')).toBeInTheDocument();
-      expect(queryByText('Burmese')).not.toBeInTheDocument();
-      expect(getByText('Fish')).toBeInTheDocument();
-      expect(queryByText('Freshwater')).not.toBeInTheDocument();
+      // No Category filter in the sidebar - CategoryQuickNav already shows
+      // the same taxonomy as chips above the results, so the grid layout
+      // drops the redundant full category-tree filter (see availableFilters
+      // in SearchPage.shared.js).
+      expect(queryByText('FilterComponent.categoryLabel')).not.toBeInTheDocument();
 
       // Has Listing type filter
       expect(getByText('FilterComponent.listingTypeLabel')).toBeInTheDocument();
@@ -388,18 +393,6 @@ describe('SearchPage', () => {
       // 2 listings with the same price
       expect(getAllByText('ListingCard.price')).toHaveLength(2);
     });
-
-    // Test category intercation: click "Fish"
-    await user.click(getByRole('button', { name: 'Choose Fish.' }));
-
-    expect(getByText('Dogs')).toBeInTheDocument();
-    expect(queryByText('Poodle')).not.toBeInTheDocument();
-    expect(getByText('Cats')).toBeInTheDocument();
-    expect(queryByText('Burmese')).not.toBeInTheDocument();
-    // Subcategories of Fish should be visible
-    expect(getByText('Fish')).toBeInTheDocument();
-    expect(getByText('Freshwater')).toBeInTheDocument();
-    expect(getByText('Saltwater')).toBeInTheDocument();
   });
 
   it('Check that map and filters exist in map variant', async () => {
@@ -421,6 +414,7 @@ describe('SearchPage', () => {
       initialState,
       config,
       routeConfiguration,
+      initialEntries: ['/s'],
       messages: {
         'SearchPage.screenreader.openFilterButton': 'Filter: {label}',
         'FieldSelectTree.screenreader.option': 'Choose {optionName}.',
@@ -428,9 +422,8 @@ describe('SearchPage', () => {
     });
 
     await waitFor(() => {
-      // Has main search in Topbar and it's a location search.
-      expect(getByPlaceholderText('TopbarSearchForm.placeholder')).toBeInTheDocument();
-      expect(screen.getByTestId('location-search')).toBeInTheDocument();
+      // Has main search capsule in Topbar.
+      expect(getByText('SearchCapsule.keywordsLabel')).toBeInTheDocument();
 
       // Does not have filter column
       expect(screen.queryByTestId('filterColumnAside')).not.toBeInTheDocument();
@@ -502,57 +495,6 @@ describe('SearchPage', () => {
     expect(getByText('Saltwater')).toBeInTheDocument();
   });
 
-  it('Check that Cat filters is revealed in grid variant', async () => {
-    // Select correct SearchPage variant according to route configuration
-    const user = userEvent.setup();
-    const config = getConfig('grid');
-    const routeConfiguration = getRouteConfiguration(config.layout);
-    const props = { ...commonProps };
-    const SearchPage = getConnectedSearchPageForTests(config.layout);
-
-    const { getByPlaceholderText, getByText, getAllByText, queryByText, getByRole } = render(
-      <SearchPage {...props} />,
-      {
-        initialState,
-        config,
-        routeConfiguration,
-        messages: {
-          'FieldSelectTree.screenreader.option': 'Choose {optionName}.',
-        },
-      }
-    );
-
-    await waitFor(() => {
-      // Has no Cat filter (primary)
-      expect(queryByText('Cat')).not.toBeInTheDocument();
-
-      // Has Category filter
-      expect(getByText('FilterComponent.categoryLabel')).toBeInTheDocument();
-      expect(getByText('Dogs')).toBeInTheDocument();
-      expect(queryByText('Poodle')).not.toBeInTheDocument();
-      expect(getByText('Cats')).toBeInTheDocument();
-      expect(queryByText('Burmese')).not.toBeInTheDocument();
-      expect(getByText('Fish')).toBeInTheDocument();
-      expect(queryByText('Freshwater')).not.toBeInTheDocument();
-    });
-
-    // Test category intercation: click "Cats"
-    await user.click(getByRole('button', { name: 'Choose Cats.' }));
-
-    // Has Cat filter (enum) using SelectMultipleFilter component (it contains also legend for screen readers)
-    expect(getAllByText('Cat')).toHaveLength(2);
-
-    expect(getByText('Dogs')).toBeInTheDocument();
-    expect(queryByText('Poodle')).not.toBeInTheDocument();
-    expect(getByText('Cats')).toBeInTheDocument();
-    // Subcategories of Cats should be visible
-    expect(queryByText('Burmese')).toBeInTheDocument();
-    expect(queryByText('Egyptian mau')).toBeInTheDocument();
-    expect(getByText('Fish')).toBeInTheDocument();
-    expect(queryByText('Freshwater')).not.toBeInTheDocument();
-    expect(queryByText('Saltwater')).not.toBeInTheDocument();
-  });
-
   it('Check that Boat filters is revealed in grid variant', async () => {
     const user = userEvent.setup();
     // Select correct SearchPage variant according to route configuration
@@ -567,6 +509,7 @@ describe('SearchPage', () => {
         initialState,
         config,
         routeConfiguration,
+        initialEntries: ['/s'],
         messages: {
           'FieldSelectTree.screenreader.option': 'Choose {optionName}.',
         },
@@ -605,6 +548,7 @@ describe('SearchPage', () => {
         initialState,
         config,
         routeConfiguration,
+        initialEntries: ['/s'],
       }
     );
 

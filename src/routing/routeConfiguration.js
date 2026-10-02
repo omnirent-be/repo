@@ -13,11 +13,14 @@ import { NamedRedirect } from '../components';
 const pageDataLoadingAPI = getPageDataLoadingAPI();
 
 const AuthenticationPage = loadable(() => import(/* webpackChunkName: "AuthenticationPage" */ '../containers/AuthenticationPage/AuthenticationPage'));
+const BalancePage = loadable(() => import(/* webpackChunkName: "BalancePage" */ '../containers/BalancePage/BalancePage'));
+const ReferralPage = loadable(() => import(/* webpackChunkName: "ReferralPage" */ '../containers/ReferralPage/ReferralPage'));
 const CheckoutPage = loadable(() => import(/* webpackChunkName: "CheckoutPage" */ '../containers/CheckoutPage/CheckoutPage'));
 const CMSPage = loadable(() => import(/* webpackChunkName: "CMSPage" */ '../containers/CMSPage/CMSPage'));
 const ContactDetailsPage = loadable(() => import(/* webpackChunkName: "ContactDetailsPage" */ '../containers/ContactDetailsPage/ContactDetailsPage'));
 const EditListingPage = loadable(() => import(/* webpackChunkName: "EditListingPage" */ '../containers/EditListingPage/EditListingPage'));
 const EmailVerificationPage = loadable(() => import(/* webpackChunkName: "EmailVerificationPage" */ '../containers/EmailVerificationPage/EmailVerificationPage'));
+const FavoriteListingsPage = loadable(() => import(/* webpackChunkName: "FavoriteListingsPage" */ '../containers/FavoriteListingsPage/FavoriteListingsPage'));
 const InboxPage = loadable(() => import(/* webpackChunkName: "InboxPage" */ '../containers/InboxPage/InboxPage'));
 const MakeOfferPage = loadable(() => import(/* webpackChunkName: "MakeOfferPage" */ '../containers/MakeOfferPage/MakeOfferPage'));
 const LandingPage = loadable(() => import(/* webpackChunkName: "LandingPage" */ '../containers/LandingPage/LandingPage'));
@@ -30,6 +33,9 @@ const PasswordRecoveryPage = loadable(() => import(/* webpackChunkName: "Passwor
 const PasswordResetPage = loadable(() => import(/* webpackChunkName: "PasswordResetPage" */ '../containers/PasswordResetPage/PasswordResetPage'));
 const PaymentMethodsPage = loadable(() => import(/* webpackChunkName: "PaymentMethodsPage" */ '../containers/PaymentMethodsPage/PaymentMethodsPage'));
 const PrivacyPolicyPage = loadable(() => import(/* webpackChunkName: "PrivacyPolicyPage" */ '../containers/PrivacyPolicyPage/PrivacyPolicyPage'));
+const FaqPage = loadable(() => import(/* webpackChunkName: "FaqPage" */ '../containers/FaqPage/FaqPage'));
+const ContactPage = loadable(() => import(/* webpackChunkName: "ContactPage" */ '../containers/ContactPage/ContactPage'));
+const HowItWorksPage = loadable(() => import(/* webpackChunkName: "HowItWorksPage" */ '../containers/HowItWorksPage/HowItWorksPage'));
 const ProfilePage = loadable(() => import(/* webpackChunkName: "ProfilePage" */ '../containers/ProfilePage/ProfilePage'));
 const ProfileSettingsPage = loadable(() => import(/* webpackChunkName: "ProfileSettingsPage" */ '../containers/ProfileSettingsPage/ProfileSettingsPage'));
 const RequestQuotePage = loadable(() => import(/* webpackChunkName: "RequestQuotePage" */ '../containers/RequestQuotePage/RequestQuotePage'));
@@ -164,18 +170,34 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
     {
       path: '/l/new',
       name: 'NewListingPage',
-      auth: true,
-      component: () => (
+      // Deliberately not auth-gated (see EditListingPage's own route below):
+      // OmniRent's "List First, Sign Up Later" flow lets a provider start
+      // the wizard's Basics step (title/category/photos) before creating an
+      // account - EditListingPage.js itself enforces auth for every OTHER
+      // case (editing an existing draft/listing).
+      component: ({ location }) => (
         <NamedRedirect
           name="EditListingPage"
-          params={{ slug: draftSlug, id: draftId, type: 'new', tab: 'details' }}
+          // OmniRent only has one listing type (default-booking), whose
+          // wizard now starts on 'basics' instead of 'details' - see
+          // EditListingWizard.js's tabsForListingType.
+          params={{ slug: draftSlug, id: draftId, type: 'new', tab: 'basics' }}
+          // Forwarded as-is: e.g. ?title=... from the landing page's
+          // "Ik wil verhuren" quick-start prompt, read by
+          // EditListingBasicsPanel.js's getInitialValues as a fallback
+          // initial title (same mechanism already used for ?listingType=).
+          search={location.search}
         />
       ),
     },
     {
       path: '/l/:slug/:id/:type/:tab',
       name: 'EditListingPage',
-      auth: true,
+      // Not auth-gated at the route level (see the "List First, Sign Up
+      // Later" comment on NewListingPage above) - EditListingPage.js itself
+      // redirects to auth for every case except brand-new listing creation
+      // (params.type === 'new'), which is the only one anonymous visitors
+      // are allowed to reach.
       component: EditListingPage,
       loadData: pageDataLoadingAPI.EditListingPage.loadData,
       prioritizeLibraryLoading: {
@@ -266,6 +288,30 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/recover-password',
       name: 'PasswordRecoveryPage',
       component: PasswordRecoveryPage,
+    },
+    {
+      path: '/favorites',
+      name: 'FavoriteListingsPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: FavoriteListingsPage,
+      loadData: pageDataLoadingAPI.FavoriteListingsPage.loadData,
+    },
+    {
+      path: '/balance',
+      name: 'BalancePage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: BalancePage,
+      loadData: pageDataLoadingAPI.BalancePage.loadData,
+    },
+    {
+      path: '/referral',
+      name: 'ReferralPage',
+      auth: true,
+      authPage: 'LoginPage',
+      component: ReferralPage,
+      loadData: pageDataLoadingAPI.ReferralPage.loadData,
     },
     {
       path: '/inbox',
@@ -397,6 +443,21 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       name: 'PrivacyPolicyPage',
       component: PrivacyPolicyPage,
       loadData: pageDataLoadingAPI.PrivacyPolicyPage.loadData,
+    },
+    {
+      path: '/faq',
+      name: 'FaqPage',
+      component: FaqPage,
+    },
+    {
+      path: '/contact',
+      name: 'ContactPage',
+      component: ContactPage,
+    },
+    {
+      path: '/hoe-het-werkt',
+      name: 'HowItWorksPage',
+      component: HowItWorksPage,
     },
     {
       path: '/styleguide',

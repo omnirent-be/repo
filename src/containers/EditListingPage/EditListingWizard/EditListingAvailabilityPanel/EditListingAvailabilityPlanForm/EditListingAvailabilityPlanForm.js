@@ -95,6 +95,7 @@ const EditListingAvailabilityPlanForm = props => {
           unitType,
           fetchErrors,
           values,
+          defaultSeats,
         } = fieldRenderProps;
 
         const classes = classNames(rootClassName || css.root, className);
@@ -144,6 +145,7 @@ const EditListingAvailabilityPlanForm = props => {
                     values={values}
                     formApi={formApi}
                     intl={intl}
+                    defaultSeats={defaultSeats}
                   />
                 );
               })}

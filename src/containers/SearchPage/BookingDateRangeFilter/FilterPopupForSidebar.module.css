@@ -79,17 +79,25 @@
 
 .popup {
   /* By default hide the content */
-  display: block;
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
+  display: none;
 
-  /* Position */
-  position: absolute;
-  z-index: var(--zIndexPopup);
+  /* Position: in-flow, not an absolutely-positioned overlay - this is the
+     sidebar's only default-open filter, so floating it would cover every
+     filter below (Prijs, Overdrachtsmethode, Locatie) instead of pushing
+     them down. */
+  position: static;
 
   /* Layout */
-  min-width: 300px;
+  width: 100%;
+  max-width: 100%;
+  /* The calendar grid inside (DateRangeController) has its own intrinsic
+     minimum width (~274px for 7 day-columns) that doesn't shrink - on a
+     narrow sidebar (e.g. right at the 768px breakpoint, where the column
+     is only ~234px) that's wider than this wrapper. Without clipping, it
+     visually bleeds into the search results to the right instead of
+     respecting the sidebar's edge. A horizontal scrollbar at these
+     in-between widths beats overlapping content. */
+  overflow-x: auto;
   margin-top: 7px;
   background-color: var(--colorWhite);
 
@@ -106,7 +114,4 @@
 
 .isOpen {
   display: block;
-  visibility: visible;
-  opacity: 1;
-  pointer-events: auto;
 }

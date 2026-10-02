@@ -1,0 +1,224 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  position: relative;
+  margin-top: -32px;
+  border-radius: 32px 32px 0 0;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--marketplaceColor) 9%, var(--colorWhite)) 0%,
+    color-mix(in srgb, var(--marketplaceColor) 3%, var(--colorWhite)) 55%,
+    var(--colorWhite) 100%
+  );
+  padding: 48px 32px 72px 32px;
+
+  @media (--viewportMedium) {
+    margin-top: -56px;
+    border-radius: 56px 56px 0 0;
+    padding: 64px 32px 96px 32px;
+  }
+}
+
+.inner {
+  max-width: var(--contentMaxWidthPages);
+  margin: 0 auto;
+  text-align: center;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: var(--fontWeightSemiBold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--marketplaceColor);
+}
+
+.heading {
+  margin: 10px 0 12px 0;
+}
+
+.intro {
+  margin: 0 auto 48px auto;
+  max-width: 54ch;
+  color: var(--colorGrey600);
+  font-size: 16px;
+  line-height: 1.6;
+
+  @media (--viewportMedium) {
+    margin-bottom: 56px;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  text-align: left;
+
+  @media (--viewportLarge) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+
+.card {
+  border-radius: 20px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--transitionStyle), box-shadow var(--transitionStyle);
+
+  &:hover {
+    transform: translateY(-4px);
+  }
+}
+
+.cardRent {
+  background-color: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+
+  &:hover {
+    box-shadow: 0 20px 36px rgba(36, 42, 30, 0.1);
+  }
+}
+
+.cardList {
+  background-color: color-mix(in srgb, var(--marketplaceColor) 6%, var(--colorWhite));
+  border: 1px solid color-mix(in srgb, var(--marketplaceColor) 16%, transparent);
+
+  &:hover {
+    box-shadow: 0 20px 36px rgba(23, 76, 79, 0.14);
+  }
+}
+
+.cardEyebrow {
+  font-size: 12px;
+  font-weight: var(--fontWeightSemiBold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--marketplaceColor);
+}
+
+.cardHeading {
+  composes: h3 from global;
+  margin: 6px 0 24px 0;
+  color: var(--colorGrey700);
+}
+
+.steps {
+  list-style: none;
+  margin: 0 0 28px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.stepIcon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--colorWhite);
+  box-shadow: var(--boxShadowLight);
+
+  /* IconDate (the calendar icon) defaults to a light grey fill, which reads
+     much fainter than the other teal step icons here - override it to
+     match. The extra specificity (two classes) guarantees this wins over
+     IconDate's own single-class default regardless of CSS module load
+     order. No-op for icons whose own color comes from an inner element. */
+  & .stepIconSvg {
+    fill: var(--marketplaceColor);
+  }
+}
+
+.stepIconSvg {
+  width: 18px;
+  height: 18px;
+}
+
+.stepBody {
+  flex: 1 1 0;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 8px;
+  row-gap: 2px;
+}
+
+.stepNumber {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+  font-size: 10px;
+  font-weight: var(--fontWeightBold);
+}
+
+.stepTitle {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 15px;
+  color: var(--colorGrey700);
+}
+
+.stepText {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--colorGrey600);
+}
+
+.cardCta {
+  margin-top: auto;
+  align-self: flex-start;
+  display: inline-block;
+  padding: 11px 24px;
+  border-radius: 999px;
+  font-weight: var(--fontWeightSemiBold);
+  font-size: 14px;
+}
+
+.cardRent .cardCta {
+  background-color: var(--colorGrey50);
+  color: var(--colorGrey700);
+
+  &:hover {
+    background-color: var(--colorGrey100);
+    text-decoration: none;
+  }
+}
+
+.cardList .cardCta {
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+
+  &:hover {
+    background-color: var(--marketplaceColorLight);
+    color: var(--colorWhite);
+    text-decoration: none;
+  }
+}

@@ -10,6 +10,7 @@ import {
   propTypes,
 } from '../../../../util/types';
 import { displayDeliveryPickup, displayDeliveryShipping } from '../../../../util/configHelpers';
+import { isBookingProcessAlias, isNegotiationProcessAlias } from '../../../../transactions/transaction';
 import { types as sdkTypes } from '../../../../util/sdkLoader';
 
 // Import shared components
@@ -21,26 +22,56 @@ import css from './EditListingDeliveryPanel.module.css';
 
 const { Money } = sdkTypes;
 
+// Coarse Gent-area bucket for the "Locatie" search filter (see the
+// injected 'region' listing field in configHelpers.js's mergeListingConfig)
+// - Belgian postal codes in province East-Flanders all start with '9',
+// and Gent city + its annexed districts (Gentbrugge, Sint-Amandsberg,
+// Wondelgem, ...) all fall in the 9000-9052 range.
+const regionFromPostalCode = postalCode => {
+  if (!postalCode) {
+    return null;
+  }
+  if (postalCode === '9000') {
+    return 'gent-centrum';
+  }
+  const code = Number.parseInt(postalCode, 10);
+  if (Number.isNaN(code)) {
+    return null;
+  }
+  if (code >= 9000 && code <= 9052) {
+    return 'groot-gent';
+  }
+  return code >= 9000 && code <= 9999 ? 'regio-oost-vlaanderen' : null;
+};
+
 const getInitialValues = props => {
   const { listing, listingTypes, marketplaceCurrency } = props;
   const { geolocation, publicData, price } = listing?.attributes || {};
 
-  const listingType = listing?.attributes?.publicData?.listingType;
+  const listingType = publicData?.listingType;
   const listingTypeConfig = listingTypes.find(conf => conf.listingType === listingType);
-  const displayShipping = displayDeliveryShipping(listingTypeConfig);
-  const displayPickup = displayDeliveryPickup(listingTypeConfig);
+  // Same reasoning as EditListingDeliveryForm.js: booking- and
+  // negotiation-type listings always offer both delivery methods
+  // regardless of Console's defaultListingFields.pickup/shipping (off for
+  // both daily-rental and request-quote), while other listing types keep
+  // respecting those Console flags.
+  const isBooking = isBookingProcessAlias(listingTypeConfig?.transactionType?.alias);
+  const isNegotiation = isNegotiationProcessAlias(listingTypeConfig?.transactionType?.alias);
+  const displayShipping = isBooking || isNegotiation || displayDeliveryShipping(listingTypeConfig);
+  const displayPickup = isBooking || isNegotiation || displayDeliveryPickup(listingTypeConfig);
   const displayMultipleDelivery = displayShipping && displayPickup;
 
   // Only render current search if full place object is available in the URL params
   // TODO bounds are missing - those need to be queried directly from Google Places
   const locationFieldsPresent = publicData?.location?.address && geolocation;
   const location = publicData?.location || {};
-  const { address, building } = location;
+  const { address, building, postalCode, city, neighborhood } = location;
   const {
     shippingEnabled,
     pickupEnabled,
     shippingPriceInSubunitsOneItem,
     shippingPriceInSubunitsAdditionalItems,
+    deliveryPricePerKmInSubunits,
   } = publicData;
   const deliveryOptions = [];
 
@@ -60,6 +91,8 @@ const getInitialValues = props => {
     shippingPriceInSubunitsAdditionalItems != null
       ? new Money(shippingPriceInSubunitsAdditionalItems, currency)
       : null;
+  const pricePerKmAsMoney =
+    deliveryPricePerKmInSubunits != null ? new Money(deliveryPricePerKmInSubunits, currency) : null;
 
   // Initial values for the form
   return {
@@ -67,12 +100,21 @@ const getInitialValues = props => {
     location: locationFieldsPresent
       ? {
           search: address,
-          selectedPlace: { address, origin: geolocation },
+          // postalCode/city/neighborhood are carried along here too (not
+          // just set on submit) so that resubmitting this form without
+          // touching the address field doesn't wipe the previously saved
+          // postcode/wijk label - see onSubmit below and
+          // GeocoderMapbox.js's extractLocationLabelParts.
+          selectedPlace: { address, origin: geolocation, postalCode, city, neighborhood },
         }
       : { search: undefined, selectedPlace: undefined },
     deliveryOptions,
     shippingPriceInSubunitsOneItem: shippingOneItemAsMoney,
     shippingPriceInSubunitsAdditionalItems: shippingAdditionalItemsAsMoney,
+    deliveryPricePerKmInSubunits: pricePerKmAsMoney,
+    // Not read from (or saved to) publicData anywhere - see
+    // EditListingDeliveryForm.js's bookingMode radio buttons.
+    bookingMode: 'request',
   };
 };
 
@@ -159,6 +201,7 @@ const EditListingDeliveryPanel = props => {
               location,
               shippingPriceInSubunitsOneItem,
               shippingPriceInSubunitsAdditionalItems,
+              deliveryPricePerKmInSubunits,
               deliveryOptions,
             } = values;
 
@@ -166,9 +209,22 @@ const EditListingDeliveryPanel = props => {
             const pickupEnabled = deliveryOptions.includes('pickup');
             const address = location?.selectedPlace?.address || null;
             const origin = location?.selectedPlace?.origin || null;
+            const postalCode = location?.selectedPlace?.postalCode || null;
+            const city = location?.selectedPlace?.city || null;
+            const neighborhood = location?.selectedPlace?.neighborhood || null;
 
             const pickupDataMaybe =
-              pickupEnabled && address ? { location: { address, building } } : {};
+              pickupEnabled && address
+                ? { location: { address, building, postalCode, city, neighborhood } }
+                : {};
+
+            // Search filters: see the injected 'deliveryOptions' and
+            // 'region' listing fields in configHelpers.js's
+            // mergeListingConfig - region can only be derived when we
+            // actually have a postal code, i.e. pickup is enabled.
+            const regionMaybe = pickupEnabled
+              ? { region: regionFromPostalCode(postalCode) }
+              : {};
 
             const shippingDataMaybe =
               shippingEnabled && shippingPriceInSubunitsOneItem != null
@@ -181,6 +237,16 @@ const EditListingDeliveryPanel = props => {
                   }
                 : {};
 
+            // Optional: takes priority over the flat shipping price above
+            // when set (see getDeliveryLineItems in server/api-util/lineItems.js) -
+            // needs the listing's own geolocation (from the pickup address
+            // above) to actually compute a distance, so it's a no-op
+            // without one.
+            const pricePerKmDataMaybe =
+              shippingEnabled && deliveryPricePerKmInSubunits != null
+                ? { deliveryPricePerKmInSubunits: deliveryPricePerKmInSubunits.amount }
+                : {};
+
             // New values for listing attributes
             const updateValues = {
               geolocation: origin,
@@ -189,6 +255,9 @@ const EditListingDeliveryPanel = props => {
                 ...pickupDataMaybe,
                 shippingEnabled,
                 ...shippingDataMaybe,
+                ...pricePerKmDataMaybe,
+                deliveryOptions,
+                ...regionMaybe,
               },
             };
 
@@ -198,10 +267,15 @@ const EditListingDeliveryPanel = props => {
             setState({
               initialValues: {
                 building,
-                location: { search: address, selectedPlace: { address, origin } },
+                location: {
+                  search: address,
+                  selectedPlace: { address, origin, postalCode, city, neighborhood },
+                },
                 shippingPriceInSubunitsOneItem,
                 shippingPriceInSubunitsAdditionalItems,
+                deliveryPricePerKmInSubunits,
                 deliveryOptions,
+                bookingMode: 'request',
               },
             });
             onSubmit(updateValues);

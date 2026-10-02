@@ -258,7 +258,14 @@ export const ManageListingCard = props => {
           <NamedLink
             className={css.manageLink}
             name="EditListingPage"
-            params={{ id, slug, type: editListingLinkType, tab: 'details' }}
+            params={{
+              id,
+              slug,
+              type: editListingLinkType,
+              // default-booking listings start their wizard on 'basics'
+              // instead of 'details' - see EditListingWizard.js.
+              tab: isBookingProcessAlias(transactionProcessAlias) ? 'basics' : 'details',
+            }}
             ariaLabel={intl.formatMessage(
               { id: 'ManageListingCard.screenreader.editListing' },
               { title }

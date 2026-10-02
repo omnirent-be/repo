@@ -37,9 +37,23 @@
 }
 
 .highlight {
-  color: var(--marketplaceColor);
+  align-self: center;
+  height: auto;
+  padding: 10px 20px;
+  margin: 0 4px;
+  color: var(--colorWhite);
+  background-color: var(--marketplaceColor);
+  border-radius: 999px;
+
   &:hover {
-    color: var(--marketplaceColorDark);
+    color: var(--colorWhite);
+    background-color: var(--marketplaceColorLight);
+    border-bottom: 0px solid;
+    border-radius: 999px;
+  }
+
+  & .priorityLinkLabel {
+    margin: 0;
   }
 }
 

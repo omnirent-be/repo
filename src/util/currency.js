@@ -256,6 +256,31 @@ export const formatMoney = (intl, value) => {
 };
 
 /**
+ * Format the given money to a string without decimals, e.g. "€ 100,00" -> "€ 100".
+ * Used on listing cards, where a prominent, glanceable price matters more
+ * than exact cents - full precision (and real cents, when a price has
+ * them) is still shown everywhere else via formatMoney.
+ *
+ * @param {Object} intl
+ * @param {Money} value
+ *
+ * @return {String} formatted money value, no fraction digits
+ */
+export const formatMoneyWhole = (intl, value) => {
+  if (!(value instanceof Money)) {
+    throw new Error('Value must be a Money type');
+  }
+  const valueAsNumber = convertMoneyToNumber(value);
+  const numberFormatOptions = {
+    ...getCurrencyFormatting(value.currency, {}),
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  };
+
+  return intl.formatNumber(valueAsNumber, numberFormatOptions);
+};
+
+/**
  * Format the given major-unit string value as currency. E.g. "10" -> "$10".
  *
  * NOTE: This function should not be used with listing prices or other Money type.

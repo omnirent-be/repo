@@ -78,6 +78,39 @@
   }
 }
 
+.optionalText {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey400);
+  margin-top: -16px;
+  margin-bottom: 24px;
+}
+
+.sectionContainer {
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  composes: h4 from global;
+  color: var(--colorGrey700);
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.bookingModeRadio {
+  margin-bottom: 8px;
+}
+
+.bookingModeDisabled {
+  opacity: 0.5;
+}
+
+.bookingModeHint {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey400);
+  margin-top: 0;
+  margin-bottom: 20px;
+}
+
 .submitButton {
   margin-top: auto;
   margin-bottom: 24px;

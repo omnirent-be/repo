@@ -52,6 +52,8 @@ import {
 // Import modules from this directory
 import EditListingWizardTab, {
   DETAILS,
+  BASICS,
+  RENTAL_DETAILS,
   PRICING,
   PRICING_AND_STOCK,
   DELIVERY,
@@ -61,11 +63,22 @@ import EditListingWizardTab, {
   PHOTOS,
   STYLE,
 } from './EditListingWizardTab';
+import EditListingProgressBar from './EditListingProgressBar';
+import ListingHealthScoreBar from './ListingHealthScoreBar';
 import css from './EditListingWizard.module.css';
 
-// This is the initial tab on editlisting wizard.
+// This is the initial tab on editlisting wizard, shown before a listing
+// type has been picked yet (OmniRent has 2: daily-rental/booking and
+// request-quote/negotiation, see Console). BASICS (not DETAILS) now plays
+// this role, since it's the tab that creates the draft and - like the old
+// DETAILS tab - includes the listing-type selector (see
+// EditListingBasicsForm.js's FieldSelectListingType). Once a type is
+// picked and the draft is saved, the wizard re-resolves the real tab list
+// for that type via tabsForListingType and continues from there - for a
+// non-booking type this means one extra redirect hop back through here,
+// landing on that process's own first tab (e.g. 'details'), not a dead end.
 // When listing type is known, other tabs are checked from _tabsForListingType_ function.
-const TABS_DETAILS_ONLY = [DETAILS];
+const TABS_DETAILS_ONLY = [BASICS];
 
 // Tabs are horizontal in small screens
 const MAX_HORIZONTAL_NAV_SCREEN_WIDTH = 1023;
@@ -85,10 +98,23 @@ const STRIPE_ONBOARDING_RETURN_URL_FAILURE = 'failure';
  * @returns {Array<string>} - The allowed tabs for the given process and listing type configuration
  */
 const tabsForListingType = (processName, listingTypeConfig) => {
-  const locationMaybe = displayLocation(listingTypeConfig) ? [LOCATION] : [];
-  const pricingMaybe = displayPrice(listingTypeConfig) ? [PRICING] : [];
+  // OmniRent's "request-quote" listing type has price/location/pickup/
+  // shipping all switched off in Console's defaultListingFields - stale
+  // config left over from before this was a real, payment-taking
+  // negotiation process (quotes were presumably meant to carry their own
+  // price/location entirely via chat once). It's actively used today (see
+  // the Offerte-Engine: QuoteSystem.js, MakeOfferPage.js, the "Vanaf-prijs"
+  // pricing step), so those Console flags would otherwise make the
+  // Pricing/Delivery tabs disappear from the wizard entirely - same failure
+  // pattern already fixed for default-booking's daily-rental listing type,
+  // see EditListingDeliveryForm.js/Panel.js's isBooking-aware bypass.
+  const isNegotiation = processName === 'default-negotiation';
+  const locationMaybe = !isNegotiation && displayLocation(listingTypeConfig) ? [LOCATION] : [];
+  const pricingMaybe = isNegotiation || displayPrice(listingTypeConfig) ? [PRICING] : [];
   const deliveryMaybe =
-    displayDeliveryPickup(listingTypeConfig) || displayDeliveryShipping(listingTypeConfig)
+    isNegotiation ||
+    displayDeliveryPickup(listingTypeConfig) ||
+    displayDeliveryShipping(listingTypeConfig)
       ? [DELIVERY]
       : [];
   const styleOrPhotosTab = requireListingImage(listingTypeConfig) ? [PHOTOS] : [STYLE];
@@ -101,10 +127,32 @@ const tabsForListingType = (processName, listingTypeConfig) => {
   //         Details tab asks for "title" and is therefore the first tab in the wizard flow.
   // Note 4: Ensure that the last panel contains the messaging for not-yet-verified files so
   //         that it is clear to the user why the 'publish' button is disabled during verification
+  //
+  // default-booking uses a dedicated 4-step flow (see the plan at
+  // .claude/plans/sparkling-pondering-spark.md): BASICS (photos + title +
+  // category, replaces the old separate DETAILS-first/PHOTOS-last tabs and
+  // is the one that creates the draft), RENTAL_DETAILS (description,
+  // accessories, replacement value, condition), PRICING, AVAILABILITY,
+  // then DELIVERY last. LOCATION is deliberately dropped for this process:
+  // EditListingDeliveryForm.js already collects a full pickup address
+  // (unrestricted, unlike EditListingLocationForm.js's city-only
+  // placeTypes) and writes the same publicData.location/geolocation
+  // fields - keeping both tabs meant two competing forms silently
+  // overwriting each other's address depending on submit order. DELIVERY
+  // must stay the literal last tab, not AVAILABILITY: onCompleteEditListingWizardTab
+  // explicitly skips the "is this the last tab, publish now" check for
+  // AVAILABILITY (its own submission happens inside a modal, see
+  // EditListingWizardTab.js), so it can never safely be last.
   const tabs = {
-    ['default-booking']: [DETAILS, ...locationMaybe, PRICING, AVAILABILITY, ...styleOrPhotosTab],
+    ['default-booking']: [BASICS, RENTAL_DETAILS, PRICING, AVAILABILITY, DELIVERY],
     ['default-purchase']: [DETAILS, PRICING_AND_STOCK, ...deliveryMaybe, ...styleOrPhotosTab],
-    ['default-negotiation']: [DETAILS, ...locationMaybe, ...pricingMaybe, ...styleOrPhotosTab],
+    ['default-negotiation']: [
+      DETAILS,
+      ...locationMaybe,
+      ...pricingMaybe,
+      ...deliveryMaybe,
+      ...styleOrPhotosTab,
+    ],
     ['default-inquiry']: [DETAILS, ...locationMaybe, ...pricingMaybe, ...styleOrPhotosTab],
     ['default-download']: [DETAILS, ...locationMaybe, FILES, ...pricingMaybe, ...styleOrPhotosTab],
   };
@@ -129,6 +177,12 @@ const tabLabelAndSubmit = (intl, tab, isNewListingFlow, isPriceDisabled, process
   if (tab === DETAILS) {
     labelKey = 'EditListingWizard.tabLabelDetails';
     submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.saveDetails`;
+  } else if (tab === BASICS) {
+    labelKey = 'EditListingWizard.tabLabelBasics';
+    submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.saveBasics`;
+  } else if (tab === RENTAL_DETAILS) {
+    labelKey = 'EditListingWizard.tabLabelRentalDetails';
+    submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.saveRentalDetails`;
   } else if (tab === PRICING) {
     labelKey = 'EditListingWizard.tabLabelPricing';
     submitButtonKey = `EditListingWizard.${processNameString}${newOrEdit}.savePricing`;
@@ -269,6 +323,10 @@ const tabCompleted = (tab, listing, config, options = {}) => {
         unitType &&
         hasValidListingFieldsInExtendedData(publicData, privateData, config)
       );
+    case BASICS:
+      return !!(title && listingType && transactionProcessAlias && unitType && images?.length > 0);
+    case RENTAL_DETAILS:
+      return !!description;
     case PRICING:
       return !!price;
     case PRICING_AND_STOCK:
@@ -586,12 +644,25 @@ class EditListingWizard extends Component {
       ? validListingTypes[0].transactionType.process
       : INQUIRY_PROCESS_NAME;
 
-    const hasListingTypeSelected =
-      existingListingType || this.state.selectedListingType || validListingTypes.length === 1;
+    // Deliberately not treating this.state.selectedListingType as "selected"
+    // for the tab LIST below: that flips true the instant the BASICS
+    // dropdown is picked, before any draft exists. For non-booking
+    // processes (e.g. negotiation/"Offerte"), tabsForListingType drops
+    // BASICS from the tab list - so if
+    // `tabs` switched right away, the redirect guard below would find the
+    // current URL tab ('basics') no longer valid and bounce the user back
+    // to that process's own first tab mid-pick, discarding the just-chosen
+    // dropdown value even though the wizard's own state kept it (visible as
+    // an unexplained reset/redirect while selecting "Offerte"). So the tab
+    // LIST only switches once the listing type is actually persisted -
+    // matching the "one extra redirect hop" already anticipated in the
+    // TABS_DETAILS_ONLY comment above, which happens right after the draft
+    // is submitted, not while still choosing a type.
+    const hasPersistedListingType = !!existingListingType || validListingTypes.length === 1;
 
     // For oudated draft listing, we don't show other tabs but the "details"
     const tabs =
-      isNewListingFlow && (invalidExistingListingType || !hasListingTypeSelected)
+      isNewListingFlow && (invalidExistingListingType || !hasPersistedListingType)
         ? TABS_DETAILS_ONLY
         : tabsForListingType(processName, listingTypeConfig);
 
@@ -703,8 +774,26 @@ class EditListingWizard extends Component {
       return <NamedRedirect name="EditListingPage" params={pathParams} />;
     }
 
+    const currentStepIndex = tabs.indexOf(selectedTab) + 1;
+    const showStepIndicator = isNewListingFlow && currentStepIndex > 0 && tabs.length > 1;
+    // The new 4-step visual progress bar only replaces the indicator for
+    // default-booking (OmniRent's actual listing type) - every other
+    // process keeps the plain text indicator unchanged.
+    const showProgressBar = showStepIndicator && processName === 'default-booking';
+
     return (
       <div className={classes}>
+        {showProgressBar ? <ListingHealthScoreBar listing={listing} /> : null}
+        {showProgressBar ? (
+          <EditListingProgressBar selectedTab={selectedTab} />
+        ) : showStepIndicator ? (
+          <p className={css.stepIndicator}>
+            <FormattedMessage
+              id="EditListingWizard.stepIndicator"
+              values={{ current: currentStepIndex, total: tabs.length }}
+            />
+          </p>
+        ) : null}
         <Tabs
           rootClassName={css.tabsContainer}
           navRootClassName={css.nav}

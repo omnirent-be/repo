@@ -38,6 +38,13 @@
   flex-shrink: 0;
 }
 
+.categorySuggestionHint {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey400);
+  margin-top: -16px;
+  margin-bottom: 24px;
+}
+
 .listingTypeSelect {
   margin-bottom: 24px;
 

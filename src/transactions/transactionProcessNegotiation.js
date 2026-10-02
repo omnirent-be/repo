@@ -103,6 +103,26 @@ export const transitions = {
   EXPIRE_CUSTOMER_REVIEW_PERIOD: 'transition/expire-customer-review-period',
   EXPIRE_PROVIDER_REVIEW_PERIOD: 'transition/expire-provider-review-period',
   EXPIRE_REVIEW_PERIOD: 'transition/expire-review-period',
+
+  // Security deposit ("borg"). The actual hold/refund/payout happens on a
+  // separate, linked deposit-hold transaction (see server/api/deposit/*.js
+  // and ext/transaction-processes/deposit-hold). These self-loop
+  // transitions only mirror that outcome onto protectedData here, so the
+  // deposit's status is visible on the transaction itself. Since the
+  // provider may release or claim the deposit any time after the offer is
+  // accepted (not necessarily while still "offer-accepted"), the
+  // release/claim transitions are duplicated per reachable state - see
+  // process.edn and transactionProcessBooking.js for the same pattern.
+  LINK_DEPOSIT_PAYMENT: 'transition/link-deposit-payment',
+  CONFIRM_DEPOSIT_HELD: 'transition/confirm-deposit-held',
+  RECORD_DEPOSIT_RELEASE: 'transition/record-deposit-release',
+  RECORD_DEPOSIT_CLAIM: 'transition/record-deposit-claim',
+  LINK_DEPOSIT_PAYMENT_DELIVERED: 'transition/link-deposit-payment-delivered',
+  CONFIRM_DEPOSIT_HELD_DELIVERED: 'transition/confirm-deposit-held-delivered',
+  RECORD_DEPOSIT_RELEASE_DELIVERED: 'transition/record-deposit-release-delivered',
+  RECORD_DEPOSIT_CLAIM_DELIVERED: 'transition/record-deposit-claim-delivered',
+  RECORD_DEPOSIT_RELEASE_REVIEWED: 'transition/record-deposit-release-reviewed',
+  RECORD_DEPOSIT_CLAIM_REVIEWED: 'transition/record-deposit-claim-reviewed',
 };
 
 /**
@@ -220,6 +240,10 @@ export const graph = {
         [transitions.OPERATOR_CANCEL]: states.CANCELED,
         [transitions.DELIVER]: states.DELIVERED,
         [transitions.OPERATOR_MARK_DELIVERED]: states.DELIVERED,
+        [transitions.LINK_DEPOSIT_PAYMENT]: states.OFFER_ACCEPTED,
+        [transitions.CONFIRM_DEPOSIT_HELD]: states.OFFER_ACCEPTED,
+        [transitions.RECORD_DEPOSIT_RELEASE]: states.OFFER_ACCEPTED,
+        [transitions.RECORD_DEPOSIT_CLAIM]: states.OFFER_ACCEPTED,
       },
     },
     [states.DELIVERED]: {
@@ -230,6 +254,10 @@ export const graph = {
         [transitions.AUTO_ACCEPT_DELIVERABLE]: states.COMPLETED,
         [transitions.OPERATOR_ACCEPT_DELIVERABLE]: states.COMPLETED,
         [transitions.OPERATOR_CANCEL_FROM_DELIVERED]: states.CANCELED,
+        [transitions.LINK_DEPOSIT_PAYMENT_DELIVERED]: states.DELIVERED,
+        [transitions.CONFIRM_DEPOSIT_HELD_DELIVERED]: states.DELIVERED,
+        [transitions.RECORD_DEPOSIT_RELEASE_DELIVERED]: states.DELIVERED,
+        [transitions.RECORD_DEPOSIT_CLAIM_DELIVERED]: states.DELIVERED,
       },
     },
     [states.CHANGES_REQUESTED]: {
@@ -259,7 +287,12 @@ export const graph = {
         [transitions.EXPIRE_CUSTOMER_REVIEW_PERIOD]: states.REVIEWED,
       },
     },
-    [states.REVIEWED]: { type: 'final' },
+    [states.REVIEWED]: {
+      on: {
+        [transitions.RECORD_DEPOSIT_RELEASE_REVIEWED]: states.REVIEWED,
+        [transitions.RECORD_DEPOSIT_CLAIM_REVIEWED]: states.REVIEWED,
+      },
+    },
     [states.OFFER_REJECTED]: { type: 'final' },
     [states.CANCELED]: { type: 'final' },
   },
@@ -443,6 +476,14 @@ export const isRelevantPastTransition = transition => {
     transitions.REVIEW_2_BY_PROVIDER,
     transitions.REVIEW_1_BY_CUSTOMER,
     transitions.REVIEW_2_BY_CUSTOMER,
+    transitions.CONFIRM_DEPOSIT_HELD,
+    transitions.CONFIRM_DEPOSIT_HELD_DELIVERED,
+    transitions.RECORD_DEPOSIT_RELEASE,
+    transitions.RECORD_DEPOSIT_RELEASE_DELIVERED,
+    transitions.RECORD_DEPOSIT_RELEASE_REVIEWED,
+    transitions.RECORD_DEPOSIT_CLAIM,
+    transitions.RECORD_DEPOSIT_CLAIM_DELIVERED,
+    transitions.RECORD_DEPOSIT_CLAIM_REVIEWED,
   ].includes(transition);
 };
 

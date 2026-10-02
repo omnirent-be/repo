@@ -40,6 +40,14 @@
    :to :state/request-rejected,
    :actor :actor.role/operator,
    :actions []}
+  {:name :transition/expire-quote-request,
+   :from :state/quote-requested,
+   :to :state/request-rejected,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/quote-requested]}
+     {:fn/period ["P1D"]}]},
+   :actions []}
   {:name :transition/make-offer-after-inquiry,
    :from :state/inquiry,
    :to :state/offer-pending,
@@ -302,7 +310,65 @@
    {:fn/plus
     [{:fn/timepoint [:time/first-entered-state :state/completed]}
      {:fn/period ["P7D"]}]},
-   :actions [{:name :action/publish-reviews}]}],
+   :actions [{:name :action/publish-reviews}]}
+  ;; Security deposit hold, mirroring default-booking's own deposit
+  ;; transitions exactly (see that process.edn) - these are all self-loops
+  ;; that only record status on THIS transaction via update-protected-data.
+  ;; The actual Stripe hold/release/payout happens on a separate, linked
+  ;; "deposit-hold" transaction (see server/api/deposit/*.js), initiated
+  ;; from listing.publicData.depositInSubunits - the same field the booking
+  ;; flow already uses, now also set by EditListingPricingForm.js for
+  ;; negotiation-process listings.
+  {:name :transition/link-deposit-payment,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/offer-accepted,
+   :to :state/offer-accepted}
+  {:name :transition/confirm-deposit-held,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/offer-accepted,
+   :to :state/offer-accepted}
+  {:name :transition/record-deposit-release,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/offer-accepted,
+   :to :state/offer-accepted}
+  {:name :transition/record-deposit-claim,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/offer-accepted,
+   :to :state/offer-accepted}
+  {:name :transition/link-deposit-payment-delivered,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/delivered,
+   :to :state/delivered}
+  {:name :transition/confirm-deposit-held-delivered,
+   :actor :actor.role/customer,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/delivered,
+   :to :state/delivered}
+  {:name :transition/record-deposit-release-delivered,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/delivered,
+   :to :state/delivered}
+  {:name :transition/record-deposit-claim-delivered,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/delivered,
+   :to :state/delivered}
+  {:name :transition/record-deposit-release-reviewed,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/reviewed,
+   :to :state/reviewed}
+  {:name :transition/record-deposit-claim-reviewed,
+   :actor :actor.role/provider,
+   :actions [{:name :action/update-protected-data}],
+   :from :state/reviewed,
+   :to :state/reviewed}],
  :notifications
  [{:name :notification/new-quote-request,
    :on :transition/request-quote,
@@ -336,6 +402,14 @@
    :on :transition/operator-reject-request,
    :to :actor.role/provider,
    :template :negotiation-operator-rejected-request}
+  {:name :notification/expired-quote-request-customer,
+   :on :transition/expire-quote-request,
+   :to :actor.role/customer,
+   :template :negotiation-expired-quote-request-customer}
+  {:name :notification/expired-quote-request-provider,
+   :on :transition/expire-quote-request,
+   :to :actor.role/provider,
+   :template :negotiation-expired-quote-request-provider}
   {:name :notification/operator-rejected-offer-provider,
    :on :transition/operator-reject-offer,
    :to :actor.role/provider,

@@ -1,7 +1,7 @@
 import { subUnitDivisors } from '../config/settingsCurrency';
 import { getSupportedProcessesInfo, isBookingProcessAlias } from '../transactions/transaction';
 import { sanitizeText } from './sanitize';
-import { EXTENDED_DATA_SCHEMA_TYPES } from './types';
+import { EXTENDED_DATA_SCHEMA_TYPES, AVAILABILITY_MULTIPLE_SEATS } from './types';
 
 const isTestEnvironment = process.env.NODE_ENV === 'test';
 // Generic helpers for validating config values
@@ -167,7 +167,11 @@ const mergeAnalyticsConfig = (hostedAnalyticsConfig, defaultAnalyticsConfig) => 
   const plausibleDomains = joinStrings(plausibleDomainsHosted, plausibleDomainsDefault);
   const plausibleDomainsMaybe = plausibleDomains ? { plausibleDomains } : {};
 
-  return { googleAnalyticsId, ...plausibleDomainsMaybe };
+  // Meta Pixel has no hosted-asset equivalent in Console - it's env-var only.
+  const facebookPixelId = defaultAnalyticsConfig.facebookPixelId;
+  const facebookPixelIdMaybe = facebookPixelId ? { facebookPixelId } : {};
+
+  return { googleAnalyticsId, ...plausibleDomainsMaybe, ...facebookPixelIdMaybe };
 };
 
 ////////////////////
@@ -1017,7 +1021,7 @@ const validUserFields = (userFields, userTypesInUse) => {
 // Validate listing types config //
 ///////////////////////////////////
 
-const validListingTypes = listingTypes => {
+export const validListingTypes = listingTypes => {
   // Check what transaction processes this client app supports
   const supportedProcessesInfo = getSupportedProcessesInfo();
 
@@ -1038,6 +1042,21 @@ const validListingTypes = listingTypes => {
 
     const priceVariationTypeMaybe = isBookingProcessAlias(alias)
       ? { priceVariations: { enabled: priceVariations?.enabled } }
+      : {};
+
+    // Renting out N identical units (chairs, tables, ...) needs Sharetribe's
+    // own "multiple seats" availability/quantity model - the whole feature
+    // (provider seat-count input, renter seats dropdown, per-seat pricing)
+    // already exists in this template's code, gated on
+    // listingTypeConfig.availabilityType === 'multipleSeats'. Console has
+    // this explicitly set to 'oneSeat' for OmniRent's booking-process
+    // listing types (confirmed live, not just unset) and there's no Console
+    // write access this session - so, like the defaultListingFields
+    // overrides elsewhere in this app, this unconditionally forces
+    // 'multipleSeats' for every booking-process listing type rather than
+    // only filling in a gap.
+    const availabilityTypeMaybe = isBookingProcessAlias(alias)
+      ? { availabilityType: AVAILABILITY_MULTIPLE_SEATS }
       : {};
 
     const hasTransactionFields = transactionFields?.length > 0;
@@ -1063,6 +1082,7 @@ const validListingTypes = listingTypes => {
           ...priceVariationTypeMaybe,
           // e.g. stockType, availabilityType, messagingOptions...
           ...restOfListingType,
+          ...availabilityTypeMaybe,
         },
       ];
     }
@@ -1391,9 +1411,69 @@ const mergeListingConfig = (hostedConfig, defaultConfigs, categoriesInUse) => {
 
   const listingTypesInUse = listingTypes.map(lt => `${lt.listingType}`);
 
+  // Two new search filters (pickup/delivery method, and a coarse Gent-area
+  // region) that don't exist as Console-hosted listing fields yet - there's
+  // no Console write access this session, so they're injected here the
+  // same way availabilityType is forced in validListingTypes above. Both
+  // read real publicData already being saved: `deliveryOptions` by
+  // EditListingDeliveryPanel.js's submit handler, `region` derived there
+  // from the pickup address's postal code (see regionFromPostalCode).
+  // Deliberately NOT scoped via listingTypeConfig: SearchPage.shared.js's
+  // pickListingFieldFilters hides listingType-scoped fields entirely until
+  // that exact type is already the active filter, which would make these
+  // invisible on the default /s results (both listing types shown
+  // together). Gated to 'daily-rental' being present at all (OmniRent's
+  // real booking listing type) so generic template test fixtures
+  // (rent-bicycles-daily etc.) never pick these up.
+  const omniRentFiltersMaybe = listingTypesInUse.includes('daily-rental')
+    ? [
+        {
+          key: 'deliveryOptions',
+          scope: 'public',
+          schemaType: 'multi-enum',
+          enumOptions: [
+            { option: 'pickup', label: 'Ophalen bij verhuurder' },
+            { option: 'shipping', label: 'Levering aan huis mogelijk' },
+          ],
+          filterConfig: {
+            indexForSearch: true,
+            showFilter: true,
+            label: 'Overdrachtsmethode',
+            group: 'secondary',
+            filterType: 'SelectMultipleFilter',
+          },
+          showConfig: { label: 'Overdrachtsmethode' },
+          saveConfig: { label: 'Overdrachtsmethode' },
+        },
+        {
+          key: 'region',
+          scope: 'public',
+          schemaType: 'enum',
+          enumOptions: [
+            { option: 'gent-centrum', label: 'Gent Centrum (9000)' },
+            { option: 'groot-gent', label: 'Groot-Gent (< 10 km)' },
+            { option: 'regio-oost-vlaanderen', label: 'Regio Oost-Vlaanderen' },
+          ],
+          filterConfig: {
+            indexForSearch: true,
+            showFilter: true,
+            label: 'Locatie',
+            group: 'secondary',
+            filterType: 'SelectSingleFilter',
+          },
+          showConfig: { label: 'Locatie' },
+          saveConfig: { label: 'Locatie' },
+        },
+      ]
+    : [];
+
   return {
     ...rest,
-    listingFields: validListingFields(listingFields, listingTypesInUse, categoriesInUse),
+    listingFields: validListingFields(
+      [...listingFields, ...omniRentFiltersMaybe],
+      listingTypesInUse,
+      categoriesInUse
+    ),
     listingTypes: validListingTypes(listingTypes),
     enforceValidListingType: defaultConfigs.listing.enforceValidListingType,
   };

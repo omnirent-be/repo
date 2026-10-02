@@ -65,6 +65,45 @@ const getUnitLineItem = lineItems => {
   return unitLineItem;
 };
 
+// Small pills for deposit / extra-day sub-status, shown in addition to the
+// main process state. These read the same protectedData the TransactionPage
+// action buttons use (see TransactionPage.stateDataBooking.js), so the inbox
+// row always agrees with what the detail page would show.
+const getExtraBadges = (tx, transactionRole, isBooking) => {
+  if (!isBooking) {
+    return [];
+  }
+  const isCustomer = transactionRole === TX_TRANSITION_ACTOR_CUSTOMER;
+  const protectedData = tx.attributes?.protectedData || {};
+  const { extraDay, deposit } = protectedData;
+  const depositInSubunits = tx.listing?.attributes?.publicData?.depositInSubunits;
+
+  const badges = [];
+
+  if (extraDay?.status === 'payment_initiated' && isCustomer) {
+    badges.push({ id: 'InboxPage.badge.extraDayResumePayment', tone: 'warning' });
+  } else if (extraDay?.status === 'requested') {
+    badges.push({
+      id: isCustomer ? 'InboxPage.badge.extraDayRequestedCustomer' : 'InboxPage.badge.extraDayRequestedProvider',
+      tone: isCustomer ? 'info' : 'warning',
+    });
+  } else if (extraDay?.status === 'accepted') {
+    badges.push({ id: 'InboxPage.badge.extraDayAccepted', tone: 'success' });
+  }
+
+  if (depositInSubunits && !deposit && isCustomer) {
+    badges.push({ id: 'InboxPage.badge.depositDue', tone: 'warning' });
+  } else if (deposit?.status === 'held') {
+    badges.push({ id: 'InboxPage.badge.depositHeld', tone: 'info' });
+  } else if (deposit?.status === 'released') {
+    badges.push({ id: 'InboxPage.badge.depositReleased', tone: 'success' });
+  } else if (deposit?.status === 'claimed') {
+    badges.push({ id: 'InboxPage.badge.depositClaimed', tone: 'neutral' });
+  }
+
+  return badges;
+};
+
 // Booking data (start & end) are bit different depending on display times and
 // if "end" refers to last day booked or the first exclusive day
 const bookingData = (tx, lineItemUnitType, timeZone) => {
@@ -194,6 +233,8 @@ export const InboxItem = props => {
     [css.stateNoActionNeeded]: !actionNeeded,
   });
 
+  const extraBadges = getExtraBadges(tx, transactionRole, isBooking);
+
   return (
     <div className={css.item}>
       <div className={css.itemAvatar}>
@@ -217,6 +258,18 @@ export const InboxItem = props => {
         {availabilityType == AVAILABILITY_MULTIPLE_SEATS && unitLineItem?.seats ? (
           <div className={css.itemSeats}>
             <FormattedMessage id="InboxPage.seats" values={{ seats: unitLineItem.seats }} />
+          </div>
+        ) : null}
+        {extraBadges.length > 0 ? (
+          <div className={css.itemExtras}>
+            {extraBadges.map(badge => (
+              <span
+                key={badge.id}
+                className={classNames(css.badge, css[`badge${badge.tone[0].toUpperCase()}${badge.tone.slice(1)}`])}
+              >
+                <FormattedMessage id={badge.id} />
+              </span>
+            ))}
           </div>
         ) : null}
         <div className={css.itemState}>

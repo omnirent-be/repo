@@ -5,6 +5,11 @@ import { FormattedMessage } from '../../../util/reactIntl';
 import { getProcess, resolveLatestProcessName } from '../../../transactions/transaction';
 
 import { Heading } from '../../../components';
+import {
+  QuoteProgress,
+  QuoteRequestSummary,
+} from '../../../components/QuoteSystem/QuoteSystem';
+import { userDisplayNameAsString } from '../../../util/data';
 
 import css from './RequestQuote.module.css';
 
@@ -19,6 +24,7 @@ const RequestQuote = props => {
     isCustomerBanned,
     intl,
     transactionFieldsComponent,
+    processState,
   } = props;
 
   if (!isNegotiationProcess) {
@@ -40,16 +46,29 @@ const RequestQuote = props => {
     return null;
   }
 
-  const classes = classNames(rootClassName || css.container, className);
-  return customerDefaultMessage ? (
-    <div className={classes}>
-      <Heading as="h2" rootClassName={css.sectionHeading}>
-        <FormattedMessage id="TransactionPage.RequestQuote.heading" />
-      </Heading>
+  const otherParty = isCustomer ? transaction?.provider : transaction?.customer;
+  const otherPartyName = userDisplayNameAsString(otherParty, '');
 
-      {transactionFieldsComponent}
-    </div>
-  ) : null;
+  const classes = classNames(rootClassName || css.container, className);
+  return (
+    <>
+      <QuoteProgress
+        processState={processState}
+        transactionRole={transactionRole}
+        otherPartyName={otherPartyName}
+      />
+      <QuoteRequestSummary protectedData={protectedData} />
+      {customerDefaultMessage ? (
+        <div className={classes}>
+          <Heading as="h2" rootClassName={css.sectionHeading}>
+            <FormattedMessage id="TransactionPage.RequestQuote.heading" />
+          </Heading>
+
+          {transactionFieldsComponent}
+        </div>
+      ) : null}
+    </>
+  );
 };
 
 export default RequestQuote;

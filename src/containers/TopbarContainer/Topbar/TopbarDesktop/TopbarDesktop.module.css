@@ -12,6 +12,11 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 0 12px 0 0;
+  /* Positioning context for the search capsule's own absolute centering
+     (see SearchCapsule.module.css's .outsideClickWrapper) - keeps it
+     mathematically centered on the topbar regardless of how wide the logo
+     and the links on the right happen to be. */
+  position: relative;
 
   /* fill */
   background-color: var(--colorWhite);
@@ -38,10 +43,10 @@
 .searchLink {
   min-width: 320px;
   height: 100%;
-  border-left-style: solid;
-  border-left-width: 1px;
-  border-left-color: var(--colorGrey100);
-  margin-right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
 }
 
 .spacer {
@@ -83,7 +88,7 @@
   }
 }
 
-/* These is used with Inbox, Sign up, and Log in */
+/* Used with Sign up and Log in (logged-out only - see topbarLink usages) */
 .topbarLink {
   flex-shrink: 0;
 
@@ -121,6 +126,25 @@
   position: relative;
 }
 
+/* Icon-only inbox link (replaces the old "Postvak IN" text link) */
+.inboxIconLink {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0 4px;
+  border-radius: 50%;
+  transition: background-color var(--transitionStyleButton);
+
+  &:hover {
+    background-color: var(--colorGrey50);
+    text-decoration: none;
+  }
+}
+
 .notificationDot {
   /* Dimensions */
   width: 7px;
@@ -129,8 +153,8 @@
 
   /* Position */
   position: absolute;
-  top: 2px;
-  right: -9px;
+  top: 6px;
+  right: 6px;
 
   /* Style: red dot */
   background-color: var(--colorFail);
@@ -198,6 +222,13 @@
 .profileMenuContent {
   min-width: 276px;
   padding-top: 20px;
+  overflow: hidden;
+
+  /* Rounder, more elevated panel than the default MenuContent styling -
+     overrides .root's square corners/thin top border/flat popup shadow. */
+  border-radius: 16px !important;
+  border: 1px solid var(--colorGrey100) !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* left animated "border" like hover element */
@@ -238,6 +269,25 @@
 
   @media (--viewportMedium) {
     margin: 0;
+  }
+}
+
+/* The referral item, featured at the top of the profile menu instead of a
+   permanent wide button in the topbar - a festive highlight so it still
+   catches the eye the way that button used to. */
+.menuLinkHighlight {
+  width: calc(100% - 24px);
+  margin: 0 12px;
+  padding: 10px;
+  background-color: var(--colorSuccessSubtle);
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--colorSuccessDark);
+  border-radius: 12px;
+
+  &:hover {
+    background-color: var(--colorSuccessSubtle);
+    color: var(--colorSuccessDark);
+    opacity: 0.85;
   }
 }
 

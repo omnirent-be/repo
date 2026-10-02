@@ -24,7 +24,7 @@ exports[`EditListingDeliveryForm matches snapshot 1`] = `
               class="aspectBox"
             >
               <input
-                accept="image/*"
+                accept="image/jpeg,image/png"
                 class="addImageInput"
                 id="addImage"
                 name="addImage"

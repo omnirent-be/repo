@@ -1,9 +1,44 @@
+import { keywordSynonymGroups } from '../config/configSearchSynonyms';
+
 /**
  * Check if a listing field should be shown as a filter.
  * showFilter takes priority and falls back to indexForSearch.
  */
 export const isFilterEnabled = filterConfig => {
   return filterConfig.showFilter === true;
+};
+
+/**
+ * Broaden a keyword search query with related-product synonyms, e.g. searching
+ * "wijnton" also searches "wijnvaatje". Safe to do because Sharetribe's keyword
+ * search already matches a listing if it contains ANY word in the query (it's an
+ * OR), so appending extra words only adds matches - it never narrows them.
+ * See src/config/configSearchSynonyms.js.
+ */
+export const expandKeywordsWithSynonyms = (keywords, synonymGroups = keywordSynonymGroups) => {
+  if (!keywords || typeof keywords !== 'string') {
+    return keywords;
+  }
+
+  const words = keywords.split(/\s+/).filter(Boolean);
+  const existingWords = new Set(words.map(w => w.toLowerCase()));
+
+  const extraWords = new Set();
+  words.forEach(word => {
+    const normalizedWord = word.toLowerCase();
+    synonymGroups.forEach(group => {
+      const isInGroup = group.some(term => term.toLowerCase() === normalizedWord);
+      if (isInGroup) {
+        group.forEach(term => {
+          if (!existingWords.has(term.toLowerCase())) {
+            extraWords.add(term);
+          }
+        });
+      }
+    });
+  });
+
+  return extraWords.size > 0 ? `${keywords} ${[...extraWords].join(' ')}` : keywords;
 };
 
 /**

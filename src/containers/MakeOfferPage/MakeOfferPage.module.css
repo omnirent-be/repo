@@ -131,3 +131,11 @@
   composes: p from global;
   font-weight: var(--fontWeightBold);
 }
+
+.requestSummary {
+  margin: 0 24px 24px 24px;
+
+  @media (--viewportLarge) {
+    margin: 0 0 24px 0;
+  }
+}

@@ -6,9 +6,11 @@ import classNames from 'classnames';
 
 import { useConfiguration } from '../../context/configurationContext';
 import { camelize } from '../../util/string';
+import { parse } from '../../util/urlHelpers';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { propTypes } from '../../util/types';
 import { ensureCurrentUser, getFeaturedListingsProps } from '../../util/data';
+import { storeReferralCode } from '../../util/referral';
 import {
   isSignupEmailTakenError,
   isTooManyEmailVerificationRequestsError,
@@ -216,6 +218,16 @@ export const AuthenticationPageComponent = props => {
     window.scrollTo(0, 0);
   }, [tosModalOpen, privacyModalOpen]);
 
+  // Capture ?ref=<userId> from a referral link so it can be attached to
+  // the new user's privateData at signup (see AuthenticationPage.helpers.js).
+  useEffect(() => {
+    const { ref } = parse(props.location.search);
+    if (ref) {
+      storeReferralCode(ref);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const {
     authInProgress,
     currentUser,
@@ -375,34 +387,52 @@ export const AuthenticationPageComponent = props => {
               />
 
               {showLoginForm ? (
-                <LoginForm
-                  className={css.loginForm}
-                  onSubmit={submitLogin}
-                  inProgress={authInProgress}
-                />
+                <>
+                  <LoginForm
+                    className={css.loginForm}
+                    onSubmit={submitLogin}
+                    inProgress={authInProgress}
+                  />
+                  <SocialLoginButtons
+                    isLogin={isLogin}
+                    showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
+                    showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
+                    // Scaffold only - no real itsme OIDC integration exists
+                    // yet (see socialLoginLogos.js's ItsmeMark). Flip to a
+                    // real showItsmeLogin flag once server/api/auth/itsme.js
+                    // exists and real credentials are configured.
+                    showItsmeComingSoon
+                    {...fromMaybe}
+                    {...userTypeMaybe}
+                  />
+                </>
               ) : (
-                <SignupForm
-                  className={css.signupForm}
-                  onSubmit={getHandleSubmitSignup({
-                    submitSignup,
-                    userFields,
-                    userTypes,
-                  })}
-                  inProgress={authInProgress}
-                  termsAndConditions={termsAndConditions}
-                  preselectedUserType={preselectedUserType}
-                  userTypes={userTypes}
-                  userFields={userFields}
-                />
+                <>
+                  <SocialLoginButtons
+                    isLogin={isLogin}
+                    showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
+                    showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
+                    showItsmeComingSoon
+                    dividerPosition="after"
+                    dividerMessageId="AuthenticationPage.orEmail"
+                    {...fromMaybe}
+                    {...userTypeMaybe}
+                  />
+                  <SignupForm
+                    className={css.signupForm}
+                    onSubmit={getHandleSubmitSignup({
+                      submitSignup,
+                      userFields,
+                      userTypes,
+                    })}
+                    inProgress={authInProgress}
+                    termsAndConditions={termsAndConditions}
+                    preselectedUserType={preselectedUserType}
+                    userTypes={userTypes}
+                    userFields={userFields}
+                  />
+                </>
               )}
-
-              <SocialLoginButtons
-                isLogin={isLogin}
-                showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
-                showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
-                {...fromMaybe}
-                {...userTypeMaybe}
-              />
             </div>
           ) : null}
 
@@ -447,6 +477,7 @@ export const AuthenticationPageComponent = props => {
             <EmailVerificationInfo
               name={user.attributes.profile.firstName}
               email={<span className={css.email}>{user.attributes.email}</span>}
+              emailAddress={user.attributes.email}
               onResendVerificationEmail={onResendVerificationEmail}
               resendErrorMessage={
                 <ResendVerificationErrorMessage

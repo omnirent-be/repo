@@ -58,7 +58,7 @@ const canDeferStripeLibrary = (initialPathname, routeConfiguration) => {
  */
 export const IncludeScripts = props => {
   const { marketplaceRootURL: rootURL, maps, analytics, stripe } = props?.config || {};
-  const { googleAnalyticsId, plausibleDomains } = analytics;
+  const { googleAnalyticsId, plausibleDomains, facebookPixelId } = analytics;
 
   const routeConfiguration = useRouteConfiguration();
   // Note: Affects Mapbox only. Google Maps initialization is not yet ready to support asynchronous loading.
@@ -180,6 +180,41 @@ export const IncludeScripts = props => {
         crossOrigin="anonymous"
       ></script>
     );
+  }
+
+  if (facebookPixelId) {
+    // Meta Pixel: async-load fbevents.js, same pattern as the gtag.js setup above -
+    // define the fbq stub/queue before the script has loaded, so early fbq() calls
+    // (init, PageView) are queued and replayed once fbevents.js is ready.
+    analyticsLibraries.push(
+      <script key="meta_pixel" async src="https://connect.facebook.net/en_US/fbevents.js"></script>
+    );
+    analyticsLibraries.push(
+      <noscript
+        key="meta_pixel_noscript"
+        dangerouslySetInnerHTML={{
+          __html: `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${facebookPixelId}&ev=PageView&noscript=1" alt="" />`,
+        }}
+      />
+    );
+
+    if (typeof window !== 'undefined') {
+      if (!window.fbq) {
+        const fbq = function() {
+          fbq.callMethod ? fbq.callMethod.apply(fbq, arguments) : fbq.queue.push(arguments);
+        };
+        window.fbq = fbq;
+        if (!window._fbq) {
+          window._fbq = fbq;
+        }
+        fbq.push = fbq;
+        fbq.loaded = true;
+        fbq.version = '2.0';
+        fbq.queue = [];
+      }
+      window.fbq('init', facebookPixelId);
+      window.fbq('track', 'PageView');
+    }
   }
 
   const isBrowser = typeof window !== 'undefined';

@@ -25,10 +25,13 @@ export { default as IconEdit } from './IconEdit/IconEdit';
 export { default as IconEmailAttention } from './IconEmailAttention/IconEmailAttention';
 export { default as IconEmailSent } from './IconEmailSent/IconEmailSent';
 export { default as IconEmailSuccess } from './IconEmailSuccess/IconEmailSuccess';
+export { default as IconHeart } from './IconHeart/IconHeart';
 export { default as IconInquiry } from './IconInquiry/IconInquiry';
 export { default as IconKeys } from './IconKeys/IconKeys';
 export { default as IconKeysSuccess } from './IconKeysSuccess/IconKeysSuccess';
 export { default as IconReviewStar } from './IconReviewStar/IconReviewStar';
+export { default as ExternalReviewBadge } from './ExternalReviewBadge/ExternalReviewBadge';
+export { default as IdentityVerifiedBadge } from './IdentityVerifiedBadge/IdentityVerifiedBadge';
 export { default as IconReviewUser } from './IconReviewUser/IconReviewUser';
 export { default as IconSearch } from './IconSearch/IconSearch';
 export { default as IconSynchronize } from './IconSynchronize/IconSynchronize';
@@ -46,6 +49,7 @@ export { Heading, H1, H2, H3, H4, H5, H6  } from './Heading/Heading';
 export { default as AspectRatioWrapper } from './AspectRatioWrapper/AspectRatioWrapper';
 export { default as ExternalLink } from './ExternalLink/ExternalLink';
 export { default as ExpandingTextarea } from './ExpandingTextarea/ExpandingTextarea';
+export { default as FavoriteButton } from './FavoriteButton/FavoriteButton';
 export { default as FileName } from './FileName/FileName';
 
 export { default as Form } from './Form/Form';
@@ -92,6 +96,7 @@ export { default as Menu } from './Menu/Menu';
 
 // Modal
 export { default as Modal } from './Modal/Modal';
+export { default as MobileBottomNav } from './MobileBottomNav/MobileBottomNav';
 export { default as ModalInMobile } from './ModalInMobile/ModalInMobile';
 
 // Fields (for Final Form)

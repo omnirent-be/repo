@@ -25,6 +25,7 @@ const stripeRelatedStatesForDigitalDownload = [
   'state/purchased',
   'state/reported',
 ];
+const stripeRelatedStatesForExtraDayPayment = ['state/pending-payment'];
 
 const HAS_INCOMPLETE_TRANSACTIONS =
   'User has transactions on states that include incomplete payment processing';
@@ -61,12 +62,20 @@ module.exports = (req, res) => {
       states: stripeRelatedStatesForDigitalDownload.join(','),
     });
 
+  // Extra-day-payment states that contain Stripe payment processing
+  const ongoingExtraDayPaymentsWithIncompletePaymentProcessing = () =>
+    sdk.transactions.query({
+      processNames: 'extra-day-payment',
+      states: stripeRelatedStatesForExtraDayPayment.join(','),
+    });
+
   // Check for any states that may contain incomplete Stripe actions
   Promise.all([
     ongoingBookingsWithIncompletePaymentProcessing(),
     ongoingPurchasesWithIncompletePaymentProcessing(),
     ongoingNegotiationsWithIncompletePaymentProcessing(),
     ongoingDigitalDownloadsWithIncompletePaymentProcessing(),
+    ongoingExtraDayPaymentsWithIncompletePaymentProcessing(),
   ])
     .then(responses => {
       if (hasOngoingTransactionsWithIncompletePaymentProcessing(responses)) {

@@ -1,0 +1,56 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  max-width: var(--contentMaxWidthPages);
+  margin: 0 auto;
+  padding: 20px 24px 0 24px;
+
+  @media (--viewportMedium) {
+    padding: 28px 32px 0 32px;
+  }
+}
+
+.track {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--colorGrey100);
+  background-color: var(--colorWhite);
+  color: var(--colorGrey700);
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  transition: var(--transitionStyleButton);
+
+  &:hover {
+    border-color: var(--marketplaceColor);
+    color: var(--marketplaceColor);
+    text-decoration: none;
+  }
+}
+
+.chipIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.chipLabel {
+  display: inline-block;
+}

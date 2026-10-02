@@ -1,0 +1,51 @@
+{:format :v3,
+ :transitions
+ [{:name :transition/request-deposit-hold,
+   :actor :actor.role/customer,
+   :actions
+   [{:name :action/privileged-set-line-items}
+    {:name :action/stripe-create-payment-intent}],
+   :to :state/pending-payment,
+   :privileged? true}
+  {:name :transition/expire-payment,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/pending-payment]}
+     {:fn/period ["PT15M"]}]},
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}],
+   :from :state/pending-payment,
+   :to :state/payment-expired}
+  {:name :transition/confirm-deposit-hold,
+   :actor :actor.role/customer,
+   :actions
+   [{:name :action/stripe-confirm-payment-intent}
+    {:name :action/stripe-capture-payment-intent}],
+   :from :state/pending-payment,
+   :to :state/held}
+  {:name :transition/release-deposit,
+   :actor :actor.role/provider,
+   :actions [{:name :action/stripe-refund-payment}],
+   :from :state/held,
+   :to :state/released,
+   :privileged? true}
+  {:name :transition/claim-deposit,
+   :actor :actor.role/provider,
+   :actions [{:name :action/stripe-create-payout}],
+   :from :state/held,
+   :to :state/claimed,
+   :privileged? true}],
+ :notifications
+ [{:name :notification/deposit-held,
+   :on :transition/confirm-deposit-hold,
+   :to :actor.role/provider,
+   :template :deposit-held}
+  {:name :notification/deposit-released,
+   :on :transition/release-deposit,
+   :to :actor.role/customer,
+   :template :deposit-released}
+  {:name :notification/deposit-claimed,
+   :on :transition/claim-deposit,
+   :to :actor.role/customer,
+   :template :deposit-claimed}]}

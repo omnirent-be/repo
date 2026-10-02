@@ -96,7 +96,7 @@
   margin: 0;
   display: block;
   font-weight: var(--fontWeightMedium);
-  color: var(--colorGrey600);
+  color: var(--marketplaceColor);
   padding: 2px 0 4px 12px;
 
   /* Override button styles */
@@ -107,7 +107,8 @@
 
   &:focus,
   &:hover {
-    color: var(--colorBlack);
+    color: var(--marketplaceColorDark);
+    text-decoration: underline;
   }
 
   @media (--viewportMedium) {

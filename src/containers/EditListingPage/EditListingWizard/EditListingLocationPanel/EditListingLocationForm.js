@@ -12,12 +12,7 @@ import {
 } from '../../../../util/validators';
 
 // Import shared components
-import {
-  Form,
-  FieldLocationAutocompleteInput,
-  Button,
-  FieldTextInput,
-} from '../../../../components';
+import { Form, FieldLocationAutocompleteInput, Button } from '../../../../components';
 
 // Import modules from this directory
 import css from './EditListingLocationForm.module.css';
@@ -74,10 +69,6 @@ export const EditListingLocationForm = props => (
         id: 'EditListingLocationForm.addressNotRecognized',
       });
 
-      const optionalText = intl.formatMessage({
-        id: 'EditListingLocationForm.optionalText',
-      });
-
       const { updateListingError, showListingsError } = fetchErrors || {};
 
       const classes = classNames(rootClassName || css.root, className);
@@ -112,6 +103,9 @@ export const EditListingLocationForm = props => (
             placeholder={intl.formatMessage({
               id: 'EditListingLocationForm.addressPlaceholder',
             })}
+            // Only cities/towns are relevant for a listing's location - restrict
+            // results so a provider can't pick a full street address here.
+            placeTypes={['place', 'locality']}
             useDefaultPredictions={false}
             format={identity}
             valueFromForm={values.location}
@@ -119,17 +113,6 @@ export const EditListingLocationForm = props => (
               autocompleteSearchRequired(addressRequiredMessage),
               autocompletePlaceSelected(addressNotRecognizedMessage)
             )}
-          />
-
-          <FieldTextInput
-            className={css.building}
-            type="text"
-            name="building"
-            id={`${formId}building`}
-            label={intl.formatMessage({ id: 'EditListingLocationForm.building' }, { optionalText })}
-            placeholder={intl.formatMessage({
-              id: 'EditListingLocationForm.buildingPlaceholder',
-            })}
           />
 
           <Button

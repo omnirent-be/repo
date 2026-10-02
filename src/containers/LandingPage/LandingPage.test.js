@@ -28,7 +28,7 @@ describe('LandingPage', () => {
     const data = {
       sections: [
         {
-          sectionType: 'columns',
+          sectionType: 'article',
           sectionId: 'test-section',
           numColumns: 1,
           title: { fieldType: 'heading2', content: 'Landing page' },

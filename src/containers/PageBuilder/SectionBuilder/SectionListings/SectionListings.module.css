@@ -45,17 +45,18 @@
   border-radius: 100%;
   border: none;
 
-  background-color: lightgrey;
-  opacity: 0.9;
-  font-size: 30px;
-  color: black;
+  background-color: var(--colorWhite);
+  box-shadow: var(--boxShadowLight);
+  opacity: 0.95;
+  font-size: 26px;
+  color: var(--marketplaceColor);
   transition: all ease-in-out 100ms;
 
   &:hover {
     opacity: 1;
     cursor: pointer;
-    background: black;
-    color: white;
+    background: var(--marketplaceColor);
+    color: var(--colorWhite);
   }
 }
 

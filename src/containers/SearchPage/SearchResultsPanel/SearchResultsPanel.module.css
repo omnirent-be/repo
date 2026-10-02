@@ -68,3 +68,45 @@
   margin-top: auto;
   background-color: transparent;
 }
+
+/* Click-to-load-more replaces numbered pagination: unlike an
+   auto-scroll-triggered fetch, it never loads more just because the
+   visitor scrolled past it, so scrolling on by still reaches the footer
+   normally instead of being stuck loading pages forever. */
+.loadMoreRow {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 32px 0;
+}
+
+.loadMoreButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  border: 1px solid var(--colorGrey100);
+  border-radius: 999px;
+  background-color: var(--colorWhite);
+  color: var(--colorGrey700);
+  font-size: 15px;
+  font-weight: var(--fontWeightSemiBold);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+
+  &:hover:not(:disabled) {
+    background-color: var(--colorGrey50);
+    border-color: var(--colorGrey200);
+  }
+
+  &:disabled {
+    cursor: default;
+    color: var(--colorGrey500);
+  }
+}
+
+.loadMoreSpinner {
+  width: 20px;
+  height: 20px;
+  stroke: var(--colorGrey500);
+}

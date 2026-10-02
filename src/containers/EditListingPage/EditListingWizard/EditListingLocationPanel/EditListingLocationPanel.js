@@ -20,10 +20,9 @@ const getInitialValues = props => {
   // TODO bounds are missing - those need to be queried directly from Google Places
   const locationFieldsPresent = publicData?.location?.address && geolocation;
   const location = publicData?.location || {};
-  const { address, building } = location;
+  const { address } = location;
 
   return {
-    building,
     location: locationFieldsPresent
       ? {
           search: address,
@@ -99,7 +98,7 @@ const EditListingLocationPanel = props => {
         className={css.form}
         initialValues={state.initialValues}
         onSubmit={values => {
-          const { building = '', location } = values;
+          const { location } = values;
           const {
             selectedPlace: { address, origin },
           } = location;
@@ -108,7 +107,7 @@ const EditListingLocationPanel = props => {
           const updateValues = {
             geolocation: origin,
             publicData: {
-              location: { address, building },
+              location: { address },
             },
           };
           // Save the initialValues to state
@@ -116,7 +115,6 @@ const EditListingLocationPanel = props => {
           // and therefore re-rendering would overwrite the values during XHR call.
           setState({
             initialValues: {
-              building,
               location: { search: address, selectedPlace: { address, origin } },
             },
           });

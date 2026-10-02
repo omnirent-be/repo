@@ -7,6 +7,7 @@ import loadable from '@loadable/component';
 import { sendVerificationEmail, hasCurrentUserErrors } from '../../ducks/user.duck';
 import { logout, authenticationInProgress } from '../../ducks/auth.duck';
 import { manageDisableScrolling } from '../../ducks/ui.duck';
+import { MobileBottomNav } from '../../components';
 
 const Topbar = loadable(() => import(/* webpackChunkName: "Topbar" */ './Topbar/Topbar'));
 
@@ -24,10 +25,18 @@ const Topbar = loadable(() => import(/* webpackChunkName: "Topbar" */ './Topbar/
  * @returns {JSX.Element}
  */
 export const TopbarContainerComponent = props => {
-  const { notificationCount = 0, hasGenericError, ...rest } = props;
+  const { notificationCount = 0, hasGenericError, isAuthenticated, ...rest } = props;
 
   return (
-    <Topbar notificationCount={notificationCount} showGenericError={hasGenericError} {...rest} />
+    <>
+      <Topbar
+        notificationCount={notificationCount}
+        showGenericError={hasGenericError}
+        isAuthenticated={isAuthenticated}
+        {...rest}
+      />
+      <MobileBottomNav isAuthenticated={isAuthenticated} notificationCount={notificationCount} />
+    </>
   );
 };
 

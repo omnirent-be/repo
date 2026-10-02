@@ -216,7 +216,8 @@
     'dot name    state'
     '... item    state'
     '... details state'
-    '... seats   state';
+    '... seats   state'
+    '... extras  state';
   padding: 2px 0 6px;
   gap: 4px 0;
 
@@ -305,6 +306,44 @@
 
   margin-top: 0;
   margin-bottom: 0;
+}
+
+.itemExtras {
+  grid-area: extras;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.badge {
+  composes: marketplaceTinyFontStyles from global;
+  display: inline-block;
+  font-weight: var(--fontWeightSemiBold);
+  line-height: 14px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.badgeWarning {
+  color: var(--colorAttentionDark);
+  background-color: var(--colorAttentionSubtle);
+}
+
+.badgeInfo {
+  color: var(--marketplaceColor);
+  background-color: var(--colorGrey50);
+}
+
+.badgeSuccess {
+  color: var(--colorSuccessDark);
+  background-color: var(--colorSuccessSubtle);
+}
+
+.badgeNeutral {
+  color: var(--colorGrey700);
+  background-color: var(--colorGrey50);
 }
 
 .itemState {

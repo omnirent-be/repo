@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 // Import contexts and util modules
 import { FormattedMessage, intlShape } from '../../util/reactIntl';
@@ -11,6 +11,7 @@ import { propTypes } from '../../util/types';
 import { ensureTransaction } from '../../util/data';
 import { createSlug } from '../../util/urlHelpers';
 import { isTransactionInitiateListingNotFoundError } from '../../util/errors';
+import { markReferralConversion } from '../../util/api';
 import {
   getProcess,
   resolveLatestProcessName,
@@ -31,6 +32,7 @@ import {
   hasDefaultPaymentMethod,
   hasPaymentExpired,
   hasTransactionPassedPendingPayment,
+  isCustomerProfileCompleteForCheckout,
   processCheckoutWithPayment,
   setOrderPageInitialValues,
 } from './CheckoutPageTransactionHelpers.js';
@@ -117,6 +119,8 @@ const getOrderParams = (
   const seatsMaybe = seats ? { seats } : {};
   const deliveryMethod = pageData.orderData?.deliveryMethod;
   const deliveryMethodMaybe = deliveryMethod ? { deliveryMethod } : {};
+  const couponCode = pageData.orderData?.couponCode;
+  const couponCodeMaybe = couponCode ? { couponCode } : {};
   const { listingType, unitType, priceVariants } = pageData?.listing?.attributes?.publicData || {};
 
   // price variant data for fixed duration bookings
@@ -156,6 +160,7 @@ const getOrderParams = (
     ...priceVariantNameMaybe,
     ...protectedDataMaybe,
     ...optionalPaymentParams,
+    ...couponCodeMaybe,
   };
   return orderParams;
 };
@@ -342,6 +347,11 @@ const handleSubmit = (values, process, props, stripe, submitting, setSubmitting)
 
       setOrderPageInitialValues(initialValues, routeConfiguration, dispatch);
       onSubmitCallback();
+      // Fire-and-forget: marks the referral as converted (for the operator's
+      // manual payout report) if this is the customer's first completed
+      // booking and they signed up via a referral link. Must never block or
+      // fail checkout.
+      markReferralConversion().catch(() => {});
       history.push(orderDetailsPath);
     })
     .catch(err => {
@@ -415,6 +425,9 @@ export const CheckoutPageWithPayment = props => {
   const [submitting, setSubmitting] = useState(false);
   // Initialized stripe library is saved to state - if it's needed at some point here too.
   const [stripe, setStripe] = useState(null);
+  const [couponInput, setCouponInput] = useState(props.pageData?.orderData?.couponCode || '');
+  // null | 'applied' | 'invalid' - only set once the customer has actually tried a code
+  const [couponFeedback, setCouponFeedback] = useState(null);
 
   const {
     scrollingDisabled,
@@ -431,6 +444,8 @@ export const CheckoutPageWithPayment = props => {
     retrievePaymentIntentError,
     stripeCustomerFetched,
     pageData,
+    setPageData,
+    fetchSpeculatedTransaction,
     processName,
     listingTitle,
     title,
@@ -438,6 +453,66 @@ export const CheckoutPageWithPayment = props => {
     showTransactionFields,
     config,
   } = props;
+
+  const appliedCouponCode = pageData?.orderData?.couponCode;
+
+  // Once a re-speculated transaction comes back for an applied coupon code,
+  // check whether it actually produced a discount line item - an unknown
+  // code still speculates successfully, it just doesn't add a discount.
+  // A customer who already has platform credit covering the full available
+  // discount room is a separate case from an unknown code: the code isn't
+  // wrong, there's just no room left, so it gets its own message instead of
+  // being told the code is invalid.
+  useEffect(() => {
+    if (!appliedCouponCode) {
+      setCouponFeedback(null);
+      return;
+    }
+    const lineItems = speculatedTransactionMaybe?.attributes?.lineItems;
+    if (!lineItems) {
+      return;
+    }
+    const hasCouponDiscount = lineItems.some(li => li.code === 'line-item/coupon-discount');
+    const hasCreditDiscount = lineItems.some(li => li.code === 'line-item/customer-credit');
+    setCouponFeedback(
+      hasCouponDiscount ? 'applied' : hasCreditDiscount ? 'noRoomLeft' : 'invalid'
+    );
+  }, [speculatedTransactionMaybe, appliedCouponCode]);
+
+  const handleApplyCoupon = () => {
+    const trimmedCode = couponInput.trim();
+    const updatedOrderData = { ...pageData.orderData };
+    if (trimmedCode) {
+      updatedOrderData.couponCode = trimmedCode;
+    } else {
+      delete updatedOrderData.couponCode;
+    }
+    const updatedPageData = { ...pageData, orderData: updatedOrderData };
+    setCouponFeedback(null);
+    setPageData(updatedPageData);
+
+    const orderParams = getOrderParams(updatedPageData, {}, {}, config);
+    fetchSpeculatedTransactionIfNeeded(orderParams, updatedPageData, fetchSpeculatedTransaction);
+  };
+
+  // Re-requests a price as soon as the customer's postal code + country are
+  // known, so distance-based delivery pricing (see getDeliveryLineItems in
+  // server/api-util/lineItems.js) shows the real fee before they ever reach
+  // the "Pay" button - otherwise the price shown here would just stay at
+  // whatever it was when the page first loaded (no address known yet), and
+  // only the FINAL charge (computed again at actual submit time, once the
+  // full shipping address is definitely known) would be correct. See
+  // StripePaymentForm.js's useShippingAddressWatcher for what triggers this.
+  const handleShippingAddressChange = React.useCallback(
+    ({ postalCode, city, country }) => {
+      const partialShippingDetails = {
+        shippingDetails: { address: { postalCode, city, country } },
+      };
+      const orderParams = getOrderParams(pageData, partialShippingDetails, {}, config);
+      fetchSpeculatedTransactionIfNeeded(orderParams, pageData, fetchSpeculatedTransaction);
+    },
+    [pageData, config, fetchSpeculatedTransaction]
+  );
 
   // Since the listing data is already given from the ListingPage
   // and stored to handle refreshes, it might not have the possible
@@ -467,16 +542,64 @@ export const CheckoutPageWithPayment = props => {
 
   // Show breakdown only when (speculated?) transaction is loaded
   // (i.e. it has an id and lineItems)
+  const couponCodeSection = tx.id ? (
+    <form
+      className={css.couponCode}
+      onSubmit={e => {
+        e.preventDefault();
+        handleApplyCoupon();
+      }}
+    >
+      {/* breakdown (and this form with it) is rendered twice - mobile and
+          desktop layouts - so the label wraps the input for an implicit,
+          collision-free association instead of a shared id/htmlFor pair. */}
+      <label className={css.couponCodeLabel}>
+        <FormattedMessage id="CheckoutPage.couponCodeLabel" />
+        <div className={css.couponCodeRow}>
+          <input
+            className={css.couponCodeInput}
+            type="text"
+            value={couponInput}
+            onChange={e => setCouponInput(e.target.value)}
+            placeholder={intl.formatMessage({ id: 'CheckoutPage.couponCodePlaceholder' })}
+          />
+          <button type="submit" className={css.couponCodeButton}>
+            <FormattedMessage id="CheckoutPage.couponCodeApply" />
+          </button>
+        </div>
+        <span className={css.couponCodeHint}>
+          <FormattedMessage id="CheckoutPage.couponCodeHint" />
+        </span>
+      </label>
+      {couponFeedback === 'applied' ? (
+        <p className={css.couponCodeApplied}>
+          <FormattedMessage id="CheckoutPage.couponCodeApplied" />
+        </p>
+      ) : couponFeedback === 'noRoomLeft' ? (
+        <p className={css.couponCodeInvalid}>
+          <FormattedMessage id="CheckoutPage.couponCodeNoRoomLeft" />
+        </p>
+      ) : couponFeedback === 'invalid' ? (
+        <p className={css.couponCodeInvalid}>
+          <FormattedMessage id="CheckoutPage.couponCodeInvalid" />
+        </p>
+      ) : null}
+    </form>
+  ) : null;
+
   const breakdown =
     tx.id && tx.attributes.lineItems?.length > 0 ? (
-      <OrderBreakdown
-        className={css.orderBreakdown}
-        userRole="customer"
-        transaction={tx}
-        {...txBookingMaybe}
-        currency={config.currency}
-        marketplaceName={config.marketplaceName}
-      />
+      <>
+        <OrderBreakdown
+          className={css.orderBreakdown}
+          userRole="customer"
+          transaction={tx}
+          {...txBookingMaybe}
+          currency={config.currency}
+          marketplaceName={config.marketplaceName}
+        />
+        {couponCodeSection}
+      </>
     ) : null;
 
   const totalPrice =
@@ -496,6 +619,13 @@ export const CheckoutPageWithPayment = props => {
     !retrievePaymentIntentError &&
     !isPaymentExpired
   );
+
+  // The huurder's own contact/identity details (phone, birth date, home
+  // address - see ProfileSettingsForm.js) are required for a complete
+  // rental contract, but nothing before this page ever asked for them.
+  // Block checkout with a link to go fill them in rather than let another
+  // booking go through with permanently blank contract fields.
+  const customerProfileComplete = !currentUser || isCustomerProfileCompleteForCheckout(currentUser);
 
   const firstImage = listing?.images?.length > 0 ? listing.images[0] : null;
 
@@ -612,7 +742,16 @@ export const CheckoutPageWithPayment = props => {
             {errorMessages.retrievePaymentIntentErrorMessage}
             {errorMessages.paymentExpiredMessage}
 
-            {showPaymentForm ? (
+            {showPaymentForm && !customerProfileComplete ? (
+              <div className={css.profileIncompleteNotice}>
+                <p>
+                  <FormattedMessage id="CheckoutPage.profileIncompleteNotice" />
+                </p>
+                <NamedLink name="ProfileSettingsPage" className={css.profileIncompleteLink}>
+                  <FormattedMessage id="CheckoutPage.profileIncompleteLink" />
+                </NamedLink>
+              </div>
+            ) : showPaymentForm ? (
               <StripePaymentForm
                 className={css.paymentForm}
                 onSubmit={values =>
@@ -639,6 +778,7 @@ export const CheckoutPageWithPayment = props => {
                   return onStripeInitialized(stripe, process, props);
                 }}
                 askShippingDetails={askShippingDetails}
+                onShippingAddressChange={handleShippingAddressChange}
                 showPickUpLocation={showPickUpLocation}
                 showLocation={showLocation}
                 listingLocation={listingLocation}

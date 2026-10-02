@@ -11,7 +11,15 @@ import { isStripeError } from '../../util/errors';
 import * as validators from '../../util/validators';
 import { propTypes } from '../../util/types';
 
-import { H4, Button, ExternalLink, FieldSelect, FieldRadioButton, Form } from '../../components';
+import {
+  H4,
+  Button,
+  ExternalLink,
+  FieldSelect,
+  FieldRadioButton,
+  FieldTextInput,
+  Form,
+} from '../../components';
 
 import css from './StripeConnectAccountForm.module.css';
 
@@ -126,7 +134,166 @@ const CreateStripeAccountFields = props => {
           </option>
         ))}
       </FieldSelect>
+
+      {/* Collected natively instead of sending the provider to Stripe's own
+          hosted onboarding page for it - that page also shows a SEPA direct
+          debit mandate screen upfront, which put people off. These two
+          values become a Stripe bank_account token (via Stripe.js, still
+          client-side - no new backend endpoint) attached to the account
+          right after it's created - see createStripeAccountPayloadCreator
+          in stripeConnectAccount.duck.js. If Stripe still needs more from
+          the provider afterwards (e.g. an identity document), the existing
+          "verification needed" box below already sends them to Stripe's
+          hosted page for just that - this only replaces the bank-details
+          step, not identity verification. */}
+      <FieldTextInput
+        id="accountHolderName"
+        name="accountHolderName"
+        type="text"
+        disabled={disabled}
+        className={css.selectCountry}
+        label={intl.formatMessage({ id: 'StripeConnectAccountForm.accountHolderNameLabel' })}
+        placeholder={intl.formatMessage({
+          id: 'StripeConnectAccountForm.accountHolderNamePlaceholder',
+        })}
+        validate={validators.required(
+          intl.formatMessage({ id: 'StripeConnectAccountForm.accountHolderNameRequired' })
+        )}
+      />
+
+      <FieldTextInput
+        id="iban"
+        name="iban"
+        type="text"
+        disabled={disabled}
+        className={css.selectCountry}
+        label={intl.formatMessage({ id: 'StripeConnectAccountForm.ibanLabel' })}
+        placeholder={intl.formatMessage({ id: 'StripeConnectAccountForm.ibanPlaceholder' })}
+        validate={validators.composeValidators(
+          validators.required(intl.formatMessage({ id: 'StripeConnectAccountForm.ibanRequired' })),
+          validators.validIBAN(intl.formatMessage({ id: 'StripeConnectAccountForm.ibanInvalid' }))
+        )}
+      />
+
+      {values?.accountType === 'individual' ? (
+        <IndividualIdentityFields disabled={disabled} intl={intl} />
+      ) : null}
     </div>
+  );
+};
+
+// Stripe's account token for an individual needs a legal name, date of
+// birth and home address regardless - collected natively here for the same
+// reason as the bank fields above (skips straight to whatever Stripe still
+// needs afterwards, usually just the ID document, instead of re-asking for
+// all of it on the hosted page). Only rendered for accountType 'individual':
+// a 'company' account needs company.* fields instead, which stay on the
+// hosted flow for now - out of scope here.
+const IndividualIdentityFields = props => {
+  const { disabled, intl } = props;
+  const MINIMUM_STRIPE_REPRESENTATIVE_AGE_YEARS = 18;
+
+  const validDob = validators.composeValidators(
+    validators.required(intl.formatMessage({ id: 'StripeConnectAccountForm.dateOfBirthRequired' })),
+    value =>
+      validators.isAtLeastYearsOldFromDateString(value, MINIMUM_STRIPE_REPRESENTATIVE_AGE_YEARS)
+        ? undefined
+        : intl.formatMessage({ id: 'StripeConnectAccountForm.dateOfBirthInvalid' })
+  );
+
+  return (
+    <>
+      <FieldTextInput
+        id="firstName"
+        name="firstName"
+        type="text"
+        disabled={disabled}
+        className={css.selectCountry}
+        label={intl.formatMessage({ id: 'StripeConnectAccountForm.firstNameLabel' })}
+        placeholder={intl.formatMessage({ id: 'StripeConnectAccountForm.firstNamePlaceholder' })}
+        validate={validators.composeValidators(
+          validators.required(intl.formatMessage({ id: 'StripeConnectAccountForm.firstNameRequired' })),
+          validators.validRealName(intl.formatMessage({ id: 'StripeConnectAccountForm.firstNameInvalid' }))
+        )}
+      />
+
+      <FieldTextInput
+        id="lastName"
+        name="lastName"
+        type="text"
+        disabled={disabled}
+        className={css.selectCountry}
+        label={intl.formatMessage({ id: 'StripeConnectAccountForm.lastNameLabel' })}
+        placeholder={intl.formatMessage({ id: 'StripeConnectAccountForm.lastNamePlaceholder' })}
+        validate={validators.composeValidators(
+          validators.required(intl.formatMessage({ id: 'StripeConnectAccountForm.lastNameRequired' })),
+          validators.validRealName(intl.formatMessage({ id: 'StripeConnectAccountForm.lastNameInvalid' }))
+        )}
+      />
+
+      <FieldTextInput
+        id="dateOfBirth"
+        name="dateOfBirth"
+        type="date"
+        disabled={disabled}
+        className={css.selectCountry}
+        label={intl.formatMessage({ id: 'StripeConnectAccountForm.dateOfBirthLabel' })}
+        validate={validDob}
+      />
+
+      <FieldTextInput
+        id="phone"
+        name="phone"
+        type="tel"
+        disabled={disabled}
+        className={css.selectCountry}
+        label={intl.formatMessage({ id: 'StripeConnectAccountForm.phoneLabel' })}
+        placeholder={intl.formatMessage({ id: 'StripeConnectAccountForm.phonePlaceholder' })}
+        validate={validators.composeValidators(
+          validators.required(intl.formatMessage({ id: 'StripeConnectAccountForm.phoneRequired' })),
+          validators.validPhoneNumber(intl.formatMessage({ id: 'StripeConnectAccountForm.phoneInvalid' }))
+        )}
+      />
+
+      <FieldTextInput
+        id="addressLine1"
+        name="addressLine1"
+        type="text"
+        disabled={disabled}
+        className={css.selectCountry}
+        label={intl.formatMessage({ id: 'StripeConnectAccountForm.addressLine1Label' })}
+        placeholder={intl.formatMessage({ id: 'StripeConnectAccountForm.addressLine1Placeholder' })}
+        validate={validators.required(
+          intl.formatMessage({ id: 'StripeConnectAccountForm.addressLine1Required' })
+        )}
+      />
+
+      <FieldTextInput
+        id="postalCode"
+        name="postalCode"
+        type="text"
+        disabled={disabled}
+        className={css.selectCountry}
+        label={intl.formatMessage({ id: 'StripeConnectAccountForm.postalCodeLabel' })}
+        placeholder={intl.formatMessage({ id: 'StripeConnectAccountForm.postalCodePlaceholder' })}
+        validate={validators.required(
+          intl.formatMessage({ id: 'StripeConnectAccountForm.postalCodeRequired' })
+        )}
+      />
+
+      <FieldTextInput
+        id="city"
+        name="city"
+        type="text"
+        disabled={disabled}
+        className={css.selectCountry}
+        label={intl.formatMessage({ id: 'StripeConnectAccountForm.cityLabel' })}
+        placeholder={intl.formatMessage({ id: 'StripeConnectAccountForm.cityPlaceholder' })}
+        validate={validators.required(
+          intl.formatMessage({ id: 'StripeConnectAccountForm.cityRequired' })
+        )}
+      />
+    </>
   );
 };
 
@@ -218,7 +385,9 @@ const StripeConnectAccountForm = props => {
   return (
     <FinalForm
       {...restOfProps}
-      onSubmit={values => onSubmit({ ...values, stripePublishableKey }, isUpdate)}
+      onSubmit={values =>
+        onSubmit({ ...values, stripePublishableKey, marketplaceCurrency: config.currency }, isUpdate)
+      }
       mutators={{
         ...arrayMutators,
       }}

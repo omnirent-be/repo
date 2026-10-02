@@ -25,7 +25,13 @@ import {
   CustomExtendedDataField,
 } from '../../../../components';
 // Import modules from this directory
+import { suggestCategoryFromTitle } from './categorySuggestion';
 import css from './EditListingDetailsForm.module.css';
+
+// How long to wait after the provider stops typing the title before
+// (re-)suggesting a category from it - see the useEffect in
+// EditListingDetailsForm below.
+const CATEGORY_SUGGESTION_DEBOUNCE_MS = 500;
 
 const TITLE_MAX_LENGTH = 60;
 
@@ -205,7 +211,15 @@ const FieldSelectCategory = props => {
     checkIfInitialValuesExist();
   }, []);
 
-  const { prefix, listingCategories, formApi, intl, setAllCategoriesChosen, values } = props;
+  const {
+    prefix,
+    listingCategories,
+    formApi,
+    intl,
+    setAllCategoriesChosen,
+    values,
+    onManualChange,
+  } = props;
 
   // Counts the number of selected categories in the form values based on the given prefix.
   const countSelectedCategories = () => {
@@ -219,7 +233,11 @@ const FieldSelectCategory = props => {
     setAllCategoriesChosen(count > 0);
   };
 
-  // If a parent category changes, clear all child category values
+  // If a parent category changes, clear all child category values. This
+  // only fires for an actual click/select on one of the dropdowns below
+  // (not for formApi.change calls made programmatically, e.g. by the
+  // title-based auto-suggestion) - exactly the signal needed to know the
+  // provider has taken over from the auto-suggestion, see onManualChange.
   const handleCategoryChange = (category, level, currentCategoryOptions) => {
     const selectedCatLenght = countSelectedCategories();
     if (level < selectedCatLenght) {
@@ -229,6 +247,9 @@ const FieldSelectCategory = props => {
     }
     const categoryConfig = findCategoryConfig(currentCategoryOptions, category).subcategories;
     setAllCategoriesChosen(!categoryConfig || categoryConfig.length === 0);
+    if (onManualChange) {
+      onManualChange();
+    }
   };
 
   return (
@@ -341,8 +362,14 @@ const EditListingDetailsForm = props => (
       } = formRenderProps;
 
       const intl = useIntl();
-      const { listingType, transactionProcessAlias, unitType } = values;
+      const { listingType, transactionProcessAlias, unitType, title } = values;
       const [allCategoriesChosen, setAllCategoriesChosen] = useState(false);
+      // Once the provider actually picks a category by hand, the
+      // title-based suggestion below backs off entirely, even if they keep
+      // editing the title afterwards - see the useEffect and
+      // FieldSelectCategory's onManualChange.
+      const [categoryManuallyChanged, setCategoryManuallyChanged] = useState(false);
+      const [categoryAutoSuggested, setCategoryAutoSuggested] = useState(false);
 
       const titleRequiredMessage = intl.formatMessage({
         id: 'EditListingDetailsForm.titleRequired',
@@ -372,7 +399,32 @@ const EditListingDetailsForm = props => (
       const hasCategories = selectableCategories && selectableCategories.length > 0;
       const showCategories = listingType && hasCategories;
 
-      const showTitle = hasCategories ? allCategoriesChosen : listingType;
+      // The title is shown as soon as a listing type is picked, independent
+      // of category completion - title is what drives the category
+      // suggestion below, so it can't wait for categories to be done first.
+      const showTitle = listingType;
+
+      // Suggests a category from the title as the provider types it (see
+      // categorySuggestion.js), so they don't have to click through the
+      // category tree by hand for a common case like "Springkasteel XL".
+      // Backs off permanently once they've picked a category themselves.
+      useEffect(() => {
+        if (!hasCategories || categoryManuallyChanged || !title) {
+          return undefined;
+        }
+        const timeoutId = setTimeout(() => {
+          const suggestion = suggestCategoryFromTitle(title);
+          if (!suggestion) {
+            return;
+          }
+          formApi.change(`${categoryPrefix}1`, suggestion.categoryLevel1);
+          formApi.change(`${categoryPrefix}2`, suggestion.categoryLevel2);
+          formApi.change(`${categoryPrefix}3`, suggestion.categoryLevel3 || null);
+          setAllCategoriesChosen(true);
+          setCategoryAutoSuggested(true);
+        }, CATEGORY_SUGGESTION_DEBOUNCE_MS);
+        return () => clearTimeout(timeoutId);
+      }, [title, hasCategories, categoryManuallyChanged]);
 
       const config = useConfiguration();
       const listingTypeConfig = getListingTypeConfig(config, listingType);
@@ -408,18 +460,6 @@ const EditListingDetailsForm = props => (
             intl={intl}
           />
 
-          {showCategories && isCompatibleCurrency && (
-            <FieldSelectCategory
-              values={values}
-              prefix={categoryPrefix}
-              listingCategories={selectableCategories}
-              formApi={formApi}
-              intl={intl}
-              allCategoriesChosen={allCategoriesChosen}
-              setAllCategoriesChosen={setAllCategoriesChosen}
-            />
-          )}
-
           {showTitle && isCompatibleCurrency && (
             <FieldTextInput
               id={`${formId}title`}
@@ -434,6 +474,26 @@ const EditListingDetailsForm = props => (
               validate={composeValidators(required(titleRequiredMessage), maxLength60Message)}
               autoFocus={autoFocus}
             />
+          )}
+
+          {showCategories && isCompatibleCurrency && (
+            <>
+              <FieldSelectCategory
+                values={values}
+                prefix={categoryPrefix}
+                listingCategories={selectableCategories}
+                formApi={formApi}
+                intl={intl}
+                allCategoriesChosen={allCategoriesChosen}
+                setAllCategoriesChosen={setAllCategoriesChosen}
+                onManualChange={() => setCategoryManuallyChanged(true)}
+              />
+              {categoryAutoSuggested && !categoryManuallyChanged ? (
+                <p className={css.categorySuggestionHint}>
+                  <FormattedMessage id="EditListingDetailsForm.categorySuggested" />
+                </p>
+              ) : null}
+            </>
           )}
 
           {showDescription && isCompatibleCurrency && (

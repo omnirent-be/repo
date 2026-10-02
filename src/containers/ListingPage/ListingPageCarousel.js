@@ -12,6 +12,7 @@ import { OFFER, REQUEST } from '../../transactions/transaction';
 import { getMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
 import { initializeCardPaymentData } from '../../ducks/stripe.duck.js';
+import { toggleFavoriteListing, isFavoriteListing } from '../../ducks/user.duck';
 
 // Shared components
 import {
@@ -23,6 +24,7 @@ import {
   OrderPanel,
   LayoutSingleColumn,
   SectionText,
+  FavoriteButton,
 } from '../../components';
 
 // Related components and modules
@@ -51,7 +53,10 @@ import {
 import Notifications from './Notifications/Notifications';
 import SectionReviews from './SectionReviews';
 import SectionAuthorMaybe from './SectionAuthorMaybe';
+import SectionMoreFromProvider from './SectionMoreFromProvider';
+import SectionBreadcrumbs from './SectionBreadcrumbs';
 import SectionMapMaybe from './SectionMapMaybe';
+import SectionDistanceMaybe from './SectionDistanceMaybe';
 import SectionGallery from './SectionGallery';
 import CustomListingFields from './CustomListingFields';
 import ListingPageAccessWrapper from './ListingPageAccessWrapper';
@@ -92,6 +97,8 @@ export const ListingPageComponent = props => {
     config,
     routeConfiguration,
     showOwnListingsOnly,
+    onToggleFavoriteListing,
+    favoriteListingIdInProgress,
     ...restOfProps
   } = props;
 
@@ -163,6 +170,15 @@ export const ListingPageComponent = props => {
   }
   const unitType = publicData.unitType;
   const isNegotiation = processType === 'negotiation';
+
+  // "Kofferbak-Index" - see EditListingRentalDetailsForm.js's
+  // publicData.transportSize. Shown prominently near the title so a
+  // visitor can judge transport logistics before reading further.
+  const transportSizeMessageId = {
+    compact: 'EditListingRentalDetailsForm.transportSizeCompact',
+    medium: 'EditListingRentalDetailsForm.transportSizeMedium',
+    large: 'EditListingRentalDetailsForm.transportSizeLarge',
+  }[publicData.transportSize];
 
   const commonParams = { params, history, routes: routeConfiguration };
   const onContactUser = handleContactUser({
@@ -238,6 +254,10 @@ export const ListingPageComponent = props => {
       <LayoutSingleColumn className={css.pageRoot} topbar={topbar} footer={<FooterContainer />}>
         <div className={css.contentWrapperForProductLayout}>
           <div className={css.mainColumnForProductLayout}>
+            <SectionBreadcrumbs
+              publicData={publicData}
+              categories={config.categoryConfiguration.categories}
+            />
             <Notifications
               mounted={mounted}
               listing={currentListing}
@@ -256,6 +276,17 @@ export const ListingPageComponent = props => {
               <SectionGallery
                 listing={currentListing}
                 variantPrefix={config.layout.listingImage.variantPrefix}
+                overlay={
+                  !isOwnListing && listingId ? (
+                    <FavoriteButton
+                      listingId={listingId.uuid}
+                      currentUser={currentUser}
+                      isFavorite={isFavoriteListing(currentUser, listingId.uuid)}
+                      inProgress={favoriteListingIdInProgress === listingId.uuid}
+                      onToggleFavorite={onToggleFavoriteListing}
+                    />
+                  ) : null
+                }
               />
             )}
             <div
@@ -271,7 +302,21 @@ export const ListingPageComponent = props => {
                 </H3>
               )}
             </div>
+            {transportSizeMessageId ? (
+              <div className={css.transportBadge}>
+                <FormattedMessage id={transportSizeMessageId} />
+              </div>
+            ) : null}
+
             {showDescription && <SectionText text={description} showAsIngress />}
+
+            <SectionDistanceMaybe
+              geolocation={geolocation}
+              publicData={publicData}
+              listingId={currentListing.id}
+              mapsConfig={config.maps}
+              isOwnListing={isOwnListing}
+            />
 
             <CustomListingFields
               publicData={publicData}
@@ -300,6 +345,10 @@ export const ListingPageComponent = props => {
               onSubmitInquiry={onSubmitInquiry}
               currentUser={currentUser}
               onManageDisableScrolling={onManageDisableScrolling}
+            />
+            <SectionMoreFromProvider
+              authorId={ensuredAuthor.id}
+              currentListingId={listingId?.uuid}
             />
           </div>
           <div className={css.orderColumnForProductLayout}>
@@ -442,6 +491,13 @@ const ListingPage = props => {
       dispatch(fetchTimeSlots(listingId, start, end, timeZone, options)),
     [dispatch]
   );
+  const onToggleFavoriteListing = useCallback(
+    listingId => dispatch(toggleFavoriteListing(listingId)),
+    [dispatch]
+  );
+  const favoriteListingIdInProgress = useSelector(
+    state => state.user?.favoriteListingIdInProgress
+  );
 
   return (
     <ListingPageAccessWrapper
@@ -449,6 +505,8 @@ const ListingPage = props => {
       PageComponent={ListingPageComponent}
       isAuthenticated={isAuthenticated}
       currentUser={currentUser}
+      onToggleFavoriteListing={onToggleFavoriteListing}
+      favoriteListingIdInProgress={favoriteListingIdInProgress}
       getListing={getListing}
       getOwnListing={getOwnListing}
       scrollingDisabled={scrollingDisabled}

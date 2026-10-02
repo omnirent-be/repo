@@ -86,6 +86,8 @@ const getHandleSubmit = (name, queryParamNames, onSubmit) => values => {
  * @param {Function} props.onSubmit - The function to submit
  * @param {Function} [props.formatValidRangeValues] - Function to format validRangeValues for display
  * @param {Function} [props.getLabelForRangeInput] - Function to get the aria label for the range input
+ * @param {Array<{key: string, label: React.Node, minValue: number, maxValue: number}>} [props.quickRanges] - Optional preset range buttons rendered above the slider (e.g. price quick-select)
+ * @param {React.Node} [props.description] - Optional helper text rendered above the slider, only in the always-visible (non-popup) layout
  * @returns {JSX.Element}
  */
 const IntegerRangeFilter = props => {
@@ -106,6 +108,8 @@ const IntegerRangeFilter = props => {
     showAsPopup = true,
     formatValidRangeValues,
     getLabelForRangeInput,
+    quickRanges,
+    description,
     ...rest
   } = props;
 
@@ -155,6 +159,28 @@ const IntegerRangeFilter = props => {
     <FormattedMessage id="IntegerRangeFilter.labelSelectedPlain" values={formattedRangeValues} />
   ) : null;
 
+  const quickRangeButtons = quickRanges?.length ? (
+    <div className={css.quickRanges}>
+      {quickRanges.map(range => {
+        const isActive =
+          validRangeValues.minValue === range.minValue && validRangeValues.maxValue === range.maxValue;
+        return (
+          <button
+            key={range.key}
+            type="button"
+            className={classNames(css.quickRangeButton, { [css.quickRangeButtonActive]: isActive })}
+            onClick={() => {
+              bypassDebounce.current = true;
+              handleSubmit({ [name]: { minValue: range.minValue, maxValue: range.maxValue } });
+            }}
+          >
+            {range.label}
+          </button>
+        );
+      })}
+    </div>
+  ) : null;
+
   return showAsPopup ? (
     <FilterPopup
       className={classes}
@@ -167,6 +193,7 @@ const IntegerRangeFilter = props => {
       initialValues={resolvedInitialValues}
       {...rest}
     >
+      {quickRangeButtons}
       <FieldSelectIntegerRange
         max={max}
         min={min}
@@ -193,6 +220,8 @@ const IntegerRangeFilter = props => {
       initialValues={resolvedInitialValues}
       {...rest}
     >
+      {description ? <p className={css.description}>{description}</p> : null}
+      {quickRangeButtons}
       <FieldSelectIntegerRange
         isInSideBar
         max={max}

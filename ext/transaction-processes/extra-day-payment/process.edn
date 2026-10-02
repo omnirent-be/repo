@@ -1,0 +1,66 @@
+{:format :v3,
+ :transitions
+ [{:name :transition/request-extra-day,
+   :actor :actor.role/customer,
+   :actions
+   [{:name :action/create-pending-booking, :config {:type :time}}
+    {:name :action/privileged-set-line-items}
+    {:name :action/stripe-create-payment-intent}],
+   :to :state/pending-payment,
+   :privileged? true}
+  {:name :transition/expire-payment,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/pending-payment]}
+     {:fn/period ["PT15M"]}]},
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}
+    {:name :action/decline-booking}],
+   :from :state/pending-payment,
+   :to :state/payment-expired}
+  {:name :transition/confirm-payment,
+   :actor :actor.role/customer,
+   :actions [{:name :action/stripe-confirm-payment-intent}],
+   :from :state/pending-payment,
+   :to :state/preauthorized}
+  {:name :transition/accept,
+   :actor :actor.role/provider,
+   :actions
+   [{:name :action/accept-booking}
+    {:name :action/stripe-capture-payment-intent}
+    {:name :action/stripe-create-payout}],
+   :from :state/preauthorized,
+   :to :state/accepted}
+  {:name :transition/decline,
+   :actor :actor.role/provider,
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}
+    {:name :action/decline-booking}],
+   :from :state/preauthorized,
+   :to :state/declined}
+  {:name :transition/expire,
+   :at
+   {:fn/plus
+    [{:fn/timepoint [:time/first-entered-state :state/preauthorized]}
+     {:fn/period ["P2D"]}]},
+   :actions
+   [{:name :action/calculate-full-refund}
+    {:name :action/stripe-refund-payment}
+    {:name :action/decline-booking}],
+   :from :state/preauthorized,
+   :to :state/expired}],
+ :notifications
+ [{:name :notification/extra-day-requested,
+   :on :transition/confirm-payment,
+   :to :actor.role/provider,
+   :template :extra-day-requested}
+  {:name :notification/extra-day-accepted,
+   :on :transition/accept,
+   :to :actor.role/customer,
+   :template :extra-day-accepted}
+  {:name :notification/extra-day-declined,
+   :on :transition/decline,
+   :to :actor.role/customer,
+   :template :extra-day-declined}]}

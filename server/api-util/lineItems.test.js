@@ -532,6 +532,108 @@ describe('transactionLineItems', () => {
     });
   });
 
+  describe('Weekend/Multi-day Discount', () => {
+    it('should apply the discount as a plain quantity line item without seats', () => {
+      const listing = {
+        ...mockListing,
+        attributes: {
+          ...mockListing.attributes,
+          publicData: {
+            ...mockListing.attributes.publicData,
+            unitType: 'day',
+            weekendDiscountEnabled: true,
+          },
+        },
+      };
+
+      const orderData = {
+        bookingStart: '2024-01-01T00:00:00.000Z',
+        bookingEnd: '2024-01-04T00:00:00.000Z', // 3 days
+      };
+
+      const result = transactionLineItems(
+        listing,
+        orderData,
+        mockProviderCommission,
+        mockCustomerCommission
+      );
+
+      const discountLineItem = result.find(li => li.code === 'line-item/multi-day-discount');
+      expect(discountLineItem).toEqual({
+        code: 'line-item/multi-day-discount',
+        unitPrice: new Money(-5000, 'EUR'), // 50% of €100
+        quantity: 2, // 3 days - 1
+        includeFor: ['customer', 'provider'],
+      });
+    });
+
+    it('should scale the discount by seats instead of silently disappearing', () => {
+      const listing = {
+        ...mockListing,
+        attributes: {
+          ...mockListing.attributes,
+          publicData: {
+            ...mockListing.attributes.publicData,
+            unitType: 'day',
+            weekendDiscountEnabled: true,
+          },
+        },
+      };
+
+      const orderData = {
+        bookingStart: '2024-01-01T00:00:00.000Z',
+        bookingEnd: '2024-01-04T00:00:00.000Z', // 3 days
+        seats: 20, // e.g. 20 chairs
+      };
+
+      const result = transactionLineItems(
+        listing,
+        orderData,
+        mockProviderCommission,
+        mockCustomerCommission
+      );
+
+      const discountLineItem = result.find(li => li.code === 'line-item/multi-day-discount');
+      expect(discountLineItem).toEqual({
+        code: 'line-item/multi-day-discount',
+        unitPrice: new Money(-5000, 'EUR'), // 50% of €100
+        units: 2, // 3 days - 1
+        seats: 20,
+        includeFor: ['customer', 'provider'],
+      });
+    });
+
+    it('should not apply the discount when weekendDiscountEnabled is false', () => {
+      const listing = {
+        ...mockListing,
+        attributes: {
+          ...mockListing.attributes,
+          publicData: {
+            ...mockListing.attributes.publicData,
+            unitType: 'day',
+            weekendDiscountEnabled: false,
+          },
+        },
+      };
+
+      const orderData = {
+        bookingStart: '2024-01-01T00:00:00.000Z',
+        bookingEnd: '2024-01-04T00:00:00.000Z',
+        seats: 5,
+      };
+
+      const result = transactionLineItems(
+        listing,
+        orderData,
+        mockProviderCommission,
+        mockCustomerCommission
+      );
+
+      const discountLineItem = result.find(li => li.code === 'line-item/multi-day-discount');
+      expect(discountLineItem).toBeUndefined();
+    });
+  });
+
   describe('Price Variants', () => {
     it('should use price variant when priceVariationsEnabled is true', () => {
       const listing = {

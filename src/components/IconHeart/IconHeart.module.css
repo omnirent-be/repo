@@ -1,0 +1,5 @@
+.root {
+  /* fill/stroke on the path both use currentColor, so this is the only
+     color that needs setting */
+  color: var(--colorGrey700);
+}

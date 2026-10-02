@@ -86,6 +86,24 @@ const monthlyTimeSlots = {
   },
 };
 
+// Mirrors a real listing's availability plan with 60 seats/day (e.g. "60
+// chairs") - confirms the renter-facing seats dropdown actually offers up
+// to 60, not just that it renders at all.
+const addSeats = (slots, seats) =>
+  slots.map(slot => ({ ...slot, attributes: { ...slot.attributes, seats } }));
+const monthlyTimeSlotsWith60Seats = {
+  [monthlyId]: {
+    timeSlots: addSeats(timeSlots, 60),
+    fetchTimeSlotsError: null,
+    fetchTimeSlotsInProgress: null,
+  },
+  [nextMonthlyId]: {
+    timeSlots: addSeats(timeSlotsNextMonth, 60),
+    fetchTimeSlotsError: null,
+    fetchTimeSlotsInProgress: null,
+  },
+};
+
 const unitPrice = new Decimal(1099);
 
 export const FormWithNightBooking = {
@@ -102,6 +120,41 @@ export const FormWithNightBooking = {
     monthlyTimeSlots,
     lineItems: null,
 
+    startDatePlaceholder: 'start date',
+    endDatePlaceholder: 'end date',
+
+    fetchLineItemsInProgress: false,
+    fetchLineItemsError: null,
+    onFetchTransactionLineItems: params =>
+      console.log(
+        'onFetchTransactionLineItems called with params:',
+        JSON.stringify(params, null, 2)
+      ),
+    onFetchTimeSlots: (listingId, start, end, timeZone) =>
+      console.log('onFetchTimeSlots called with args:', listingId, start, end, timeZone),
+    timeZone: 'Etc/UTC',
+    currency: 'USD',
+    marketplaceName,
+    dayCountAvailableForBooking: 90,
+    finePrintComponent: props => <div>{props.children}</div>,
+  },
+  group: 'forms',
+};
+
+export const FormWithDayBookingAnd60Seats = {
+  component: injectIntl(BookingDatesForm),
+  props: {
+    formId: 'OrderPanelBookingDatesFormExample3',
+    listingId: new UUID('listing.id'),
+    lineItemUnitType: LINE_ITEM_DAY,
+    seatsEnabled: true,
+    onSubmit: values => {
+      console.log('Submit BookingDatesForm with values:', values);
+    },
+    price: new Money(1099, 'USD'),
+    isOwnListing: false,
+    monthlyTimeSlots: monthlyTimeSlotsWith60Seats,
+    lineItems: null,
     startDatePlaceholder: 'start date',
     endDatePlaceholder: 'end date',
 

@@ -9,19 +9,42 @@
   &:hover {
     text-decoration: none;
   }
+
+  @media (--viewportMedium) {
+    transition: var(--transitionStyleButton);
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--boxShadowListingCard);
+    }
+  }
+}
+
+@keyframes listingCardImageLoading {
+  0%,
+  100% {
+    background-color: var(--colorGrey100);
+  }
+  50% {
+    background-color: var(--colorGrey50);
+  }
 }
 
 .aspectRatioWrapper {
   transition: var(--transitionStyleButton);
   background: var(--colorGrey100); /* Loading BG color */
+  /* A slow pulse while the image's bytes are still downloading, so the
+     placeholder reads as "loading" rather than "broken" during that gap.
+     The <img> (rootForImage, width/height 100%) fully covers this
+     background as soon as it paints, so the animation is simply hidden
+     underneath from then on - no need to detect "loaded" and stop it. */
+  animation: listingCardImageLoading 1.6s ease-in-out infinite;
   border-radius: var(--borderRadiusMedium);
 
-  @media (--viewportMedium) {
-    &:hover {
-      transform: scale(1.02);
-      box-shadow: var(--boxShadowListingCard);
-    }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
   }
+
 }
 
 .rootForImage {
@@ -29,6 +52,67 @@
   border-radius: var(--borderRadiusMedium);
   width: 100%;
   height: 100%;
+  /* Crop to fill the 4/3 frame (see config.layout.listingImage) instead of
+     stretching - keeps every card the same height regardless of the
+     source photo's own aspect ratio. */
+  object-fit: cover;
+}
+
+.favoriteButtonWrapper {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+}
+
+/* Holds depositBadge and transportBadge stacked vertically so a listing
+   with both doesn't render them on top of each other. */
+.badgeStack {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.depositBadge,
+.transportBadge {
+  composes: marketplaceTinyFontStyles from global;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: rgba(255, 255, 255, 0.92);
+  color: var(--colorGrey700);
+  font-weight: var(--fontWeightSemiBold);
+  white-space: nowrap;
+}
+
+.imageDots {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.imageDot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+}
+
+.imageDotActive {
+  background-color: var(--colorWhite);
+  transform: scale(1.3);
 }
 
 .title.lightText {
@@ -57,8 +141,10 @@
 }
 
 .priceValue {
-  /* Font */
-  font-weight: var(--fontWeightSemiBold);
+  /* Font - the prominent, glanceable number on the card */
+  font-size: 18px;
+  line-height: 1;
+  font-weight: var(--fontWeightBold);
   color: var(--marketplaceColor);
 
   /* Remove default margins from font */
@@ -72,9 +158,9 @@
 }
 
 .perUnit {
-  /* Font */
-  font-weight: var(--fontWeightSemiBold);
-  color: var(--marketplaceColor);
+  /* Font - secondary to priceValue, so it doesn't compete with it */
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorGrey400);
 
   /* Remove default margins from font */
   margin-top: 0;
@@ -100,24 +186,66 @@
   margin: 0;
 }
 
-/* ⚠️ the calculated height of this selector is hardcoded in SectionListings.js calculateCarouselHeight() as authorInfoHeight & authorInfoHeighMobile */
-.authorInfo {
-  /* Font */
+/* ⚠️ the calculated height of this selector is hardcoded in SectionListings.js calculateCarouselHeight() as authorInfoHeight & authorInfoHeighMobile
+   - .authorRow now also carries the delivery-method label, so that
+   calculation undercounts height when both are shown (search results
+   don't use that carousel component, so this only matters if/when
+   SectionListings' "Featured listings" CMS block is actually configured
+   on a page - revisit calculateCarouselHeight() there if so). */
+.authorRow {
   composes: marketplaceTinyFontStyles from global;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
   font-weight: var(--fontWeightMedium);
   color: var(--colorGrey700);
 
   padding-top: 4px;
   padding-bottom: 4px;
 
-  /* Remove default margins from font */
   margin-top: 0;
   margin-bottom: 0;
+}
 
-  @media (--viewportMedium) {
-    margin-top: 0;
-    margin-bottom: 0;
-  }
+.authorRow.lightText {
+  color: var(--colorWhite);
+}
+
+.rating {
+  color: var(--colorGrey400);
+}
+
+.authorRowDot {
+  color: var(--colorGrey300);
+}
+
+.deliveryLabel {
+  color: var(--colorGrey400);
+  white-space: nowrap;
+}
+
+.locationLabel {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey400);
+  margin: 0 0 2px 0;
+}
+
+.locationLabel.lightText {
+  color: var(--colorWhite);
+}
+
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.depositAmount {
+  composes: marketplaceTinyFontStyles from global;
+  flex-shrink: 0;
+  color: var(--colorGrey400);
 }
 
 .longWord {
@@ -125,5 +253,5 @@
   word-break: break-all;
   /* use break-word if available */
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
 }

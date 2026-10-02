@@ -192,6 +192,10 @@ const EditListingAvailabilityPanel = props => {
 
   const useFullDays = isFullDay(unitType);
   const useMultipleSeats = listingTypeConfig?.availabilityType === AVAILABILITY_MULTIPLE_SEATS;
+  // Only show the "X stuks" quantity line on the weekly schedule when the
+  // provider actually filled in "Aantal beschikbaar" - a single-item
+  // listing (the default) shouldn't show a meaningless "1 stuk" everywhere.
+  const hasTotalQuantity = listingAttributes?.publicData?.totalQuantity != null;
 
   const hasAvailabilityPlan = !!listingAttributes?.availabilityPlan;
   const isPublished = listing?.id && listingAttributes?.state !== LISTING_STATE_DRAFT;
@@ -317,7 +321,7 @@ const EditListingAvailabilityPanel = props => {
             weeklyExceptionQueries={weeklyExceptionQueries}
             isDaily={unitType === DAY}
             useFullDays={useFullDays}
-            useMultipleSeats={useMultipleSeats}
+            showQuantity={hasTotalQuantity}
             onDeleteAvailabilityException={onDeleteAvailabilityException}
             onFetchExceptions={onFetchExceptions}
             params={params}
@@ -379,6 +383,13 @@ const EditListingAvailabilityPanel = props => {
             useFullDays={useFullDays}
             useMultipleSeats={useMultipleSeats}
             unitType={unitType}
+            // "Aantal beschikbaar" from the Details & Contract step (see
+            // EditListingRentalDetailsForm.js) - used as the default seats
+            // value for a newly-checked day here, so a provider who already
+            // said "I have 30 chairs" doesn't have to re-type 30 into every
+            // day of the week. Falls back to 1 (a single, indivisible item)
+            // when not set - that field is optional.
+            defaultSeats={listingAttributes?.publicData?.totalQuantity}
           />
         </Modal>
       ) : null}

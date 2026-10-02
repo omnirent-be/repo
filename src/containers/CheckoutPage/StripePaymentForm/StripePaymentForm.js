@@ -212,6 +212,61 @@ const checkOnetimePaymentFields = (
   };
 };
 
+// How long to wait after the customer stops typing their postal code
+// before re-requesting a price (see onShippingAddressChange) - long enough
+// to not fire on every keystroke, short enough that the price still feels
+// live while filling in the address.
+const SHIPPING_ADDRESS_CHANGE_DEBOUNCE_MS = 800;
+
+// Watches the shipping address fields (while they're being rendered, i.e.
+// askShippingDetails) and calls onShippingAddressChange (debounced) once
+// postal code + country are both filled in, so distance-based delivery
+// pricing (see getDeliveryLineItems in server/api-util/lineItems.js) can
+// show a real, non-zero fee before the customer ever reaches the "Pay"
+// button, instead of only computing it once they submit.
+const useShippingAddressWatcher = (formApi, askShippingDetails, onShippingAddressChange) => {
+  const timeoutRef = React.useRef(null);
+  const lastSentRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!askShippingDetails || !formApi || !onShippingAddressChange) {
+      return undefined;
+    }
+
+    const unsubscribe = formApi.subscribe(
+      state => {
+        const { recipientPostal, recipientCity, recipientCountry } = state.values || {};
+        if (!recipientPostal || !recipientCountry) {
+          return;
+        }
+        const key = `${recipientPostal}|${recipientCity}|${recipientCountry}`;
+        if (key === lastSentRef.current) {
+          return;
+        }
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+        timeoutRef.current = setTimeout(() => {
+          lastSentRef.current = key;
+          onShippingAddressChange({
+            postalCode: recipientPostal,
+            city: recipientCity,
+            country: recipientCountry,
+          });
+        }, SHIPPING_ADDRESS_CHANGE_DEBOUNCE_MS);
+      },
+      { values: true }
+    );
+
+    return () => {
+      unsubscribe();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [formApi, askShippingDetails, onShippingAddressChange]);
+};
+
 const LocationOrShippingDetails = props => {
   const {
     askShippingDetails,
@@ -222,7 +277,10 @@ const LocationOrShippingDetails = props => {
     locale,
     isFuzzyLocation,
     intl,
+    onShippingAddressChange,
   } = props;
+
+  useShippingAddressWatcher(formApi, askShippingDetails, onShippingAddressChange);
 
   const locationDetails = listingLocation?.building
     ? `${listingLocation.building}, ${listingLocation.address}`
@@ -606,6 +664,7 @@ class StripePaymentForm extends Component {
           formApi={formApi}
           locale={locale}
           intl={intl}
+          onShippingAddressChange={this.props.onShippingAddressChange}
         />
 
         {billingDetailsNeeded && !loadingData ? (

@@ -11,7 +11,14 @@ import {
   stringifyDateToISO8601,
 } from '../../util/dates';
 import { isTransactionsTransitionInvalidTransition, storableError } from '../../util/errors';
-import { transactionLineItems, transitionPrivileged } from '../../util/api';
+import {
+  transactionLineItems,
+  transitionPrivileged,
+  requestExtraDay as apiRequestExtraDay,
+  initiateDepositHold as apiInitiateDepositHold,
+  releaseDeposit as apiReleaseDeposit,
+  claimDeposit as apiClaimDeposit,
+} from '../../util/api';
 import * as log from '../../util/log';
 import {
   updatedEntities,
@@ -414,6 +421,138 @@ export const makeTransitionThunk = createAsyncThunk(
 // Backward compatible wrapper for makeTransition
 export const makeTransition = (txId, transitionName, params) => dispatch => {
   return dispatch(makeTransitionThunk({ txId, transitionName, params }));
+};
+
+//////////////////////////
+// Extra day: request   //
+//////////////////////////
+
+// Customer requests one or more extra days on an already accepted booking.
+// This creates a separate, linked extra-day transaction (its own booking
+// and Stripe payment intent) - the price is calculated automatically
+// server-side. Returns that new transaction so the caller can move
+// straight into the payment step without a second round trip.
+export const requestExtraDay = (transactionId, startDate, endDate, note) => (
+  dispatch,
+  getState,
+  sdk
+) => {
+  return apiRequestExtraDay({
+    transactionId,
+    startDate,
+    endDate,
+    note,
+  }).then(response => {
+    return denormalisedResponseEntities(response)[0];
+  });
+};
+
+///////////////////////////////
+// Extra day: confirm payment //
+///////////////////////////////
+
+// After Stripe confirms the card payment client-side, this authorizes the
+// extra-day transaction's payment on the Marketplace API side (moves it to
+// "preauthorized" - not yet captured). The provider still has to accept it
+// (which captures the charge) or decline it (which releases the hold).
+export const confirmExtraDayPayment = extraDayTransactionId => (dispatch, getState, sdk) => {
+  return sdk.transactions
+    .transition(
+      {
+        id: extraDayTransactionId,
+        transition: 'transition/confirm-payment',
+        params: {},
+      },
+      { expand: true }
+    )
+    .then(response => denormalisedResponseEntities(response)[0]);
+};
+
+// Re-fetches an existing extra-day transaction, for when the customer
+// closed the payment modal before confirming the card and reopens it -
+// avoids creating a second, duplicate extra-day transaction.
+export const fetchExtraDayTransaction = extraDayTransactionId => (dispatch, getState, sdk) => {
+  return sdk.transactions
+    .show({ id: extraDayTransactionId }, { expand: true })
+    .then(response => denormalisedResponseEntities(response)[0]);
+};
+
+////////////////////////////////////
+// Extra day: accept/decline      //
+////////////////////////////////////
+
+// Provider accepts a customer's extra-day request. Plain, non-privileged
+// transition on the linked extra-day transaction - captures the
+// already-authorized payment.
+export const acceptExtraDay = extraDayTransactionId => (dispatch, getState, sdk) => {
+  return sdk.transactions
+    .transition(
+      { id: extraDayTransactionId, transition: 'transition/accept', params: {} },
+      { expand: true }
+    )
+    .then(response => denormalisedResponseEntities(response)[0]);
+};
+
+// Provider declines a customer's extra-day request. Plain, non-privileged
+// transition on the linked extra-day transaction - releases the
+// authorization hold, customer is never charged.
+export const declineExtraDay = extraDayTransactionId => (dispatch, getState, sdk) => {
+  return sdk.transactions
+    .transition(
+      { id: extraDayTransactionId, transition: 'transition/decline', params: {} },
+      { expand: true }
+    )
+    .then(response => denormalisedResponseEntities(response)[0]);
+};
+
+////////////////////////////////
+// Deposit: initiate hold     //
+////////////////////////////////
+
+// Initiates the separate, linked deposit-hold transaction for an accepted
+// booking whose listing has a security deposit configured.
+export const initiateDepositHold = transactionId => (dispatch, getState, sdk) => {
+  return apiInitiateDepositHold({ transactionId }).then(response => {
+    return denormalisedResponseEntities(response)[0];
+  });
+};
+
+////////////////////////////
+// Deposit: confirm hold  //
+////////////////////////////
+
+// After Stripe confirms the card payment client-side, this confirms the
+// deposit-hold transaction on the Marketplace API side (captures the
+// payment, leaving it held - no payout yet).
+export const confirmDepositHold = depositTransactionId => (dispatch, getState, sdk) => {
+  return sdk.transactions
+    .transition(
+      {
+        id: depositTransactionId,
+        transition: 'transition/confirm-deposit-hold',
+        params: {},
+      },
+      { expand: true }
+    )
+    .then(response => denormalisedResponseEntities(response)[0]);
+};
+
+////////////////////////////
+// Deposit: release/claim //
+////////////////////////////
+
+// Provider releases (fully refunds) the held security deposit.
+export const releaseDeposit = transactionId => (dispatch, getState, sdk) => {
+  return apiReleaseDeposit({ transactionId }).then(response => {
+    return denormalisedResponseEntities(response)[0];
+  });
+};
+
+// Provider claims (fully pays out to themselves) the held security deposit.
+export const claimDeposit = (transactionId, reason) => (dispatch, getState, sdk) => {
+  return apiClaimDeposit({ transactionId, reason }).then(response => {
+    return denormalisedResponseEntities(response)[0];
+  });
 };
 
 ////////////////////

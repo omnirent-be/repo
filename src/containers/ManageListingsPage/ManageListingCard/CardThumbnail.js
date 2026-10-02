@@ -118,7 +118,9 @@ const DraftOverlay = props => {
         <NamedLink
           className={css.finishListingDraftLink}
           name="EditListingPage"
-          params={{ id: listingId.uuid, slug, type: LISTING_PAGE_PARAM_TYPE_DRAFT, tab: 'photos' }}
+          // OmniRent's only listing type (default-booking) now starts its
+          // wizard on 'basics' instead of 'photos' - see EditListingWizard.js.
+          params={{ id: listingId.uuid, slug, type: LISTING_PAGE_PARAM_TYPE_DRAFT, tab: 'basics' }}
           ariaLabel={`${intl.formatMessage({
             id: 'ManageListingCard.finishListingDraft',
           })}: ${title}`}

@@ -17,6 +17,8 @@ import {
   PrimaryButton,
 } from '../../../components/index.js';
 
+import { QuoteExpectations, QuoteRequestFields } from '../../../components/QuoteSystem/QuoteSystem.js';
+
 import css from './RequestQuoteForm.module.css';
 
 /**
@@ -75,6 +77,8 @@ export const RequestQuoteForm = props => {
         return (
           <Form className={classes} onSubmit={handleSubmit} enforcePagePreloadFor="SaleDetailsPage">
             <div className={css.section}>
+              <QuoteExpectations />
+              <QuoteRequestFields formId={formId || 'RequestQuoteForm'} />
               {hasTransactionFieldConfigs ? (
                 <div className={css.transactionFieldsContainer}>
                   {transactionFieldsProps.map(({ key, ...fieldProps }) => (
@@ -101,6 +105,9 @@ export const RequestQuoteForm = props => {
                   intl.formatMessage({ id: 'RequestQuotePage.defaultMessageRequired' })
                 )}
               />
+              <p className={css.platformOnlyDisclaimer}>
+                <FormattedMessage id="RequestQuotePage.platformOnlyDisclaimer" />
+              </p>
             </div>
 
             <div className={submitButtonWrapperClassName}>

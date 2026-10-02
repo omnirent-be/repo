@@ -23,6 +23,8 @@ import {
   PrimaryButton,
 } from '../../../components/index.js';
 
+import { QuoteOfferFields } from '../../../components/QuoteSystem/QuoteSystem.js';
+
 import css from './MakeOfferForm.module.css';
 
 const { Money } = sdkTypes;
@@ -43,7 +45,7 @@ const getPriceValidators = (listingMinimumPriceSubUnits, marketplaceCurrency, in
 
   return listingMinimumPriceSubUnits
     ? validators.composeValidators(quoteRequired, minQuoteRequired)
-    : priceRequired;
+    : quoteRequired;
 };
 
 const FinePrint = ({ stripeConnected }) => {
@@ -164,6 +166,11 @@ export const MakeOfferForm = props => {
                 validate={priceValidators}
               />
 
+              <QuoteOfferFields
+                formId={formId || 'MakeOfferForm'}
+                marketplaceCurrency={marketplaceCurrency}
+              />
+
               {hasTransactionFieldConfigs ? (
                 <div className={css.transactionFieldsContainer}>
                   {transactionFieldsProps.map(({ key, ...fieldProps }) => (
@@ -188,6 +195,9 @@ export const MakeOfferForm = props => {
                   { authorDisplayName }
                 )}
               />
+              <p className={css.platformOnlyDisclaimer}>
+                <FormattedMessage id="MakeOfferPage.platformOnlyDisclaimer" />
+              </p>
             </div>
 
             <div className={submitButtonWrapperClassName}>

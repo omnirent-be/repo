@@ -229,13 +229,13 @@ describe('ListingPage variants', () => {
         initialState,
         config,
         routeConfiguration,
+        initialEntries: ['/l/test-slug/1234'],
       }
     );
 
     await waitFor(() => {
-      // Has main search in Topbar and it's a location search.
-      expect(getByPlaceholderText('TopbarSearchForm.placeholder')).toBeInTheDocument();
-      expect(screen.getByTestId('location-search')).toBeInTheDocument();
+      // Has main search capsule in Topbar.
+      expect(getByText('SearchCapsule.keywordsLabel')).toBeInTheDocument();
 
       // Has hero (coverPhoto) section
       expect(screen.getByTestId('hero')).toBeInTheDocument();
@@ -285,12 +285,12 @@ describe('ListingPage variants', () => {
         initialState,
         config,
         routeConfiguration,
+        initialEntries: ['/l/test-slug/1234'],
       }
     );
     await waitFor(() => {
-      // Has main search in Topbar and it's a location search.
-      expect(getByPlaceholderText('TopbarSearchForm.placeholder')).toBeInTheDocument();
-      expect(screen.getByTestId('location-search')).toBeInTheDocument();
+      // Has main search capsule in Topbar.
+      expect(getByText('SearchCapsule.keywordsLabel')).toBeInTheDocument();
 
       // Does not have hero (coverPhoto) section on carousel mode
       expect(screen.getByTestId('carousel')).toBeInTheDocument();

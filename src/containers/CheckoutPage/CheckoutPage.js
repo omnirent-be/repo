@@ -222,10 +222,18 @@ const CheckoutPage = props => {
     setPageData(data || {});
     setIsDataLoaded(true);
 
+    // Note: processName (from the outer scope) is derived from pageData
+    // state, which is still stale on this first render - setPageData above
+    // won't apply until the next render. Recompute it from the freshly
+    // loaded `data` instead, otherwise this check always sees an empty
+    // processName and incorrectly fetches Stripe/speculated-transaction
+    // data even for inquiry-only listings (no price, so it always 400s).
+    const freshProcessName = getProcessName(data || {});
+
     // Do not fetch extra data if user is not active (E.g. they are in pending-approval state.)
     if (isUserAuthorized(currentUser)) {
       // This is for processes using payments with Stripe integration
-      if (processName !== INQUIRY_PROCESS_NAME) {
+      if (freshProcessName !== INQUIRY_PROCESS_NAME) {
         // Fetch StripeCustomer and speculateTransition for transactions that include Stripe payments
         loadInitialDataForStripePayments({
           pageData: data || {},

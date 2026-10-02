@@ -26,12 +26,14 @@ import {
 import EditListingPage, { EditListingPageComponent } from './EditListingPage';
 import {
   AVAILABILITY,
+  BASICS,
   DELIVERY,
   DETAILS,
   LOCATION,
   PHOTOS,
   PRICING,
   PRICING_AND_STOCK,
+  RENTAL_DETAILS,
 } from './EditListingWizard/EditListingWizardTab';
 
 const { screen, userEvent, waitFor, within } = testingLibrary;
@@ -1221,7 +1223,59 @@ describe('EditListingPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('Booking (day): edit flow on details tab', async () => {
+  it('Booking (day): edit flow on basics tab', async () => {
+    const config = getConfig(listingTypesBookingDay, listingFieldsBooking);
+    const routeConfiguration = getRouteConfiguration(config.layout);
+    const listing = createOwnListing('listing-day', {
+      title: 'the listing',
+      description: 'Lorem ipsum',
+      publicData: {
+        listingType: 'rent-bicycles-daily',
+        transactionProcessAlias: 'default-booking/release-1',
+        unitType: 'day',
+      },
+    });
+
+    const props = {
+      ...commonProps,
+      params: {
+        id: listing.id.uuid,
+        slug: 'slug',
+        type: LISTING_PAGE_PARAM_TYPE_EDIT,
+        tab: BASICS,
+      },
+    };
+
+    const { getByText, getByRole } = render(<EditListingPage {...props} />, {
+      initialState: initialState(listing),
+      config,
+      routeConfiguration,
+    });
+
+    await waitFor(() => {
+      // Navigation to tab
+      const tabLabel = 'EditListingWizard.tabLabelBasics';
+      expect(getByText(tabLabel)).toBeInTheDocument();
+
+      // Tab: panel title
+      expect(getByText('EditListingBasicsPanel.title')).toBeInTheDocument();
+
+      // Tab/form: form title
+      expect(getByRole('textbox', { name: 'EditListingBasicsForm.title' })).toHaveValue(
+        'the listing'
+      );
+
+      // Tab/form: photo upload UI (title+category+photos all live here now,
+      // see EditListingBasicsForm.js)
+      expect(getByText('EditListingBasicsForm.chooseImage')).toBeInTheDocument();
+
+      expect(
+        getByRole('button', { name: 'EditListingWizard.edit.saveBasics' })
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('Booking (day): edit flow on rental details tab', async () => {
     const user = userEvent.setup();
     const config = getConfig(listingTypesBookingDay, listingFieldsBooking);
     const routeConfiguration = getRouteConfiguration(config.layout);
@@ -1241,11 +1295,11 @@ describe('EditListingPage', () => {
         id: listing.id.uuid,
         slug: 'slug',
         type: LISTING_PAGE_PARAM_TYPE_EDIT,
-        tab: DETAILS,
+        tab: RENTAL_DETAILS,
       },
     };
 
-    const { getByText, getByRole, getByLabelText } = render(<EditListingPage {...props} />, {
+    const { getByText, getByRole } = render(<EditListingPage {...props} />, {
       initialState: initialState(listing),
       config,
       routeConfiguration,
@@ -1253,29 +1307,25 @@ describe('EditListingPage', () => {
 
     await waitFor(() => {
       // Navigation to tab
-      const tabLabel = 'EditListingWizard.tabLabelDetails';
+      const tabLabel = 'EditListingWizard.tabLabelRentalDetails';
       expect(getByText(tabLabel)).toBeInTheDocument();
 
       // Tab: panel title
-      expect(getByText('EditListingDetailsPanel.title')).toBeInTheDocument();
-
-      // Tab/form: form title
-      expect(getByRole('textbox', { name: 'EditListingDetailsForm.title' })).toHaveValue(
-        'the listing'
-      );
+      expect(getByText('EditListingRentalDetailsPanel.title')).toBeInTheDocument();
 
       // Tab/form: description
-      expect(getByRole('textbox', { name: 'EditListingDetailsForm.description' })).toHaveValue(
-        'Lorem ipsum'
-      );
+      expect(
+        getByRole('textbox', { name: 'EditListingRentalDetailsForm.description' })
+      ).toHaveValue('Lorem ipsum');
 
-      // Tab/form: listing field
+      // Tab/form: listing field (custom per-category fields also render
+      // here now, see EditListingRentalDetailsForm.js's AddListingFields)
       expect(getByText('Amenities')).toBeInTheDocument();
       expect(getByRole('checkbox', { name: /Dog 1/i })).not.toBeChecked();
       expect(getByRole('checkbox', { name: /Dog 2/i })).not.toBeChecked();
 
       expect(
-        getByRole('button', { name: 'EditListingWizard.edit.saveDetails' })
+        getByRole('button', { name: 'EditListingWizard.edit.saveRentalDetails' })
       ).toBeInTheDocument();
     });
 
@@ -1286,8 +1336,7 @@ describe('EditListingPage', () => {
     expect(getByRole('checkbox', { name: /Dog 2/i })).not.toBeChecked();
   });
 
-  it('Booking (day): edit flow on location tab', async () => {
-    const user = userEvent.setup();
+  it('Booking (day): edit flow on delivery tab (address)', async () => {
     const config = getConfig(listingTypesBookingDay, listingFieldsBooking);
     const routeConfiguration = getRouteConfiguration(config.layout);
     const listing = createOwnListing('listing-day', {
@@ -1298,6 +1347,7 @@ describe('EditListingPage', () => {
         transactionProcessAlias: 'default-booking/release-1',
         unitType: 'day',
         amenities: ['dog_1'],
+        pickupEnabled: true,
         location: {
           address: 'Main Street 123',
           building: 'A 1',
@@ -1311,46 +1361,29 @@ describe('EditListingPage', () => {
         id: listing.id.uuid,
         slug: 'slug',
         type: LISTING_PAGE_PARAM_TYPE_EDIT,
-        tab: LOCATION,
+        tab: DELIVERY,
       },
     };
 
-    const { getByText, getByRole, getByLabelText, getByPlaceholderText } = render(
-      <EditListingPage {...props} />,
-      {
-        initialState: initialState(listing),
-        config,
-        routeConfiguration,
-      }
-    );
+    const { getByText, getByPlaceholderText } = render(<EditListingPage {...props} />, {
+      initialState: initialState(listing),
+      config,
+      routeConfiguration,
+    });
 
     await waitFor(() => {
       // Navigation to tab
-      const tabLabel = 'EditListingWizard.tabLabelLocation';
+      const tabLabel = 'EditListingWizard.tabLabelDelivery';
       expect(getByText(tabLabel)).toBeInTheDocument();
 
-      // Tab: panel title
-      expect(getByText('EditListingLocationPanel.title')).toBeInTheDocument();
-
-      // Tab/form: existing address
-      expect(getByPlaceholderText('EditListingLocationForm.addressPlaceholder')).toHaveValue(
+      // Tab/form: existing address - EditListingDeliveryForm.js is now the
+      // sole address-collecting form for booking listings (see
+      // EditListingWizard.js's tabsForListingType comment on why the
+      // standalone LOCATION tab was dropped for this process).
+      expect(getByPlaceholderText('EditListingDeliveryForm.addressPlaceholder')).toHaveValue(
         'Main Street 123'
       );
-
-      // Tab/form: existing building
-      expect(getByLabelText('EditListingLocationForm.building')).toHaveValue('A 1');
-
-      expect(
-        getByRole('button', { name: 'EditListingWizard.edit.saveLocation' })
-      ).toBeInTheDocument();
     });
-
-    // Test intercation
-    await user.clear(getByLabelText('EditListingLocationForm.building'));
-    await user.type(getByLabelText('EditListingLocationForm.building'), 'B 2');
-
-    // Tab/form: existing building
-    expect(getByLabelText('EditListingLocationForm.building')).toHaveValue('B 2');
   });
 
   it('Booking (day): edit flow on pricing tab', async () => {
@@ -1634,20 +1667,28 @@ describe('EditListingPage', () => {
       },
     };
 
-    const { getByText, getByRole, queryAllByText } = render(<EditListingPage {...props} />, {
-      initialState: initialState(listing),
-      config,
-      routeConfiguration,
-      withPortals: true,
-    });
+    const { getByText, queryByText, getByRole, queryAllByText } = render(
+      <EditListingPage {...props} />,
+      {
+        initialState: initialState(listing),
+        config,
+        routeConfiguration,
+        withPortals: true,
+      }
+    );
 
     // Test intercation: open availability exception modal
     await user.click(getByRole('button', { name: /EditListingAvailabilityPanel.addException/i }));
 
     expect(getByText('EditListingAvailabilityExceptionForm.title')).toBeInTheDocument();
-    // mode: available, not-available
-    expect(getByText('EditListingAvailabilityExceptionForm.available')).toBeInTheDocument();
-    expect(getByText('EditListingAvailabilityExceptionForm.notAvailable')).toBeInTheDocument();
+    // Every booking-process listing type gets availabilityType 'multipleSeats'
+    // forced (see configHelpers.js), so the available/not-available mode
+    // selector never renders - a seats input does instead.
+    expect(queryByText('EditListingAvailabilityExceptionForm.available')).not.toBeInTheDocument();
+    expect(
+      queryByText('EditListingAvailabilityExceptionForm.notAvailable')
+    ).not.toBeInTheDocument();
+    expect(queryAllByText('FieldSeatsInput.seatsLabel')).toHaveLength(1);
 
     // date range picker (code-splitted)
     await waitFor(async () => {
@@ -1690,6 +1731,9 @@ describe('EditListingPage', () => {
         transactionProcessAlias: 'default-booking/release-1',
         unitType: 'day',
         amenities: ['dog_1'],
+        // The "X stuks" quantity line on the weekly calendar only shows when
+        // the provider filled in "Aantal beschikbaar" for this listing.
+        totalQuantity: 60,
         location: {
           address: 'Main Street 123',
           building: 'A 1',
@@ -1814,7 +1858,10 @@ describe('EditListingPage', () => {
     });
     expect(monday).toBeChecked();
 
-    expect(queryAllByLabelText('FieldSeatsInput.seatsLabel')).toHaveLength(7);
+    // The per-day seats input is no longer shown in the weekly schedule -
+    // quantity now comes from the "Aantal beschikbaar" field set once at
+    // listing creation (EditListingRentalDetailsForm.js).
+    expect(queryAllByLabelText('FieldSeatsInput.seatsLabel')).toHaveLength(0);
 
     // save button for the plan
     expect(
@@ -1959,12 +2006,15 @@ describe('EditListingPage', () => {
       },
     };
 
-    const { getByText, getByRole, queryAllByText } = render(<EditListingPage {...props} />, {
-      initialState: initialState(listing),
-      config,
-      routeConfiguration,
-      withPortals: true,
-    });
+    const { getByText, queryByText, getByRole, queryAllByText } = render(
+      <EditListingPage {...props} />,
+      {
+        initialState: initialState(listing),
+        config,
+        routeConfiguration,
+        withPortals: true,
+      }
+    );
 
     await waitFor(() => {
       // Navigation to tab
@@ -2039,9 +2089,14 @@ describe('EditListingPage', () => {
     await user.click(getByRole('button', { name: /EditListingAvailabilityPanel.addException/i }));
 
     expect(getByText('EditListingAvailabilityExceptionForm.title')).toBeInTheDocument();
-    // mode: available, not-available
-    expect(getByText('EditListingAvailabilityExceptionForm.available')).toBeInTheDocument();
-    expect(getByText('EditListingAvailabilityExceptionForm.notAvailable')).toBeInTheDocument();
+    // Every booking-process listing type gets availabilityType 'multipleSeats'
+    // forced (see configHelpers.js), so the available/not-available mode
+    // selector never renders - a seats input does instead.
+    expect(queryByText('EditListingAvailabilityExceptionForm.available')).not.toBeInTheDocument();
+    expect(
+      queryByText('EditListingAvailabilityExceptionForm.notAvailable')
+    ).not.toBeInTheDocument();
+    expect(queryAllByText('FieldSeatsInput.seatsLabel')).toHaveLength(1);
 
     // date range picker (code-splitted)
     await waitFor(async () => {
@@ -2102,12 +2157,15 @@ describe('EditListingPage', () => {
       },
     };
 
-    const { getByText, getByRole, queryAllByText } = render(<EditListingPage {...props} />, {
-      initialState: initialState(listing),
-      config,
-      routeConfiguration,
-      withPortals: true,
-    });
+    const { getByText, queryByText, getByRole, queryAllByText } = render(
+      <EditListingPage {...props} />,
+      {
+        initialState: initialState(listing),
+        config,
+        routeConfiguration,
+        withPortals: true,
+      }
+    );
 
     await waitFor(() => {
       // Navigation to tab
@@ -2208,9 +2266,14 @@ describe('EditListingPage', () => {
     await user.click(getByRole('button', { name: /EditListingAvailabilityPanel.addException/i }));
 
     expect(getByText('EditListingAvailabilityExceptionForm.title')).toBeInTheDocument();
-    // mode: available, not-available
-    expect(getByText('EditListingAvailabilityExceptionForm.available')).toBeInTheDocument();
-    expect(getByText('EditListingAvailabilityExceptionForm.notAvailable')).toBeInTheDocument();
+    // Every booking-process listing type gets availabilityType 'multipleSeats'
+    // forced (see configHelpers.js), so the available/not-available mode
+    // selector never renders - a seats input does instead.
+    expect(queryByText('EditListingAvailabilityExceptionForm.available')).not.toBeInTheDocument();
+    expect(
+      queryByText('EditListingAvailabilityExceptionForm.notAvailable')
+    ).not.toBeInTheDocument();
+    expect(queryAllByText('FieldSeatsInput.seatsLabel')).toHaveLength(1);
 
     // time range pickers (code-splitted)
     await waitFor(async () => {
@@ -2230,7 +2293,7 @@ describe('EditListingPage', () => {
     ).toBeInTheDocument();
   }, 10000);
 
-  it('Booking (day): edit flow on photos tab', async () => {
+  it('Booking (day): edit flow on photos tab (basics, via legacy hour unitType fixture)', async () => {
     const config = getConfig(listingTypesBookingDay, listingFieldsBooking);
     const routeConfiguration = getRouteConfiguration(config.layout);
     const listing = createOwnListing('listing-day', {
@@ -2269,7 +2332,9 @@ describe('EditListingPage', () => {
         id: listing.id.uuid,
         slug: 'slug',
         type: LISTING_PAGE_PARAM_TYPE_EDIT,
-        tab: PHOTOS,
+        // Photos are absorbed into the BASICS tab now, see
+        // EditListingWizard.js's tabsForListingType.
+        tab: BASICS,
       },
     };
 
@@ -2281,80 +2346,15 @@ describe('EditListingPage', () => {
 
     await waitFor(() => {
       // Navigation to tab
-      const tabLabel = 'EditListingWizard.tabLabelPhotos';
+      const tabLabel = 'EditListingWizard.tabLabelBasics';
       expect(getByText(tabLabel)).toBeInTheDocument();
 
       // Tab: panel title
-      expect(getByText('EditListingPhotosPanel.title')).toBeInTheDocument();
+      expect(getByText('EditListingBasicsPanel.title')).toBeInTheDocument();
 
-      expect(getByText('EditListingPhotosForm.chooseImage')).toBeInTheDocument();
-      expect(getByText('EditListingPhotosForm.imageTypes')).toBeInTheDocument();
-      expect(getByText('EditListingPhotosForm.addImagesTip')).toBeInTheDocument();
-      expect(getByText('EditListingWizard.edit.savePhotos')).toBeInTheDocument();
-    });
-  });
-
-  it('Booking (day): edit flow no location on details tab', async () => {
-    const listingTypeDailyBooking = listingTypesBookingDay[0];
-    const dailyBookingNoLocation = {
-      ...listingTypeDailyBooking,
-      defaultListingFields: { location: false },
-    };
-    const config = getConfig([dailyBookingNoLocation], listingFieldsBooking);
-    const routeConfiguration = getRouteConfiguration(config.layout);
-    const listing = createOwnListing('listing-day', {
-      title: 'the listing',
-      description: 'Lorem ipsum',
-      price: new Money(1000, 'USD'),
-      availabilityPlan: {
-        type: 'availability-plan/time',
-        timezone: 'Etc/UTC',
-        entries: [
-          { dayOfWeek: 'mon', startTime: '00:00', endTime: '00:00', seats: 1 },
-          { dayOfWeek: 'tue', startTime: '00:00', endTime: '00:00', seats: 1 },
-          { dayOfWeek: 'wed', startTime: '00:00', endTime: '00:00', seats: 1 },
-          { dayOfWeek: 'thu', startTime: '00:00', endTime: '00:00', seats: 1 },
-          { dayOfWeek: 'fri', startTime: '00:00', endTime: '00:00', seats: 1 },
-          { dayOfWeek: 'sat', startTime: '00:00', endTime: '00:00', seats: 1 },
-          //{ dayOfWeek: 'sun', startTime: '00:00', endTime: '00:00', seats: 1 },
-        ],
-      },
-
-      publicData: {
-        listingType: 'rent-bicycles-daily',
-        transactionProcessAlias: 'default-booking/release-1',
-        unitType: 'hour',
-        amenities: ['dog_1'],
-        location: {
-          address: 'Main Street 123',
-          building: 'A 1',
-        },
-      },
-    });
-
-    const props = {
-      ...commonProps,
-      params: {
-        id: listing.id.uuid,
-        slug: 'slug',
-        type: LISTING_PAGE_PARAM_TYPE_EDIT,
-        tab: PHOTOS,
-      },
-    };
-
-    const { getByText, queryByText } = render(<EditListingPage {...props} />, {
-      initialState: initialState(listing),
-      config,
-      routeConfiguration,
-    });
-
-    await waitFor(() => {
-      // Navigation to tab
-      const tabLabel = 'EditListingWizard.tabLabelDetails';
-      expect(getByText(tabLabel)).toBeInTheDocument();
-
-      const tabLabelLocation = 'EditListingWizard.tabLabelLocation';
-      expect(queryByText(tabLabelLocation)).not.toBeInTheDocument();
+      expect(getByText('EditListingBasicsForm.chooseImage')).toBeInTheDocument();
+      expect(getByText('EditListingBasicsForm.imageTypes')).toBeInTheDocument();
+      expect(getByText('EditListingWizard.edit.saveBasics')).toBeInTheDocument();
     });
   });
 
@@ -2682,7 +2682,6 @@ describe('EditListingPage', () => {
   });
 
   it('Inquiry: edit flow on location tab', async () => {
-    const user = userEvent.setup();
     const config = getConfig(listingTypesInquiry, listingFieldsInquiry);
     const routeConfiguration = getRouteConfiguration(config.layout);
     const listing = createOwnListing('listing-item', {
@@ -2711,14 +2710,11 @@ describe('EditListingPage', () => {
       },
     };
 
-    const { getByText, getByRole, getByLabelText, getByPlaceholderText } = render(
-      <EditListingPage {...props} />,
-      {
-        initialState: initialState(listing),
-        config,
-        routeConfiguration,
-      }
-    );
+    const { getByText, getByRole, getByPlaceholderText } = render(<EditListingPage {...props} />, {
+      initialState: initialState(listing),
+      config,
+      routeConfiguration,
+    });
 
     await waitFor(() => {
       // Navigation to tab
@@ -2733,20 +2729,10 @@ describe('EditListingPage', () => {
         'Main Street 123'
       );
 
-      // Tab/form: existing building
-      expect(getByLabelText('EditListingLocationForm.building')).toHaveValue('A 1');
-
       expect(
         getByRole('button', { name: 'EditListingWizard.edit.saveLocation' })
       ).toBeInTheDocument();
     });
-
-    // Test intercation
-    await user.clear(getByLabelText('EditListingLocationForm.building'));
-    await user.type(getByLabelText('EditListingLocationForm.building'), 'B 2');
-
-    // Tab/form: existing building
-    expect(getByLabelText('EditListingLocationForm.building')).toHaveValue('B 2');
   });
 
   it('Inquiry: edit flow on pricing tab', async () => {
@@ -2953,28 +2939,33 @@ describe('EditListingPage', () => {
       ).toBeInTheDocument();
     });
 
-    // Check that only details and photos tabs are available
+    // Check that details, pricing, delivery and style tabs are available
     // Details tab should be visible (current tab)
     expect(getByText('EditListingWizard.tabLabelDetails')).toBeInTheDocument();
 
     // Style tab should be visible (style panel)
     expect(getByText('EditListingWizard.tabLabelStyle')).toBeInTheDocument();
 
+    // Pricing and Delivery tabs ARE shown for negotiation-process listings
+    // despite defaultListingFields.price/pickup/shipping being off in
+    // Console - that flag is stale for a process that actually takes
+    // payment via the Offerte-Engine (QuoteSystem/MakeOfferPage), see
+    // EditListingWizard.js's tabsForListingType.
+    const tabLabelPricing = 'EditListingWizard.tabLabelPricing';
+    expect(getByText(tabLabelPricing)).toBeInTheDocument();
+
+    const tabLabelDelivery = 'EditListingWizard.tabLabelDelivery';
+    expect(getByText(tabLabelDelivery)).toBeInTheDocument();
+
     // Other tabs should NOT be visible due to defaultListingFields configuration
     const tabLabelLocation = 'EditListingWizard.tabLabelLocation';
     expect(queryByText(tabLabelLocation)).not.toBeInTheDocument();
-
-    const tabLabelPricing = 'EditListingWizard.tabLabelPricing';
-    expect(queryByText(tabLabelPricing)).not.toBeInTheDocument();
 
     const tabLabelPricingAndStock = 'EditListingWizard.tabLabelPricingAndStock';
     expect(queryByText(tabLabelPricingAndStock)).not.toBeInTheDocument();
 
     const tabLabelAvailability = 'EditListingWizard.tabLabelAvailability';
     expect(queryByText(tabLabelAvailability)).not.toBeInTheDocument();
-
-    const tabLabelDelivery = 'EditListingWizard.tabLabelDelivery';
-    expect(queryByText(tabLabelDelivery)).not.toBeInTheDocument();
 
     const tabLabelPhotos = 'EditListingWizard.tabLabelPhotos';
     expect(queryByText(tabLabelPhotos)).not.toBeInTheDocument();
@@ -3022,28 +3013,31 @@ describe('EditListingPage', () => {
       ).toBeInTheDocument();
     });
 
-    // Check that only details and photos tabs are available
+    // Check that details, pricing, delivery and photos tabs are available
     // Details tab should be visible (current tab)
     expect(getByText('EditListingWizard.tabLabelDetails')).toBeInTheDocument();
 
     // Photos tab should be visible (style panel)
     expect(getByText('EditListingWizard.tabLabelStyle')).toBeInTheDocument();
 
+    // Pricing and Delivery tabs ARE shown for negotiation-process listings
+    // despite defaultListingFields.price/pickup/shipping being off in
+    // Console - see the sibling "edit flow" test above for why.
+    const tabLabelPricing = 'EditListingWizard.tabLabelPricing';
+    expect(getByText(tabLabelPricing)).toBeInTheDocument();
+
+    const tabLabelDelivery = 'EditListingWizard.tabLabelDelivery';
+    expect(getByText(tabLabelDelivery)).toBeInTheDocument();
+
     // Other tabs should NOT be visible due to defaultListingFields configuration
     const tabLabelLocation = 'EditListingWizard.tabLabelLocation';
     expect(queryByText(tabLabelLocation)).not.toBeInTheDocument();
-
-    const tabLabelPricing = 'EditListingWizard.tabLabelPricing';
-    expect(queryByText(tabLabelPricing)).not.toBeInTheDocument();
 
     const tabLabelPricingAndStock = 'EditListingWizard.tabLabelPricingAndStock';
     expect(queryByText(tabLabelPricingAndStock)).not.toBeInTheDocument();
 
     const tabLabelAvailability = 'EditListingWizard.tabLabelAvailability';
     expect(queryByText(tabLabelAvailability)).not.toBeInTheDocument();
-
-    const tabLabelDelivery = 'EditListingWizard.tabLabelDelivery';
-    expect(queryByText(tabLabelDelivery)).not.toBeInTheDocument();
 
     const tabLabelPhotos = 'EditListingWizard.tabLabelPhotos';
     expect(queryByText(tabLabelPhotos)).not.toBeInTheDocument();
@@ -3098,7 +3092,7 @@ describe('EditListingPageComponent', () => {
     const user = userEvent.setup();
     render(
       <EditListingPageComponent
-        params={{ id: 'id', slug: 'slug', type: 'new', tab: 'details' }}
+        params={{ id: 'id', slug: 'slug', type: 'new', tab: 'basics' }}
         isAuthenticated={false}
         authInProgress={false}
         fetchInProgress={false}
@@ -3144,31 +3138,95 @@ describe('EditListingPageComponent', () => {
       />
     );
 
-    const tabLabelDetails = 'EditListingWizard.tabLabelDetails';
-    expect(screen.getByText(tabLabelDetails)).toBeInTheDocument();
+    // Before a listing type is picked, the wizard falls back to a single
+    // BASICS-only tab (see EditListingWizard.js's TABS_DETAILS_ONLY) -
+    // BASICS now plays the role DETAILS used to (draft creation +
+    // listing-type selector), see EditListingBasicsForm.js.
+    const tabLabelBasics = 'EditListingWizard.tabLabelBasics';
+    expect(screen.getByText(tabLabelBasics)).toBeInTheDocument();
 
     // Check that default photos panel is not shown initially (it's added after listing type is selected)
     const tabLabelPhotos = 'EditListingWizard.tabLabelPhotos';
     expect(screen.queryByText(tabLabelPhotos)).not.toBeInTheDocument();
 
-    await user.selectOptions(
-      screen.getByLabelText('EditListingDetailsForm.listingTypeLabel'),
-      'product-selling'
+    // NOTE: switching listing type interactively used to be testable here
+    // (staying on the same 'details' tab, since DETAILS is present in
+    // every process's tab list). BASICS is booking-only, so picking a
+    // non-booking type now genuinely navigates away to that process's own
+    // first tab (via EditListingWizard.js's "nearest active tab" redirect)
+    // - this component is rendered with a static `params` prop rather than
+    // being connected to the router's current location, so it can't follow
+    // that redirect here. See the next test for the equivalent check,
+    // done by pre-setting the listing type instead of switching to it.
+  });
+
+  it('Check that a non-booking listing type gets its own (non-BASICS) wizard tabs', async () => {
+    render(
+      <EditListingPageComponent
+        params={{ id: 'id', slug: 'slug', type: 'edit', tab: 'details' }}
+        isAuthenticated={false}
+        authInProgress={false}
+        fetchInProgress={false}
+        location={{ search: '' }}
+        history={{ push: noop, replace: noop }}
+        currentUser={createCurrentUser('id-of-me-myself', { state: 'active' })}
+        getAccountLinkInProgress={false}
+        getOwnListing={() =>
+          createOwnListing('id', {
+            publicData: {
+              listingType: 'product-selling',
+              transactionProcessAlias: 'default-purchase/release-1',
+              unitType: 'item',
+            },
+          })
+        }
+        images={[]}
+        intl={fakeIntl}
+        onGetStripeConnectAccountLink={noop}
+        onLogout={noop}
+        onManageDisableScrolling={noop}
+        onFetchExceptions={noop}
+        onAddAvailabilityException={noop}
+        onDeleteAvailabilityException={noop}
+        onCreateListing={noop}
+        onCreateListingDraft={noop}
+        onPublishListingDraft={noop}
+        onUpdateListing={noop}
+        onImageUpload={noop}
+        onRemoveListingImage={noop}
+        onPayoutDetailsChange={noop}
+        onPayoutDetailsSubmit={noop}
+        fileUploads={[]}
+        fileUploadsDisabled={false}
+        hasPendingFileUploads={false}
+        allFilesUploadedAndVerified={false}
+        onUploadFile={noop}
+        onClearUploadedFiles={noop}
+        onDownloadFile={noop}
+        page={{
+          uploadedImagesOrder: [],
+          images: {},
+          monthlyExceptionQueries: {},
+          allExceptions: [],
+          payoutDetailsSaved: false,
+          payoutDetailsSaveInProgress: false,
+        }}
+        scrollingDisabled={false}
+        sendVerificationEmailInProgress={false}
+        onResendVerificationEmail={noop}
+      />
     );
 
-    // Tabs not in use
-    const tabLabelLocation = 'EditListingWizard.tabLabelLocation';
-    expect(screen.queryByText(tabLabelLocation)).not.toBeInTheDocument();
-    const tabLabelPricing = 'EditListingWizard.tabLabelPricing';
-    expect(screen.queryByText(tabLabelPricing)).not.toBeInTheDocument();
-    const tabLabelAvailability = 'EditListingWizard.tabLabelAvailability';
-    expect(screen.queryByText(tabLabelAvailability)).not.toBeInTheDocument();
+    // Tabs not in use for a purchase-type listing
+    expect(screen.queryByText('EditListingWizard.tabLabelBasics')).not.toBeInTheDocument();
+    expect(screen.queryByText('EditListingWizard.tabLabelLocation')).not.toBeInTheDocument();
+    expect(screen.queryByText('EditListingWizard.tabLabelPricing')).not.toBeInTheDocument();
+    expect(screen.queryByText('EditListingWizard.tabLabelAvailability')).not.toBeInTheDocument();
 
-    // Tabs added
-    const tabLabelPricingAndStock = 'EditListingWizard.tabLabelPricingAndStock';
-    expect(screen.getByText(tabLabelPricingAndStock)).toBeInTheDocument();
-    const tabLabelDelivery = 'EditListingWizard.tabLabelDelivery';
-    expect(screen.getByText(tabLabelDelivery)).toBeInTheDocument();
-    expect(screen.getByText(tabLabelPhotos)).toBeInTheDocument();
+    // Tabs in use
+    expect(screen.getByText('EditListingWizard.tabLabelDetails')).toBeInTheDocument();
+    expect(screen.getByText('EditListingWizard.tabLabelPricingAndStock')).toBeInTheDocument();
+    expect(screen.getByText('EditListingWizard.tabLabelDelivery')).toBeInTheDocument();
+    expect(screen.getByText('EditListingWizard.tabLabelPhotos')).toBeInTheDocument();
   });
 });

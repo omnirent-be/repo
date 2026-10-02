@@ -101,6 +101,7 @@ export const BookingTimeForm = props => {
     price: unitPrice,
     dayCountAvailableForBooking,
     marketplaceName,
+    marketplaceCurrency,
     seatsEnabled,
     isPriceVariationsInUse,
     priceVariants = [],
@@ -177,6 +178,7 @@ export const BookingTimeForm = props => {
                 priceVariantName={priceVariantName}
                 onPriceVariantChange={onPriceVariantChange(formRenderProps)}
                 disabled={!isPublishedListing}
+                marketplaceCurrency={marketplaceCurrency}
               />
             ) : null}
 

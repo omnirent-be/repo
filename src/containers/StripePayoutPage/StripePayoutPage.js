@@ -182,6 +182,7 @@ export const StripePayoutPageComponent = props => {
     currentPage: 'StripePayoutPage',
     showPaymentMethods,
     showPayoutDetails,
+    currentUser,
   };
 
   return (

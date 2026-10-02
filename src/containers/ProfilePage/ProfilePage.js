@@ -24,6 +24,8 @@ import {
 } from '../../util/fieldHelpers';
 import {
   getCurrentUserTypeRoles,
+  getExternalReview,
+  getMemberSinceYear,
   hasPermissionToViewData,
   isUserAuthorized,
 } from '../../util/userHelpers';
@@ -42,6 +44,8 @@ import {
   Reviews,
   ButtonTabNavHorizontal,
   LayoutSideNavigation,
+  ExternalReviewBadge,
+  IdentityVerifiedBadge,
   NamedRedirect,
   CustomExtendedDataSection,
 } from '../../components';
@@ -261,6 +265,7 @@ export const MainContent = props => {
     intl,
     hideReviews,
     userTypeRoles,
+    memberSinceYear,
   } = props;
 
   const hasListings = listings.length > 0;
@@ -293,6 +298,20 @@ export const MainContent = props => {
       <H2 as="h1" className={css.desktopHeading}>
         <FormattedMessage id="ProfilePage.desktopHeading" values={{ name: displayName }} />
       </H2>
+      {memberSinceYear ? (
+        <p className={css.memberSince}>
+          <FormattedMessage id="ProfilePage.memberSince" values={{ year: memberSinceYear }} />
+        </p>
+      ) : null}
+      {getExternalReview(publicData)?.rating || publicData?.identityVerifiedVia === 'itsme' ? (
+        <div className={css.badgeRow}>
+          <ExternalReviewBadge
+            externalReview={getExternalReview(publicData)}
+            className={css.externalReviewBadge}
+          />
+          <IdentityVerifiedBadge publicData={publicData} className={css.externalReviewBadge} />
+        </div>
+      ) : null}
       {hasBio ? <p className={css.bio}>{bioWithLinks}</p> : null}
 
       {displayName ? (
@@ -486,6 +505,7 @@ export const ProfilePageComponent = props => {
           hideReviews={hasNoViewingRightsOnPrivateMarketplace}
           intl={intl}
           userTypeRoles={userTypeRoles}
+          memberSinceYear={getMemberSinceYear(profileUser)}
           {...rest}
         />
       </LayoutSideNavigation>

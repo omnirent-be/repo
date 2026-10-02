@@ -8,6 +8,7 @@ import { formatMoney } from '../../../util/currency';
 import { getProcess, resolveLatestProcessName } from '../../../transactions/transaction';
 
 import { Heading } from '../../../components';
+import { QuoteOfferSummary } from '../../../components/QuoteSystem/QuoteSystem';
 
 import css from './Offer.module.css';
 
@@ -114,6 +115,12 @@ const Offer = props => {
           />
         </div>
       )}
+
+      <QuoteOfferSummary
+        protectedData={protectedData}
+        className={css.offerSummary}
+        marketplaceCurrency={currency}
+      />
 
       {transactionFieldsComponent}
     </div>

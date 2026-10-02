@@ -17,7 +17,10 @@
   word-break: break-all;
   /* use break-word if available */
   word-break: break-word;
-  hyphens: auto;
+  /* Automatic hyphenation looks bad on large display headings (e.g.
+     splits "OmniRent" into "Omni-Rent") - only break a word if it
+     genuinely doesn't fit, never insert a hyphen mid-word. */
+  hyphens: none;
 }
 
 /* Specific styles */

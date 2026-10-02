@@ -1,0 +1,38 @@
+.root {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: transform var(--transitionStyleButton, 0.2s ease-in);
+
+  &:hover {
+    transform: scale(1.08);
+  }
+}
+
+.icon {
+  /* IconHeart's path uses fill/stroke="currentColor", so both resolve
+     through this color property - not the CSS fill/stroke properties. */
+  width: 18px;
+  height: 18px;
+  color: var(--colorWhite);
+}
+
+.isFavorite .icon {
+  color: var(--colorFail);
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  stroke: var(--colorWhite);
+  stroke-width: 3px;
+}

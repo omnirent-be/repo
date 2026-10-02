@@ -135,13 +135,13 @@
 
   /* ================ Border radius ================ */
 
-  --borderRadius: 2px;
-  --borderRadiusMedium: 4px;
+  --borderRadius: 8px;
+  --borderRadiusMedium: 14px;
 
   /* ================ Transition styles ================ */
 
-  --transitionStyle: ease-in 0.2s;
-  --transitionStyleButton: ease-in-out 0.1s;
+  --transitionStyle: ease-in-out 0.2s;
+  --transitionStyleButton: ease-in-out 0.15s;
 
   /* ================ Topbar related ================ */
 
@@ -222,6 +222,14 @@ body {
   font-optical-sizing: auto;
 
   background-color: var(--colorGrey50);
+
+  /* Room for the fixed MobileBottomNav (src/components/MobileBottomNav),
+     which is itself hidden from --viewportMedium up - so content (and the
+     footer) never ends up hidden underneath it on mobile. */
+  padding-bottom: 64px;
+  @media (--viewportMedium) {
+    padding-bottom: 0;
+  }
 }
 
 ::selection {
@@ -418,6 +426,22 @@ html {
   color: var(--colorGrey700);
   padding: 0;
   margin: 0;
+  /* The viewport's scrollable area is governed by <html>, not <body>, so
+     this is the only element that needs it: dropdown popups
+     (MenuContent.module.css's .isClosed, used by SortBy and others) stay
+     position:absolute even while closed - just visibility:hidden, not
+     display:none, so they can still land past the right edge of the
+     viewport and widen the page's scrollWidth. On a centered layout
+     (justify-content: center) that extra width shifts the whole page
+     left, clipping content like the sidebar's filters. This is the
+     one-line fix that can't be chased down popup-by-popup.
+     Deliberately NOT also set on body: per spec, setting only overflow-x
+     (and leaving overflow-y at its default) makes the UA compute
+     overflow-y as auto too, which on body breaks position:sticky
+     everywhere on the page (e.g. the topbar) - body becomes a candidate
+     "nearest scrolling ancestor" that never actually scrolls (its height
+     always matches its content), instead of html, which does. */
+  overflow-x: hidden;
 }
 
 ul {

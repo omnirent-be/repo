@@ -264,6 +264,41 @@ export const fetchCurrentUser = options => (dispatch, getState, sdk) => {
   return dispatch(fetchCurrentUserThunk(options)).unwrap();
 };
 
+////////////////////////////////////////////////////////////////
+// Toggle a listing in currentUser's favorites (privateData)  //
+////////////////////////////////////////////////////////////////
+
+const toggleFavoriteListingPayloadCreator = (listingId, { getState, extra: sdk, rejectWithValue }) => {
+  const { currentUser } = getState().user;
+  const currentFavorites =
+    currentUser?.attributes?.profile?.privateData?.favoriteListingIds || [];
+  const isFavorite = currentFavorites.includes(listingId);
+  const favoriteListingIds = isFavorite
+    ? currentFavorites.filter(id => id !== listingId)
+    : [...currentFavorites, listingId];
+
+  return sdk.currentUser
+    .updateProfile({ privateData: { favoriteListingIds } }, { expand: true })
+    .then(response => {
+      const entities = denormalisedResponseEntities(response);
+      if (entities.length !== 1) {
+        throw new Error('Expected a resource in the sdk.currentUser.updateProfile response');
+      }
+      return entities[0];
+    })
+    .catch(e => rejectWithValue(storableError(e)));
+};
+
+export const toggleFavoriteListingThunk = createAsyncThunk(
+  'user/toggleFavoriteListing',
+  toggleFavoriteListingPayloadCreator
+);
+
+// Backward compatible wrapper for the thunk
+export const toggleFavoriteListing = listingId => (dispatch, getState, sdk) => {
+  return dispatch(toggleFavoriteListingThunk(listingId)).unwrap();
+};
+
 /////////////////////////////////////////////
 // Send verification email to currentUser //
 /////////////////////////////////////////////
@@ -306,6 +341,8 @@ const userSlice = createSlice({
     currentUserHasOrdersError: null,
     sendVerificationEmailInProgress: false,
     sendVerificationEmailError: null,
+    favoriteListingIdInProgress: null,
+    toggleFavoriteListingError: null,
   },
   reducers: {
     clearCurrentUser: state => {
@@ -373,6 +410,19 @@ const userSlice = createSlice({
         console.error(action.payload);
         state.currentUserHasOrdersError = action.payload;
       })
+      // toggleFavoriteListing
+      .addCase(toggleFavoriteListingThunk.pending, (state, action) => {
+        state.favoriteListingIdInProgress = action.meta.arg;
+        state.toggleFavoriteListingError = null;
+      })
+      .addCase(toggleFavoriteListingThunk.fulfilled, (state, action) => {
+        state.favoriteListingIdInProgress = null;
+        state.currentUser = mergeCurrentUser(state.currentUser, action.payload);
+      })
+      .addCase(toggleFavoriteListingThunk.rejected, (state, action) => {
+        state.favoriteListingIdInProgress = null;
+        state.toggleFavoriteListingError = action.payload;
+      })
       // sendVerificationEmail
       .addCase(sendVerificationEmailThunk.pending, state => {
         state.sendVerificationEmailInProgress = true;
@@ -403,3 +453,15 @@ export const hasCurrentUserErrors = state => {
     user.currentUserHasOrdersError
   );
 };
+
+// Listing ids the current user has saved as favorites (empty array if logged out or none).
+export const getFavoriteListingIds = currentUser =>
+  currentUser?.attributes?.profile?.privateData?.favoriteListingIds || [];
+
+export const isFavoriteListing = (currentUser, listingId) =>
+  getFavoriteListingIds(currentUser).includes(listingId);
+
+// Platform credit balance (referral rewards etc.), in subunits (e.g. cents).
+// Closed-loop credit only: usable towards bookings, never withdrawable as cash.
+export const getCreditBalanceInSubunits = currentUser =>
+  currentUser?.attributes?.profile?.privateData?.creditBalanceInSubunits || 0;

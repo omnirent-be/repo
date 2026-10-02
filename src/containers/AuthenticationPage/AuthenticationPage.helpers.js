@@ -3,6 +3,7 @@ import Cookies from 'js-cookie';
 import { isEmpty } from '../../util/common';
 import { pickUserFieldsData, addScopePrefix } from '../../util/userHelpers';
 import { pickReferralData } from '../../util/webStorageHelpers';
+import { getStoredReferralCode } from '../../util/referral';
 
 // Returns full userType config based on selected userType
 const getUserTypeConfig = (userType, userTypes) => {
@@ -81,12 +82,56 @@ export const getExtendedDataMaybe = (submitValues, userType, userFields, extraDa
  * @returns {(values: Object) => void}
  */
 export const getHandleSubmitSignup = ({ submitSignup, userFields, userTypes }) => values => {
-  const { userType, email, password, fname, lname, displayName, ...rest } = values;
+  const {
+    userType,
+    email,
+    password,
+    confirmPassword, // eslint-disable-line no-unused-vars
+    fname,
+    lname,
+    displayName,
+    accountType,
+    companyName,
+    vatNumber,
+    referralSource,
+    terms,
+    ...rest
+  } = values;
   const displayNameMaybe = displayName ? { displayName: displayName.trim() } : {};
 
   // Set referral to user private data if it exists and is valid
   const userTypeConfig = getUserTypeConfig(userType, userTypes);
   const extraPrivateData = pickReferralData(userTypeConfig);
+
+  // Referral program: who invited this user, if they signed up via a
+  // referral link (?ref=<userId>). See util/referral.js.
+  // Merged in separately (not via getExtendedDataMaybe's extraData param)
+  // because that function returns {} entirely when submitValues is empty,
+  // which would silently drop this even though we have real data to save.
+  const referredByUserId = getStoredReferralCode();
+
+  const accountTypeMaybe = accountType ? { accountType } : {};
+  // Company details - only collected (and only meaningful) for accountType
+  // 'company'. The VAT number is normalized to "BE0123456789" so it's
+  // stored the same way regardless of how the user typed it (dots, spaces).
+  const companyDetailsMaybe =
+    accountType === 'company' && companyName && vatNumber
+      ? { companyName: companyName.trim(), vatNumber: vatNumber.replace(/[\s.]/g, '').toUpperCase() }
+      : {};
+  // "Where did you hear about us?" - optional, used for marketing insight only.
+  const referralSourceMaybe = referralSource ? { referralSource } : {};
+  // Proof that the user confirmed being 18+ and accepted the terms
+  // (one combined checkbox on the signup form).
+  const consentMaybe = terms?.length > 0 ? { termsAcceptedAt: new Date().toISOString() } : {};
+  const protectedDataExtrasMaybe = {
+    ...consentMaybe,
+    ...companyDetailsMaybe,
+    ...referralSourceMaybe,
+  };
+
+  const extendedData = getExtendedDataMaybe(rest, userType, userFields, {
+    privateData: extraPrivateData,
+  });
 
   const submitParams = {
     email,
@@ -94,9 +139,19 @@ export const getHandleSubmitSignup = ({ submitSignup, userFields, userTypes }) =
     firstName: fname.trim(),
     lastName: lname.trim(),
     ...displayNameMaybe,
-    ...getExtendedDataMaybe(rest, userType, userFields, {
-      privateData: extraPrivateData,
-    }),
+    ...extendedData,
+    ...(referredByUserId
+      ? { privateData: { ...extendedData.privateData, referredByUserId } }
+      : {}),
+    // Merged in separately, same reason as referredByUserId above:
+    // getExtendedDataMaybe short-circuits to {} when there are no other
+    // extended-data fields on the form, which would otherwise drop these.
+    ...(Object.keys(accountTypeMaybe).length > 0
+      ? { publicData: { ...extendedData.publicData, ...accountTypeMaybe } }
+      : {}),
+    ...(Object.keys(protectedDataExtrasMaybe).length > 0
+      ? { protectedData: { ...extendedData.protectedData, ...protectedDataExtrasMaybe } }
+      : {}),
   };
 
   submitSignup(submitParams);
@@ -142,6 +197,7 @@ export const getHandleSubmitConfirm = ({
   // Set referral to user private data if it exists and is valid
   const userTypeConfig = getUserTypeConfig(userType, userTypes);
   const extraPrivateData = pickReferralData(userTypeConfig);
+  const referredByUserId = getStoredReferralCode();
 
   // Pass other values as extended data according to user field configuration
   const extendedDataMaybe = getExtendedDataMaybe(rest, userType, userFields, {
@@ -152,6 +208,9 @@ export const getHandleSubmitConfirm = ({
     ...authParams,
     ...displayNameMaybe,
     ...extendedDataMaybe,
+    ...(referredByUserId
+      ? { privateData: { ...extendedDataMaybe.privateData, referredByUserId } }
+      : {}),
   });
 };
 

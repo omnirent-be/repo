@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import classNames from 'classnames';
 
 import appSettings from '../../../config/settings';
@@ -7,22 +7,23 @@ import { useRouteConfiguration } from '../../../context/routeConfigurationContex
 
 import { pickBy } from '../../../util/common';
 import { FormattedMessage, useIntl } from '../../../util/reactIntl';
-import { isMainSearchTypeKeywords, isOriginInUse } from '../../../util/search';
 import { parse, stringify } from '../../../util/urlHelpers';
 import { createResourceLocatorString, matchPathname, pathByRouteName } from '../../../util/routes';
 import {
   Button,
   IconArrowHead,
+  IconClose,
   LimitedAccessBanner,
   LinkedLogo,
   Modal,
   ModalMissingInformation,
+  NamedLink,
 } from '../../../components';
 import { getSearchPageResourceLocatorStringParams } from '../../SearchPage/SearchPage.shared';
 
 import MenuIcon from './MenuIcon';
 import SearchIcon from './SearchIcon';
-import TopbarSearchForm from './TopbarSearchForm/TopbarSearchForm';
+import SearchCapsule from '../../SearchPage/SearchCapsule/SearchCapsule';
 import TopbarMobileMenu from './TopbarMobileMenu/TopbarMobileMenu';
 import TopbarDesktop from './TopbarDesktop/TopbarDesktop';
 
@@ -31,9 +32,6 @@ import { getCurrentUserTypeRoles, showCreateListingLinkForUser } from '../../../
 
 const MAX_MOBILE_SCREEN_WIDTH = 1024;
 
-const SEARCH_DISPLAY_ALWAYS = 'always';
-const SEARCH_DISPLAY_NOT_LANDING_PAGE = 'notLandingPage';
-const SEARCH_DISPLAY_ONLY_SEARCH_PAGE = 'onlySearchPage';
 const MOBILE_MENU_BUTTON_ID = 'mobileMenuButton';
 const MOBILE_SEARCH_BUTTON_ID = 'mobileSearchButton';
 
@@ -114,6 +112,69 @@ const getResolvedCurrentPage = (location, routeConfiguration) => {
   }
 };
 
+// Promo banner for the launch campaign: the €10 discount is now only the
+// public GENT10 coupon code (see server/api-util/coupons.js), not a
+// per-user claim, so it's shown to everyone - logged in or not - rather
+// than being tied to a credit balance. Dismissible: the closed state is
+// remembered per browser via localStorage, keyed by version so a future
+// campaign change can bring it back for everyone.
+const PROMO_BANNER_DISMISSED_KEY = 'omnirent_promo_banner_dismissed_v1';
+
+const PromoBanner = ({ isAuthenticated }) => {
+  const intl = useIntl();
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (window.localStorage.getItem(PROMO_BANNER_DISMISSED_KEY) === 'true') {
+        setIsDismissed(true);
+      }
+    } catch (e) {
+      // Ignore - e.g. localStorage blocked. Banner just stays visible.
+    }
+  }, []);
+
+  const handleDismiss = () => {
+    setIsDismissed(true);
+    try {
+      window.localStorage.setItem(PROMO_BANNER_DISMISSED_KEY, 'true');
+    } catch (e) {
+      // Ignore - dismissal just won't be remembered on next visit.
+    }
+  };
+
+  const showBanner = !isDismissed;
+  if (!showBanner) {
+    return null;
+  }
+  return (
+    <div className={css.promoBanner} role="note">
+      <span>
+        <FormattedMessage id="Topbar.promoBanner.signupBonus" />
+      </span>
+      {!isAuthenticated ? (
+        // Logged-in users already see this same link as the persistent
+        // referral badge next to the account menu (see TopbarDesktop.js's
+        // ReferralBadge) - showing it here too would just duplicate it.
+        <NamedLink name="ReferralPage" className={css.promoBannerLink}>
+          <FormattedMessage id="Topbar.promoBanner.referral" />
+        </NamedLink>
+      ) : null}
+      <NamedLink name="HowItWorksPage" className={css.promoBannerLink}>
+        <FormattedMessage id="Topbar.promoBanner.howItWorks" />
+      </NamedLink>
+      <button
+        className={css.promoBannerClose}
+        onClick={handleDismiss}
+        aria-label={intl.formatMessage({ id: 'Topbar.promoBanner.close' })}
+        type="button"
+      >
+        <IconClose rootClassName={css.promoBannerCloseIcon} size="small" />
+      </button>
+    </div>
+  );
+};
+
 const GenericError = props => {
   const { show } = props;
   const classes = classNames(css.genericError, {
@@ -158,27 +219,25 @@ const TopbarComponent = props => {
     routeConfiguration,
   } = props;
 
+  // The search capsule (keywords + Locatie + Datum, see SearchCapsule.js)
+  // is now the Topbar's search form everywhere - not just on SearchPage -
+  // so submitting it from any page needs to land on /s with those params.
+  // currentSearchParams (only passed when SearchPage itself renders
+  // <TopbarContainer>, see SearchPageWithGrid.js) is spread first so
+  // other already-active filters (price, category, ...) survive a
+  // keywords/region/dates change made from the topbar while already on
+  // the results page.
   const handleSubmit = values => {
-    const { currentSearchParams, history, location, config, routeConfiguration } = props;
-
-    const topbarSearchParams = () => {
-      if (isMainSearchTypeKeywords(config)) {
-        return { keywords: values?.keywords };
-      }
-      // topbar search defaults to 'location' search
-      const { search, selectedPlace } = values?.location || {};
-      const { origin, bounds } = selectedPlace || {};
-      const originMaybe = isOriginInUse(config) ? { origin } : {};
-
-      return {
-        ...originMaybe,
-        address: search,
-        bounds,
-      };
+    const { currentSearchParams, history, location, routeConfiguration } = props;
+    const { keywords, pub_region, dates } = values || {};
+    const capsuleParamsMaybe = {
+      ...(keywords ? { keywords } : {}),
+      ...(pub_region ? { pub_region } : {}),
+      ...(dates ? { dates } : {}),
     };
     const searchParams = {
       ...currentSearchParams,
-      ...topbarSearchParams(),
+      ...capsuleParamsMaybe,
     };
 
     const { routeName, pathParams } = getSearchPageResourceLocatorStringParams(
@@ -228,10 +287,7 @@ const TopbarComponent = props => {
     ? 'sales'
     : 'orders';
 
-  const { mobilemenu, mobilesearch, keywords, address, origin, bounds } = parse(location.search, {
-    latlng: ['origin'],
-    latlngBounds: ['bounds'],
-  });
+  const { mobilemenu, mobilesearch, keywords, pub_region, dates } = parse(location.search);
 
   // Custom links are sorted so that group="primary" are always at the beginning of the list.
   const sortedCustomLinks = sortCustomLinks(config.topbar?.customLinks);
@@ -260,41 +316,38 @@ const TopbarComponent = props => {
     />
   );
 
-  const topbarSearcInitialValues = () => {
-    if (isMainSearchTypeKeywords(config)) {
-      return { keywords };
-    }
-
-    // Only render current search if full place object is available in the URL params
-    const locationFieldsPresent = isOriginInUse(config)
-      ? address && origin && bounds
-      : address && bounds;
-    return {
-      location: locationFieldsPresent
-        ? {
-            search: address,
-            selectedPlace: { address, origin, bounds },
-          }
-        : null,
-    };
-  };
-  const initialSearchFormValues = topbarSearcInitialValues();
+  // Matches SearchCapsule's own initialValues shape (see SearchCapsule.js) -
+  // read straight off whatever's currently in the URL, so the topbar
+  // capsule reflects the active search/filters on any page, not just
+  // SearchPage.
+  const initialSearchFormValues = { keywords, pub_region, dates };
 
   const classes = classNames(rootClassName || css.root, className);
 
-  const { display: searchFormDisplay = SEARCH_DISPLAY_ALWAYS } = config?.topbar?.searchBar || {};
-
-  // Search form is shown conditionally depending on configuration and
-  // the current page.
-  const showSearchOnAllPages = searchFormDisplay === SEARCH_DISPLAY_ALWAYS;
-  const showSearchOnSearchPage =
-    searchFormDisplay === SEARCH_DISPLAY_ONLY_SEARCH_PAGE &&
-    ['SearchPage', 'SearchPageWithListingType'].includes(resolvedCurrentPage);
-  const showSearchNotOnLandingPage =
-    searchFormDisplay === SEARCH_DISPLAY_NOT_LANDING_PAGE && resolvedCurrentPage !== 'LandingPage';
-
-  const showSearchForm =
-    showSearchOnAllPages || showSearchOnSearchPage || showSearchNotOnLandingPage;
+  // The landing page has its own, large central search bar (see
+  // LandingPageHero) - showing the compact Topbar capsule there too was a
+  // duplicate search bar. Hardcoded (not read from config.topbar.searchBar,
+  // which is hosted-Console-controlled and not something this session can
+  // verify/set) so this is deterministic: the capsule shows on every other
+  // page always, and on the landing page only once the visitor scrolls
+  // past the hero's own search bar (a fixed pixel threshold, since the
+  // hero lives in a different component tree - no ref to measure its
+  // actual height against).
+  const isLandingPage = resolvedCurrentPage === 'LandingPage';
+  const [hasScrolledPastHero, setHasScrolledPastHero] = useState(false);
+  useEffect(() => {
+    if (!isLandingPage || typeof window === 'undefined') {
+      return undefined;
+    }
+    const HERO_SCROLL_THRESHOLD_PX = 480;
+    const handleScroll = () => {
+      setHasScrolledPastHero(window.scrollY > HERO_SCROLL_THRESHOLD_PX);
+    };
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLandingPage]);
+  const showSearchForm = !isLandingPage || hasScrolledPastHero;
 
   const mobileSearchButtonMaybe = showSearchForm ? (
     <Button
@@ -337,6 +390,7 @@ const TopbarComponent = props => {
         <FormattedMessage id="Topbar.skipToMainContent" />
         <IconArrowHead direction="right" size="small" rootClassName={css.skiptoMainArrow} />
       </Button>
+      <PromoBanner isAuthenticated={isAuthenticated} />
       <LimitedAccessBanner
         isAuthenticated={isAuthenticated}
         isLoggedInAs={isLoggedInAs}
@@ -406,15 +460,7 @@ const TopbarComponent = props => {
         focusElementId={MOBILE_SEARCH_BUTTON_ID}
       >
         <div className={css.searchContainer}>
-          <TopbarSearchForm
-            onSubmit={handleSubmit}
-            initialValues={initialSearchFormValues}
-            isMobile
-            appConfig={config}
-          />
-          <p className={css.mobileHelp}>
-            <FormattedMessage id="Topbar.mobileSearchHelp" />
-          </p>
+          <SearchCapsule isMobile initialValues={initialSearchFormValues} onSubmit={handleSubmit} />
         </div>
       </Modal>
       <ModalMissingInformation

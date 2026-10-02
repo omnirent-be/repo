@@ -1,0 +1,54 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0 24px 24px 24px;
+
+  @media (--viewportLarge) {
+    margin: 0 0 32px 0;
+  }
+}
+
+.step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+
+  &::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 3px;
+    background-color: var(--colorGrey100);
+    border-radius: 2px;
+    margin-bottom: 8px;
+  }
+}
+
+.stepCompleted::before,
+.stepCurrent::before {
+  background-color: var(--marketplaceColor);
+}
+
+.stepLabel {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey400);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.stepCurrent .stepLabel {
+  color: var(--marketplaceColor);
+  font-weight: var(--fontWeightSemiBold);
+}
+
+.stepCompleted .stepLabel {
+  color: var(--colorGrey700);
+}

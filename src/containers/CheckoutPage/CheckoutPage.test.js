@@ -86,7 +86,23 @@ describe('CheckoutPage', () => {
     dispatch: noop,
     history: { push: noop, action: 'PUSH' },
     intl: fakeIntl,
-    currentUser: createCurrentUser('currentUser'),
+    // protectedData contact details are required for the payment form to
+    // render at all now (see isCustomerProfileCompleteForCheckout in
+    // CheckoutPageTransactionHelpers.js) - without them CheckoutPage shows
+    // a "complete your profile" notice instead.
+    currentUser: createCurrentUser('currentUser', {
+      profile: {
+        firstName: 'currentUser first name',
+        lastName: 'currentUser last name',
+        displayName: 'currentUser display name',
+        abbreviatedName: 'currentUser abbreviated name',
+        protectedData: {
+          phoneNumber: '+32470000000',
+          birthDate: '1990-01-01',
+          address: { line1: 'Teststraat 1', postalCode: '9000', city: 'Gent' },
+        },
+      },
+    }),
     params: { id: 'listing1', slug: 'listing1' },
     sendOrderRequest: noop,
     fetchStripeCustomer: noop,

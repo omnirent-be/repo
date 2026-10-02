@@ -14,8 +14,9 @@ import {
   NamedLink,
 } from '../../../../components';
 
-import TopbarSearchForm from '../TopbarSearchForm/TopbarSearchForm';
+import SearchCapsule from '../../../SearchPage/SearchCapsule/SearchCapsule';
 import CustomLinksMenu from './CustomLinksMenu/CustomLinksMenu';
+import InboxIcon from '../InboxIcon';
 
 import css from './TopbarDesktop.module.css';
 
@@ -39,19 +40,35 @@ const LoginLink = () => {
   );
 };
 
-const InboxLink = ({ notificationCount, inboxTab }) => {
+// Only shown logged-out (see faqLinkMaybe below) - once a visitor is
+// authenticated, this moves into the profile menu instead, alongside the
+// other links that used to permanently crowd the topbar's right side.
+const FaqLink = () => {
+  return (
+    <NamedLink id="faq-link" name="FaqPage" className={css.topbarLink}>
+      <span className={css.topbarLinkLabel}>
+        <FormattedMessage id="TopbarDesktop.faqLink" />
+      </span>
+    </NamedLink>
+  );
+};
+
+// Icon-only now (was a text link "Postvak IN") - frees up the ~90px that
+// text took in the topbar's right side, which was crowding out the
+// centered search capsule for logged-in users. The notification dot still
+// works the same way.
+const InboxLink = ({ notificationCount, inboxTab, intl }) => {
   const notificationDot = notificationCount > 0 ? <div className={css.notificationDot} /> : null;
   return (
     <NamedLink
       id="inbox-link"
-      className={css.topbarLink}
+      className={css.inboxIconLink}
       name="InboxPage"
       params={{ tab: inboxTab }}
+      title={intl.formatMessage({ id: 'TopbarDesktop.screenreader.inbox' })}
     >
-      <span className={css.topbarLinkLabel}>
-        <FormattedMessage id="TopbarDesktop.inbox" />
-        {notificationDot}
-      </span>
+      <InboxIcon />
+      {notificationDot}
     </NamedLink>
   );
 };
@@ -74,6 +91,18 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
         <Avatar className={css.avatar} user={currentUser} disableProfileLink />
       </MenuLabel>
       <MenuContent className={css.profileMenuContent}>
+        {/* Featured first, not buried among the plain links below - this
+            used to be its own wide "Nodig vrienden uit, verdien €5" button
+            permanently taking up space in the topbar. */}
+        <MenuItem key="ReferralPage">
+          <NamedLink
+            className={classNames(css.menuLink, css.menuLinkHighlight, currentPageClass('ReferralPage'))}
+            name="ReferralPage"
+          >
+            <span className={css.menuItemBorder} />
+            <FormattedMessage id="TopbarDesktop.referralBadge" />
+          </NamedLink>
+        </MenuItem>
         {showManageListingsLink ? (
           <MenuItem key="ManageListingsPage">
             <NamedLink
@@ -85,6 +114,26 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
             </NamedLink>
           </MenuItem>
         ) : null}
+        {showManageListingsLink ? (
+          <MenuItem key="BalancePage">
+            <NamedLink
+              className={classNames(css.menuLink, currentPageClass('BalancePage'))}
+              name="BalancePage"
+            >
+              <span className={css.menuItemBorder} />
+              <FormattedMessage id="TopbarDesktop.balanceLink" />
+            </NamedLink>
+          </MenuItem>
+        ) : null}
+        <MenuItem key="FavoriteListingsPage">
+          <NamedLink
+            className={classNames(css.menuLink, currentPageClass('FavoriteListingsPage'))}
+            name="FavoriteListingsPage"
+          >
+            <span className={css.menuItemBorder} />
+            <FormattedMessage id="TopbarDesktop.favoriteListingsLink" />
+          </NamedLink>
+        </MenuItem>
         <MenuItem key="ProfileSettingsPage">
           <NamedLink
             className={classNames(css.menuLink, currentPageClass('ProfileSettingsPage'))}
@@ -101,6 +150,15 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
           >
             <span className={css.menuItemBorder} />
             <FormattedMessage id="TopbarDesktop.accountSettingsLink" />
+          </NamedLink>
+        </MenuItem>
+        <MenuItem key="FaqPage">
+          <NamedLink
+            className={classNames(css.menuLink, currentPageClass('FaqPage'))}
+            name="FaqPage"
+          >
+            <span className={css.menuItemBorder} />
+            <FormattedMessage id="TopbarDesktop.faqLink" />
           </NamedLink>
         </MenuItem>
         <MenuItem key="logout">
@@ -167,8 +225,13 @@ const TopbarDesktop = props => {
   const classes = classNames(rootClassName || css.root, className);
 
   const inboxLinkMaybe = authenticatedOnClientSide ? (
-    <InboxLink notificationCount={notificationCount} inboxTab={inboxTab} />
+    <InboxLink notificationCount={notificationCount} inboxTab={inboxTab} intl={intl} />
   ) : null;
+
+  // Logged-out visitors have no profile menu to hold this, and the topbar's
+  // right side is light for them anyway (just Signup/Login) - logged-in,
+  // it moved into the profile menu (see ProfileMenu's FaqPage MenuItem).
+  const faqLinkMaybe = authenticatedOnClientSide ? null : <FaqLink />;
 
   const profileMenuMaybe = authenticatedOnClientSide ? (
     <ProfileMenu
@@ -183,21 +246,24 @@ const TopbarDesktop = props => {
   const signupLinkMaybe = isAuthenticatedOrJustHydrated ? null : <SignupLink />;
   const loginLinkMaybe = isAuthenticatedOrJustHydrated ? null : <LoginLink />;
 
-  const searchFormMaybe = showSearchForm ? (
-    <TopbarSearchForm
-      className={classNames(css.searchLink, { [css.takeAvailableSpace]: giveSpaceForSearch })}
-      desktopInputRoot={css.topbarSearchWithLeftPadding}
-      onSubmit={onSearchSubmit}
-      initialValues={initialSearchFormValues}
-      appConfig={config}
-    />
-  ) : (
+  // A flex spacer always sits between the logo and the links, regardless of
+  // whether the search capsule is actually shown, so the logo/links
+  // positions stay put when showSearchForm flips (e.g. scrolling past the
+  // landing page hero - see Topbar.js). The capsule itself, when shown, is
+  // positioned separately (absolutely, centered in the nav - see its own
+  // .outsideClickWrapper) rather than taking up this flex space, so it's
+  // centered on the whole topbar regardless of how wide the logo/links
+  // happen to be.
+  const spacerMaybe = (
     <div
       className={classNames(css.spacer, css.topbarSearchWithLeftPadding, {
         [css.takeAvailableSpace]: giveSpaceForSearch,
       })}
     />
   );
+  const searchFormMaybe = showSearchForm ? (
+    <SearchCapsule onSubmit={onSearchSubmit} initialValues={initialSearchFormValues} />
+  ) : null;
 
   return (
     <nav
@@ -211,6 +277,7 @@ const TopbarDesktop = props => {
         alt={intl.formatMessage({ id: 'TopbarDesktop.logo' }, { marketplaceName })}
         linkToExternalSite={config?.topbar?.logoLink}
       />
+      {spacerMaybe}
       {searchFormMaybe}
 
       <CustomLinksMenu
@@ -221,6 +288,7 @@ const TopbarDesktop = props => {
         showCreateListingsLink={showCreateListingsLink}
       />
 
+      {faqLinkMaybe}
       {inboxLinkMaybe}
       {profileMenuMaybe}
       {signupLinkMaybe}

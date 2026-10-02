@@ -44,17 +44,16 @@ describe('EditListingDeliveryForm', () => {
       );
     });
 
-    // Pickup fields
+    // Pickup fields - only a city/locality is asked for here (see
+    // placeTypes on FieldLocationAutocompleteInput in
+    // EditListingLocationForm.js), not a full street address or building/
+    // apartment number, so there's no separate "building" field anymore.
     const address = 'EditListingLocationForm.address';
     expect(screen.getByText(address)).toBeInTheDocument();
-
-    const building = 'EditListingLocationForm.building';
-    expect(screen.getByText(building)).toBeInTheDocument();
 
     // Test that save button is disabled at first
     expect(screen.getByRole('button', { name: saveActionMsg })).toBeDisabled();
 
-    await user.type(screen.getByTestId('location-search'), 'Erottajankatu 19, Helsinki');
-    await user.type(screen.getByRole('textbox', { name: building }), 'B');
+    await user.type(screen.getByTestId('location-search'), 'Helsinki');
   });
 });

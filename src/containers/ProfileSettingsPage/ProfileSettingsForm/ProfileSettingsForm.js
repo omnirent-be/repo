@@ -19,6 +19,7 @@ import {
   ImageFromFile,
   IconSpinner,
   FieldTextInput,
+  FieldSelect,
   H4,
   CustomExtendedDataField,
 } from '../../../components';
@@ -27,6 +28,41 @@ import css from './ProfileSettingsForm.module.css';
 
 const ACCEPT_IMAGES = 'image/*';
 const UPLOAD_CHANGE_DELAY = 2000; // Show spinner so that browser has time to load img srcset
+
+// The rating is optional (a provider might not have any external reviews
+// yet), so this only validates the range once a value has been entered.
+const validateOptionalRating = message => value => {
+  if (value === '' || value === undefined || value === null) {
+    return undefined;
+  }
+  const num = Number(value);
+  return Number.isNaN(num) || num < 1 || num > 5 ? message : undefined;
+};
+
+const MINIMUM_RENTER_AGE_YEARS = 18;
+
+// These contact-detail fields (phone, birth date, address) aren't required
+// to save THIS form - CheckoutPage.js is what actually enforces them,
+// right before booking, since that's the only place they're consequential.
+// Requiring them here too would block saving unrelated changes (bio,
+// avatar, ...) for every existing user who hasn't filled them in yet - so
+// each validator below only fires once something invalid is actually
+// typed, never on an empty field.
+
+// A rental contract's signer needs to be an adult - `type="date"` gives a
+// plain 'YYYY-MM-DD' string, so this uses the shared isAtLeastYearsOldFromDateString
+// helper rather than the (year/month/day)-shaped ageAtLeast in validators.js.
+// The same helper is re-checked at the checkout gate itself (see
+// CheckoutPageTransactionHelpers.js's isCustomerProfileCompleteForCheckout),
+// since a saved birth date could in principle predate this validator.
+const validateBirthDate = message => value => {
+  if (!value) {
+    return undefined;
+  }
+  return validators.isAtLeastYearsOldFromDateString(value, MINIMUM_RENTER_AGE_YEARS)
+    ? undefined
+    : message;
+};
 
 const DisplayNameMaybe = props => {
   const { userTypeConfig, intl } = props;
@@ -162,7 +198,17 @@ class ProfileSettingsFormComponent extends Component {
           const firstNameRequiredMessage = intl.formatMessage({
             id: 'ProfileSettingsForm.firstNameRequired',
           });
-          const firstNameRequired = validators.required(firstNameRequiredMessage);
+          // A rental contract needs a real name - minLength alone can't
+          // catch "aa"/"xx"-style placeholders, so validRealName (shared
+          // with StripeConnectAccountForm.js) rejects those too.
+          const firstNameRequired = validators.composeValidators(
+            validators.required(firstNameRequiredMessage),
+            validators.minLength(
+              intl.formatMessage({ id: 'ProfileSettingsForm.firstNameTooShort' }),
+              2
+            ),
+            validators.validRealName(intl.formatMessage({ id: 'ProfileSettingsForm.firstNameInvalid' }))
+          );
 
           // Last name
           const lastNameLabel = intl.formatMessage({
@@ -174,7 +220,14 @@ class ProfileSettingsFormComponent extends Component {
           const lastNameRequiredMessage = intl.formatMessage({
             id: 'ProfileSettingsForm.lastNameRequired',
           });
-          const lastNameRequired = validators.required(lastNameRequiredMessage);
+          const lastNameRequired = validators.composeValidators(
+            validators.required(lastNameRequiredMessage),
+            validators.minLength(
+              intl.formatMessage({ id: 'ProfileSettingsForm.lastNameTooShort' }),
+              2
+            ),
+            validators.validRealName(intl.formatMessage({ id: 'ProfileSettingsForm.lastNameInvalid' }))
+          );
 
           // Bio
           const bioLabel = intl.formatMessage({
@@ -374,6 +427,73 @@ class ProfileSettingsFormComponent extends Component {
 
               <DisplayNameMaybe userTypeConfig={userTypeConfig} intl={intl} />
 
+              <div className={css.sectionContainer}>
+                <H4 as="h2" className={css.sectionTitle}>
+                  <FormattedMessage id="ProfileSettingsForm.contactDetailsHeading" />
+                </H4>
+                <p className={css.extraInfo}>
+                  <FormattedMessage id="ProfileSettingsForm.contactDetailsInfo" />
+                </p>
+                <FieldTextInput
+                  className={css.row}
+                  type="tel"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  label={intl.formatMessage({ id: 'ProfileSettingsForm.phoneNumberLabel' })}
+                  placeholder={intl.formatMessage({
+                    id: 'ProfileSettingsForm.phoneNumberPlaceholder',
+                  })}
+                  validate={validators.validPhoneNumber(
+                    intl.formatMessage({ id: 'ProfileSettingsForm.phoneNumberInvalid' })
+                  )}
+                />
+                <FieldTextInput
+                  className={css.row}
+                  type="date"
+                  id="birthDate"
+                  name="birthDate"
+                  label={intl.formatMessage({ id: 'ProfileSettingsForm.birthDateLabel' })}
+                  validate={validateBirthDate(
+                    intl.formatMessage(
+                      { id: 'ProfileSettingsForm.birthDateInvalid' },
+                      { minAge: MINIMUM_RENTER_AGE_YEARS }
+                    )
+                  )}
+                />
+                <FieldTextInput
+                  className={css.row}
+                  type="text"
+                  id="addressLine1"
+                  name="addressLine1"
+                  label={intl.formatMessage({ id: 'ProfileSettingsForm.addressLine1Label' })}
+                  placeholder={intl.formatMessage({
+                    id: 'ProfileSettingsForm.addressLine1Placeholder',
+                  })}
+                />
+                <div className={css.nameContainer}>
+                  <FieldTextInput
+                    className={css.firstName}
+                    type="text"
+                    id="addressPostalCode"
+                    name="addressPostalCode"
+                    label={intl.formatMessage({ id: 'ProfileSettingsForm.addressPostalCodeLabel' })}
+                    placeholder={intl.formatMessage({
+                      id: 'ProfileSettingsForm.addressPostalCodePlaceholder',
+                    })}
+                  />
+                  <FieldTextInput
+                    className={css.lastName}
+                    type="text"
+                    id="addressCity"
+                    name="addressCity"
+                    label={intl.formatMessage({ id: 'ProfileSettingsForm.addressCityLabel' })}
+                    placeholder={intl.formatMessage({
+                      id: 'ProfileSettingsForm.addressCityPlaceholder',
+                    })}
+                  />
+                </div>
+              </div>
+
               <div className={classNames(css.sectionContainer)}>
                 <H4 as="h2" className={css.sectionTitle}>
                   <FormattedMessage id="ProfileSettingsForm.bioHeading" />
@@ -388,6 +508,68 @@ class ProfileSettingsFormComponent extends Component {
                 <p className={css.extraInfo}>
                   <FormattedMessage id="ProfileSettingsForm.bioInfo" values={{ marketplaceName }} />
                 </p>
+              </div>
+              <div className={classNames(css.sectionContainer)}>
+                <H4 as="h2" className={css.sectionTitle}>
+                  <FormattedMessage id="ProfileSettingsForm.externalReviewHeading" />
+                </H4>
+                <p className={css.extraInfo}>
+                  <FormattedMessage
+                    id="ProfileSettingsForm.externalReviewInfo"
+                    values={{ marketplaceName }}
+                  />
+                </p>
+                <FieldSelect
+                  id="externalReviewSource"
+                  name="externalReviewSource"
+                  label={intl.formatMessage({ id: 'ProfileSettingsForm.externalReviewSourceLabel' })}
+                >
+                  <option value="">
+                    {intl.formatMessage({ id: 'ProfileSettingsForm.externalReviewSourceNone' })}
+                  </option>
+                  <option value="google">Google</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="trustpilot">Trustpilot</option>
+                  <option value="other">
+                    {intl.formatMessage({ id: 'ProfileSettingsForm.externalReviewSourceOther' })}
+                  </option>
+                </FieldSelect>
+                <FieldTextInput
+                  type="number"
+                  id="externalReviewRating"
+                  name="externalReviewRating"
+                  step="0.1"
+                  min="1"
+                  max="5"
+                  label={intl.formatMessage({ id: 'ProfileSettingsForm.externalReviewRatingLabel' })}
+                  placeholder="4.8"
+                  validate={validateOptionalRating(
+                    intl.formatMessage({ id: 'ProfileSettingsForm.externalReviewRatingInvalid' })
+                  )}
+                />
+                <FieldTextInput
+                  type="number"
+                  id="externalReviewCount"
+                  name="externalReviewCount"
+                  min="0"
+                  step="1"
+                  label={intl.formatMessage({ id: 'ProfileSettingsForm.externalReviewCountLabel' })}
+                  placeholder="27"
+                />
+                <FieldTextInput
+                  type="text"
+                  id="externalReviewUrl"
+                  name="externalReviewUrl"
+                  label={intl.formatMessage({ id: 'ProfileSettingsForm.externalReviewUrlLabel' })}
+                  placeholder="https://g.page/..."
+                  validate={value =>
+                    value
+                      ? validators.validBusinessURL(
+                          intl.formatMessage({ id: 'ProfileSettingsForm.externalReviewUrlInvalid' })
+                        )(value)
+                      : undefined
+                  }
+                />
               </div>
               <div className={classNames(css.sectionContainer, css.lastSection)}>
                 {userFieldProps.map(({ key, ...fieldProps }) => (

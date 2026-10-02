@@ -72,7 +72,7 @@ const DayScheduleEntry = ({
   date,
   range,
   useFullDays,
-  useMultipleSeats,
+  showQuantity,
   isDaily,
   timeZone,
   onDeleteAvailabilityException,
@@ -126,7 +126,7 @@ const DayScheduleEntry = ({
               }
             />
           </div>
-          {useMultipleSeats && !(seats === 0) ? (
+          {showQuantity && !(seats === 0) ? (
             <div className={css.seats}>
               <FormattedMessage
                 id="EditListingAvailabilityPanel.WeeklyCalendar.seats"
@@ -164,7 +164,7 @@ const DayScheduleEntry = ({
               />
             )}
           </div>
-          {useMultipleSeats && !(seats === 0) ? (
+          {showQuantity && !(seats === 0) ? (
             <div className={css.seats}>
               <FormattedMessage
                 id="EditListingAvailabilityPanel.WeeklyCalendar.seats"
@@ -225,7 +225,7 @@ const CalendarDate = props => {
     hasAvailability,
     isDaily,
     useFullDays,
-    useMultipleSeats,
+    showQuantity,
     onDeleteAvailabilityException,
     fetchExceptionsInProgress,
     fetchExceptionsError,
@@ -249,7 +249,7 @@ const CalendarDate = props => {
                   timeZone={timeZone}
                   isDaily={isDaily}
                   useFullDays={useFullDays}
-                  useMultipleSeats={useMultipleSeats}
+                  showQuantity={showQuantity}
                   onDeleteAvailabilityException={onDeleteAvailabilityException}
                   intl={intl}
                 />
@@ -344,7 +344,7 @@ const FormattedWeekRange = ({ currentWeek, endOfCurrentWeek, timeZone, intl }) =
  * @param {Object.<string, ExceptionQueryInfo>?} props.weeklyExceptionQueries E.g. '2022-12-14': { fetchExceptionsError, fetchExceptionsInProgress }
  * @param {boolean} props.isDaily
  * @param {boolean} props.useFullDays
- * @param {boolean} props.useMultipleSeats
+ * @param {boolean} props.showQuantity
  * @param {Function} props.onDeleteAvailabilityException
  * @param {Function} props.onFetchExceptions
  * @param {Object} props.routeConfiguration
@@ -366,7 +366,7 @@ const WeeklyCalendar = props => {
     availabilityExceptions = [],
     weeklyExceptionQueries,
     isDaily,
-    useMultipleSeats,
+    showQuantity,
     useFullDays,
     onDeleteAvailabilityException,
     onFetchExceptions,
@@ -536,7 +536,7 @@ const WeeklyCalendar = props => {
               onDeleteAvailabilityException={onDeleteAvailabilityException}
               isDaily={isDaily}
               useFullDays={useFullDays}
-              useMultipleSeats={useMultipleSeats}
+              showQuantity={showQuantity}
               timeZone={timeZone}
               fetchExceptionsInProgress={fetchExceptionsInProgress}
               fetchExceptionsError={fetchExceptionsError}

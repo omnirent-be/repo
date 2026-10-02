@@ -101,6 +101,7 @@ export const BookingFixedDurationForm = props => {
     price: unitPrice,
     dayCountAvailableForBooking,
     marketplaceName,
+    marketplaceCurrency,
     seatsEnabled,
     isPriceVariationsInUse,
     priceVariants = [],
@@ -179,6 +180,7 @@ export const BookingFixedDurationForm = props => {
               priceVariantName={priceVariantName}
               onPriceVariantChange={onPriceVariantChange(formRenderProps)}
               disabled={!isPublishedListing}
+              marketplaceCurrency={marketplaceCurrency}
             />
 
             {monthlyTimeSlots && timeZone ? (

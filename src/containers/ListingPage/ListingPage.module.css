@@ -379,6 +379,11 @@
 .productOrderPanel {
   @media (--viewportLarge) {
     display: block;
+    padding: 24px;
+    border: 1px solid var(--colorGrey100);
+    border-radius: 12px;
+    box-shadow: var(--boxShadowPopup);
+    background-color: var(--colorWhite);
   }
   /* Note: panel height might be too much on small viewport - hence min-height */
   @media (--viewportLarge) and (min-height: 950px) {
@@ -406,6 +411,19 @@
       margin-top: 0;
     }
   }
+}
+
+/* "Kofferbak-Index" badge - see ListingPageCarousel.js's
+   transportSizeMessageId. */
+.transportBadge {
+  composes: marketplaceTinyFontStyles from global;
+  display: inline-block;
+  margin: 12px 0 0 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background-color: var(--colorGrey100);
+  color: var(--colorGrey700);
+  font-weight: var(--fontWeightSemiBold);
 }
 
 .sectionAvatar {
@@ -666,6 +684,48 @@
   margin: 0;
 }
 
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 24px 0 24px;
+  font-size: 13px;
+  color: var(--colorGrey500);
+
+  @media (--viewportMedium) {
+    padding: 24px 0 0 0;
+  }
+}
+
+.breadcrumbLink {
+  color: var(--colorGrey500);
+
+  &:hover {
+    color: var(--marketplaceColor);
+    text-decoration: none;
+  }
+}
+
+.breadcrumbSep {
+  color: var(--colorGrey300);
+}
+
+.breadcrumbCurrent {
+  color: var(--colorGrey700);
+  font-weight: var(--fontWeightMedium);
+}
+
+.moreFromProviderGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.moreFromProviderCard {
+  min-width: 0;
+}
+
 .detailsRow {
   display: inline-flex;
   justify-content: space-between;
@@ -748,10 +808,11 @@
 
 .longWord {
   word-break: break-word;
-  hyphens: auto;
+  hyphens: none; /* avoid ugly mid-word breaks like "Gebruiksvoorwaar-den" */
 }
 
 .productGallery {
+  position: relative;
   margin: 0 0 36px 0;
 
   @media (--viewportMedium) {
@@ -761,6 +822,13 @@
     margin: 0 0 40px 0;
     padding-bottom: 4px;
   }
+}
+
+.galleryFavoriteButtonWrapper {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
 }
 
 .mobileHeading {
