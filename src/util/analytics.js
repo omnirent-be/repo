@@ -1,20 +1,15 @@
-// Our own custom event names mapped to the closest Meta Pixel Standard Event,
-// sent alongside the custom event so Meta Ads can optimize/report on them
-// (Standard Events get richer support in Ads Manager than trackCustom alone).
-// See https://developers.facebook.com/docs/meta-pixel/reference#standard-events
-const META_STANDARD_EVENTS = {
-  hero_search_started: 'Search',
-  listing_clicked: 'ViewContent',
-  booking_request_started: 'InitiateCheckout',
-  booking_request_sent: 'Lead',
-};
-
 // A small, direct custom-event helper for interaction-time analytics (a
 // click, a form submit) - distinct from src/analytics/handlers.js, which
-// only reacts to route changes. Sends to both GA4 (gtag.js) and Meta Pixel
-// (fbq), each injected via util/includeScripts.js and each independently
-// optional - no-ops for whichever hasn't loaded (e.g. in dev/test, or when
-// the corresponding env var/id isn't configured).
+// reacts to route changes and sends the Meta Pixel Standard Events
+// (Search/ViewContent/InitiateCheckout/Lead) for the same funnel steps.
+// This one only ever sends trackCustom to Meta, not a Standard Event -
+// every one of our current custom names (hero_search_started,
+// listing_clicked, ...) fires on the same interaction as a route change
+// that handlers.js already turns into a Standard Event, so mapping a
+// Standard Event here too would double-count it. Sends to both GA4
+// (gtag.js) and Meta Pixel (fbq), each injected via util/includeScripts.js
+// and each independently optional - no-ops for whichever hasn't loaded
+// (e.g. in dev/test, or when the corresponding env var/id isn't configured).
 export const trackEvent = (name, params = {}) => {
   if (typeof window === 'undefined') {
     return;
@@ -29,10 +24,6 @@ export const trackEvent = (name, params = {}) => {
   }
   if (window.fbq) {
     window.fbq('trackCustom', name, enrichedParams);
-    const standardEvent = META_STANDARD_EVENTS[name];
-    if (standardEvent) {
-      window.fbq('track', standardEvent, enrichedParams);
-    }
   }
 };
 

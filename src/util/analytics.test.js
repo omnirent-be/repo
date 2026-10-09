@@ -73,17 +73,9 @@ describe('trackEvent', () => {
     delete window.fbq;
   });
 
-  it('also sends a mapped Meta Standard Event when one exists', () => {
+  it('never sends a Standard Event itself - that is handlers.js MetaPixelHandler\'s job', () => {
     window.fbq = jest.fn();
-    trackEvent('booking_request_sent', { listing_id: 'abc' });
-    expect(window.fbq).toHaveBeenCalledWith('trackCustom', 'booking_request_sent', expect.anything());
-    expect(window.fbq).toHaveBeenCalledWith('track', 'Lead', expect.anything());
-    delete window.fbq;
-  });
-
-  it('does not send a Standard Event for unmapped event names', () => {
-    window.fbq = jest.fn();
-    trackEvent('category_clicked', { category: 'tent-structuren' });
+    trackEvent('listing_clicked', { listing_id: 'abc' });
     expect(window.fbq).not.toHaveBeenCalledWith('track', expect.anything(), expect.anything());
     delete window.fbq;
   });
