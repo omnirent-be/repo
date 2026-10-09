@@ -1,4 +1,4 @@
-import { matchFunnelEvent } from './handlers';
+import { matchFunnelEvent, MetaPixelHandler } from './handlers';
 
 describe('matchFunnelEvent', () => {
   it('matches a search results page, carrying keywords and category as event params', () => {
@@ -37,5 +37,33 @@ describe('matchFunnelEvent', () => {
   it('ignores unrelated routes', () => {
     expect(matchFunnelEvent('/about')).toBeNull();
     expect(matchFunnelEvent('/profile/abc123')).toBeNull();
+  });
+});
+
+describe('MetaPixelHandler', () => {
+  afterEach(() => {
+    delete window.fbq;
+  });
+
+  it('does nothing when fbq is not available', () => {
+    expect(() => new MetaPixelHandler().trackPageView('/l/abc123')).not.toThrow();
+  });
+
+  it('sends the mapped Standard Event for a matched funnel route', () => {
+    window.fbq = jest.fn();
+    new MetaPixelHandler().trackPageView('/l/abc123');
+    expect(window.fbq).toHaveBeenCalledWith('track', 'ViewContent', {});
+  });
+
+  it('sends Lead for an order page reached right after checkout', () => {
+    window.fbq = jest.fn();
+    new MetaPixelHandler().trackPageView('/order/xyz789', '/l/mijn-tent/abc123/checkout');
+    expect(window.fbq).toHaveBeenCalledWith('track', 'Lead', {});
+  });
+
+  it('does nothing for a route outside the funnel', () => {
+    window.fbq = jest.fn();
+    new MetaPixelHandler().trackPageView('/about');
+    expect(window.fbq).not.toHaveBeenCalled();
   });
 });

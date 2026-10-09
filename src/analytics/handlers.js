@@ -36,6 +36,33 @@ export const matchFunnelEvent = (canonicalPath, previousPath) => {
   return null;
 };
 
+// Funnel event name -> Meta Pixel Standard Event, mirroring the mapping in
+// util/analytics.js (kept separate since that one maps our own custom click
+// event names, not these route-matched GA4-style names).
+const FUNNEL_TO_META_STANDARD_EVENT = {
+  search: 'Search',
+  view_item: 'ViewContent',
+  booking_request_started: 'InitiateCheckout',
+  booking_request_sent: 'Lead',
+};
+
+// Sends the same funnel steps as GoogleAnalyticsHandler to Meta Pixel, but
+// independently of it - Meta Pixel has its own id gate (facebookPixelId,
+// checked in util/includeScripts.js, which is what defines window.fbq), so
+// this handler is pushed unconditionally and no-ops until fbq exists.
+export class MetaPixelHandler {
+  trackPageView(canonicalPath, previousPath) {
+    if (!window.fbq) {
+      return;
+    }
+    const funnelEvent = matchFunnelEvent(canonicalPath, previousPath);
+    const standardEvent = funnelEvent && FUNNEL_TO_META_STANDARD_EVENT[funnelEvent.name];
+    if (standardEvent) {
+      window.fbq('track', standardEvent, funnelEvent.params);
+    }
+  }
+}
+
 // Google Analytics 4 (GA4) using gtag.js script, which is included in util/includeScripts.js
 export class GoogleAnalyticsHandler {
   trackPageView(canonicalPath, previousPath) {

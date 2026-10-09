@@ -24,7 +24,7 @@ import './styles/marketplaceDefaults.css';
 // Configs and store setup
 import appSettings from './config/settings';
 import defaultConfig from './config/configDefault';
-import { LoggingAnalyticsHandler, GoogleAnalyticsHandler } from './analytics/handlers';
+import { LoggingAnalyticsHandler, GoogleAnalyticsHandler, MetaPixelHandler } from './analytics/handlers';
 import configureStore from './store';
 
 // Utils
@@ -103,6 +103,11 @@ const setupAnalyticsHandlers = googleAnalyticsId => {
   if (appSettings.dev) {
     handlers.push(new LoggingAnalyticsHandler());
   }
+
+  // Meta Pixel handler is always pushed - it no-ops on its own until
+  // window.fbq exists (gated by REACT_APP_FACEBOOK_PIXEL_ID, see
+  // util/includeScripts.js), so it doesn't need a check here like GA's id.
+  handlers.push(new MetaPixelHandler());
 
   // Add Google Analytics 4 (GA4) handler if tracker ID is found
   if (googleAnalyticsId) {
