@@ -2,31 +2,16 @@
 
 .root {
   background-color: var(--colorWhite);
-  padding: 8px 0 32px 0;
+  padding: 24px 0 32px 0;
 
   @media (--viewportMedium) {
-    padding: 16px 0 56px 0;
+    padding: 32px 0 56px 0;
   }
 }
 
 .inner {
   max-width: var(--contentMaxWidthPages);
   margin: 0 auto;
-}
-
-.row {
-  padding: 24px 0 8px 0;
-
-  @media (--viewportMedium) {
-    padding: 28px 0 12px 0;
-  }
-}
-
-.rowHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
   padding: 0 16px;
 
   @media (--viewportMedium) {
@@ -35,36 +20,36 @@
 }
 
 .rowTitle {
-  margin: 0;
-  font-size: 20px;
+  margin: 0 0 16px 0;
+  font-size: 22px;
   line-height: 1.3;
   color: var(--colorGrey700);
 
   @media (--viewportMedium) {
-    font-size: 24px;
+    font-size: 28px;
+    margin-bottom: 24px;
   }
 }
 
-/* "HET AANBOD" is meant to be the main body of the homepage, so this is a
-   real wrapping grid (3-4 columns) rather than the single-row horizontal
-   carousel it used to be - a one-row carousel can't read as "most of the
-   page" no matter how it's styled. */
+/* Strict grid ("Populair voor feesten in Gent") - 1 column on small phones,
+   2 from --viewportSmall, 4 from --viewportLarge (2 rows of 4 once there's
+   a full ROW_LISTING_COUNT (8) cards). */
 .track {
   list-style: none;
-  margin: 14px 0 0 0;
-  padding: 0 16px;
+  margin: 0;
+  padding: 0;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px 12px;
+  grid-template-columns: 1fr;
+  gap: 16px;
 
-  @media (--viewportMedium) {
-    grid-template-columns: repeat(3, 1fr);
-    padding: 0 32px;
-    gap: 24px 20px;
+  @media (--viewportSmall) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px 12px;
   }
 
   @media (--viewportLarge) {
     grid-template-columns: repeat(4, 1fr);
+    gap: 24px 20px;
   }
 }
 
@@ -72,19 +57,19 @@
   min-width: 0;
 }
 
-.viewAllRow {
-  display: flex;
-  justify-content: center;
-  padding: 24px 16px 0 16px;
-
-  @media (--viewportMedium) {
-    padding: 28px 32px 0 32px;
-  }
+.emptyRow {
+  margin: 0;
+  padding: 24px;
+  border-radius: 14px;
+  background-color: var(--colorGrey50);
+  color: var(--colorGrey500);
+  font-size: 14px;
+  text-align: center;
 }
 
 .skeleton {
   width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 3;
   border-radius: 14px;
   background: linear-gradient(90deg, var(--colorGrey50) 25%, var(--colorGrey100) 50%, var(--colorGrey50) 75%);
   background-size: 200% 100%;
@@ -97,6 +82,16 @@
   }
   100% {
     background-position: -200% 0;
+  }
+}
+
+.viewAllRow {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0 0 0;
+
+  @media (--viewportMedium) {
+    padding: 32px 0 0 0;
   }
 }
 

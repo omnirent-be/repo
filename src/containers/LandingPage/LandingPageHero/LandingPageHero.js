@@ -7,12 +7,11 @@ import { useConfiguration } from '../../../context/configurationContext';
 import { formatMoney } from '../../../util/currency';
 import { displayPrice } from '../../../util/configHelpers';
 import { isBookingProcessAlias } from '../../../transactions/transaction';
-import { NamedLink } from '../../../components';
-import { createSlug, stringify } from '../../../util/urlHelpers';
+import { NamedLink, UnifiedSearchForm } from '../../../components';
+import { createSlug } from '../../../util/urlHelpers';
 import { fetchRecentActivityThunk } from '../../../ducks/recentActivity.duck';
 import { fetchListingsCountThunk } from '../../../ducks/listingsCount.duck';
 import { fetchHeroPhotosThunk } from '../../../ducks/heroPhotos.duck';
-import { SearchCTA } from '../../PageBuilder/Primitives/SearchCTA/SearchCTA';
 
 import css from './LandingPageHero.module.css';
 
@@ -22,22 +21,42 @@ import css from './LandingPageHero.module.css';
 const HERO_IMAGE_URL =
   'https://sharetribe-assets.imgix.net/690e87ec-9691-4079-a358-055499ede745/raw/97/472bbb898252d3b7b3b7643b18e12aa5a69e57?auto=format&fit=clip&h=3600&w=3600&s=bdc4507b62b00facd299ecf7dc8b81a3';
 
-// Keyword, location and dates - matches the "Wat zoek je? / Locatie /
-// Datums" 3-field layout of the combined action module. No category field
-// here (that's reachable via the quick-nav chips on the results page).
-const SEARCH_FIELDS = {
-  categories: false,
-  keywordSearch: true,
-  locationSearch: true,
-  dateRange: true,
-};
-
-const TRUST_ITEMS_RENT = ['secure', 'noObligation', 'local'];
-
-// See the comment where this is used, at the bottom of LandingPageHero.
-const SHOW_ACTIVITY_TICKER = false;
+const TRUST_ITEMS_RENT = ['secure', 'noObligation', 'payAfterAcceptance'];
 
 const PHOTO_ROTATE_MS = 5000;
+
+// Shown instead of real activity whenever there are fewer than
+// MIN_REAL_ACTIVITY_ITEMS real (non-test) ones - a ticker with 1-2 real
+// items would undersell activity more than it builds confidence. Swapped
+// out automatically once real, non-test activity passes the threshold.
+const MIN_REAL_ACTIVITY_ITEMS = 10;
+const FALLBACK_ACTIVITY = [
+  {
+    id: 'fallback-1',
+    node: <FormattedMessage id="LandingPageHero.activityTicker.fallback.bbq" />,
+    time: { id: 'justNow' },
+  },
+  {
+    id: 'fallback-2',
+    node: <FormattedMessage id="LandingPageHero.activityTicker.fallback.partytent" />,
+    time: { id: 'minutesAgo', minutes: 12 },
+  },
+  {
+    id: 'fallback-3',
+    node: <FormattedMessage id="LandingPageHero.activityTicker.fallback.tapbar" />,
+    time: { id: 'minutesAgo', minutes: 34 },
+  },
+  {
+    id: 'fallback-4',
+    node: <FormattedMessage id="LandingPageHero.activityTicker.fallback.bouncyCastle" />,
+    time: { id: 'hoursAgo', hours: 1 },
+  },
+  {
+    id: 'fallback-5',
+    node: <FormattedMessage id="LandingPageHero.activityTicker.fallback.wineBarrels" />,
+    time: { id: 'hoursAgo', hours: 2 },
+  },
+];
 
 // Real photos from real listings, cross-fading in the same frame the static
 // fallback photo used to occupy. Falls back to the fixed photo when no
@@ -234,40 +253,110 @@ const HeroPhoto = () => {
   );
 };
 
-// Scrolling strip of real, recent listing activity (e.g. "Jan heeft net
-// 'Partytent 6x10m' geplaatst"). Fetched once per page load; renders
-// nothing while loading or if there's no data yet, rather than showing
-// placeholder/fake activity. Moved here (below the hero) from the Topbar,
-// which previously rendered it sitewide above the hero on the homepage.
+// "X min geleden" / "Xu geleden" from an ISO date - deliberately coarse
+// (minutes/hours only) since this is a trust-building glance, not a precise
+// timestamp.
+const relativeTimeLabel = isoDate => {
+  if (!isoDate) {
+    return null;
+  }
+  const diffMinutes = Math.max(0, Math.round((Date.now() - new Date(isoDate).getTime()) / 60000));
+  if (diffMinutes < 2) {
+    return { id: 'justNow' };
+  }
+  if (diffMinutes < 60) {
+    return { id: 'minutesAgo', minutes: diffMinutes };
+  }
+  return { id: 'hoursAgo', hours: Math.round(diffMinutes / 60) };
+};
+
+const ActivityTimeLabel = ({ time }) => {
+  if (!time) {
+    return null;
+  }
+  if (time.id === 'justNow') {
+    return <FormattedMessage id="LandingPageHero.activityTicker.timeJustNow" />;
+  }
+  if (time.id === 'minutesAgo') {
+    return (
+      <FormattedMessage
+        id="LandingPageHero.activityTicker.timeMinutesAgo"
+        values={{ minutes: time.minutes }}
+      />
+    );
+  }
+  return (
+    <FormattedMessage id="LandingPageHero.activityTicker.timeHoursAgo" values={{ hours: time.hours }} />
+  );
+};
+
+// Realtime social-proof strip right under the hero. Prefers real, recent
+// listing activity over the curated fallback copy, but only once there's
+// enough of it (MIN_REAL_ACTIVITY_ITEMS) to not look sparse. Test/seed
+// listings are excluded upstream in recentActivity.duck.js.
+//
+// Mobile gets one static item (no animation, no marquee) rather than the
+// scrolling ticker - a moving strip is harder to read at that width and
+// risks horizontal overflow; viewportMedium and up get the full marquee,
+// which pauses on hover/focus so it's actually readable rather than just
+// decorative. The outer root has a fixed height from the first render (the
+// fallback copy renders immediately, before the real-activity fetch
+// resolves), so swapping in real items never causes a layout shift.
 const ActivityTicker = () => {
   const dispatch = useDispatch();
-  const [items, setItems] = useState([]);
+  const [realItems, setRealItems] = useState([]);
 
   useEffect(() => {
     dispatch(fetchRecentActivityThunk())
       .unwrap()
-      .then(setItems)
-      .catch(() => setItems([]));
+      .then(setRealItems)
+      .catch(() => setRealItems([]));
   }, []);
 
-  if (items.length === 0) {
-    return null;
-  }
+  const useFallback = realItems.length < MIN_REAL_ACTIVITY_ITEMS;
+  const items = useFallback
+    ? FALLBACK_ACTIVITY
+    : realItems.map(item => ({
+        id: item.id,
+        node: (
+          <FormattedMessage
+            id="Topbar.activityTicker.item"
+            values={{ name: item.authorName, title: item.title }}
+          />
+        ),
+        time: relativeTimeLabel(item.createdAt),
+      }));
 
   const trackItems = [...items, ...items];
+  const firstItem = items[0];
 
   return (
     <div className={css.activityTicker}>
-      <div className={css.activityTrack}>
-        {trackItems.map((item, index) => (
-          <span key={`${item.id}-${index}`} className={css.activityItem}>
-            <span className={css.activityDot} />
-            <FormattedMessage
-              id="Topbar.activityTicker.item"
-              values={{ name: item.authorName, title: item.title }}
-            />
-          </span>
-        ))}
+      <div className={css.activityStatic}>
+        <span className={css.activityItem}>
+          {firstItem.node}
+          {firstItem.time ? (
+            <span className={css.activityTime}>
+              {' '}
+              · <ActivityTimeLabel time={firstItem.time} />
+            </span>
+          ) : null}
+        </span>
+      </div>
+      <div className={css.activityTrackViewport}>
+        <div className={css.activityTrack}>
+          {trackItems.map((item, index) => (
+            <span key={`${item.id}-${index}`} className={css.activityItem}>
+              {item.node}
+              {item.time ? (
+                <span className={css.activityTime}>
+                  {' '}
+                  · <ActivityTimeLabel time={item.time} />
+                </span>
+              ) : null}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -299,94 +388,54 @@ const ListingsCountBadge = () => {
   );
 };
 
-// One thin line - "🛡️ Borg & huurcontract beveiligd  •  💳 Veilig online
-// betalen  •  📍 Direct bij Gentenaars" - instead of three separate
-// checkmark rows, per the decision to keep the hero itself lean and let
-// the listings grid be the first thing a visitor actually scrolls through.
-const TRUST_ITEMS_EMOJI = { secure: '🛡️', noObligation: '💳', local: '📍' };
+const TrustCheckIcon = () => (
+  <svg className={css.trustIcon} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path
+      d="M16.667 5L7.5 14.167 3.333 10"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 const TrustRow = () => (
-  <p className={css.trustRow}>
-    {TRUST_ITEMS_RENT.map((item, index) => (
-      <React.Fragment key={item}>
-        {index > 0 ? <span className={css.trustSeparator}>•</span> : null}
-        <span className={css.trustItem}>
-          <span aria-hidden="true">{TRUST_ITEMS_EMOJI[item]}</span>{' '}
+  <ul className={css.trustRow}>
+    {TRUST_ITEMS_RENT.map(item => {
+      return (
+        <li key={item} className={css.trustItem}>
+          <TrustCheckIcon />
           <FormattedMessage id={`LandingPageHero.trust.${item}`} />
-        </span>
-      </React.Fragment>
-    ))}
-  </p>
+        </li>
+      );
+    })}
+  </ul>
 );
 
-// The toggle forming the "roof" of the action module - switches its body
-// below between the renter's search bar and the provider's quick-start
-// prompt, rather than floating as its own separate control.
-const RoleTabs = ({ isListMode, setIsListMode }) => (
-  <div className={css.actionModuleTabs}>
-    <button
-      type="button"
-      className={classNames(css.actionModuleTab, { [css.actionModuleTabActive]: !isListMode })}
-      onClick={() => setIsListMode(false)}
-    >
-      <FormattedMessage id="LandingPageHero.tab.rent" />
-    </button>
-    <button
-      type="button"
-      className={classNames(css.actionModuleTab, { [css.actionModuleTabActive]: isListMode })}
-      onClick={() => setIsListMode(true)}
-    >
-      <FormattedMessage id="LandingPageHero.tab.list" />
-    </button>
-  </div>
+// A plain secondary link, not a second competing module - the hero is
+// renter-only now (see the conversation this replaced the old RoleTabs
+// toggle + QuickListForm in). Providers get their own full section further
+// down the page instead (HomepageProviderSection).
+const ProviderLink = () => (
+  <NamedLink name="NewListingPage" className={css.providerLink}>
+    <FormattedMessage id="LandingPageHero.providerLink" />
+  </NamedLink>
 );
-
-// The "Ik wil verhuren" side of the action module: a one-line prompt that
-// leads into the real listing wizard (NewListingPage). The typed text is
-// carried over as a `title` query param, which EditListingBasicsPanel.js's
-// getInitialValues reads as a fallback initial title (same mechanism it
-// already uses for `listingType`) - the wizard's own title field then
-// picks it up and, since that field already runs suggestCategoryFromTitle
-// on every title change (see EditListingBasicsForm.js), the category gets
-// auto-suggested there too, without duplicating that logic here.
-const QuickListForm = () => {
-  const intl = useIntl();
-  const [value, setValue] = useState('');
-  const trimmedValue = value.trim();
-
-  return (
-    <div className={css.quickListForm}>
-      <input
-        type="text"
-        className={css.quickListInput}
-        value={value}
-        onChange={e => setValue(e.target.value)}
-        placeholder={intl.formatMessage({ id: 'LandingPageHero.list.inputPlaceholder' })}
-      />
-      <NamedLink
-        name="NewListingPage"
-        to={trimmedValue ? { search: `?${stringify({ title: trimmedValue })}` } : undefined}
-        className={css.quickListButton}
-      >
-        <FormattedMessage id="LandingPageHero.list.cta" />
-      </NamedLink>
-    </div>
-  );
-};
 
 /**
  * LandingPageHero - replaces the hosted "hero" section on the homepage with
- * a code-defined hero: a hyperlocal heading, a combined action module (a
- * huren/verhuren toggle forming the module's own header, switching its
- * body between the real search bar and a quick-start listing prompt), and
- * trust signals below it.
+ * a code-defined hero: a hyperlocal heading, the real search bar, a plain
+ * secondary link for providers, and trust signals below it. Renter-only by
+ * design - a conversion audit flagged the previous huren/verhuren toggle
+ * for giving a visitor with rental intent the bedrijfslogica of a two-sided
+ * marketplace to parse before they could even search. Providers get their
+ * own full section further down the page (HomepageProviderSection).
  *
  * @component
  * @returns {JSX.Element}
  */
 const LandingPageHero = () => {
-  const [isListMode, setIsListMode] = useState(false);
-
   return (
     <>
       <section className={css.root}>
@@ -407,18 +456,12 @@ const LandingPageHero = () => {
 
             <div className={css.searchCardWrap}>
               <div className={css.actionModule}>
-                <RoleTabs isListMode={isListMode} setIsListMode={setIsListMode} />
-                <div className={css.actionModuleBody}>
-                  {isListMode ? (
-                    <QuickListForm />
-                  ) : (
-                    <SearchCTA searchFields={SEARCH_FIELDS} />
-                  )}
-                </div>
+                <UnifiedSearchForm />
               </div>
             </div>
 
             <TrustRow />
+            <ProviderLink />
           </div>
 
           <div className={css.imageColumn}>
@@ -429,10 +472,7 @@ const LandingPageHero = () => {
           </div>
         </div>
       </section>
-      {/* Disabled until official launch with real bookings - showing
-          seed/test listing activity here would undermine trust rather than
-          build it. Flip to true once there's real activity to show. */}
-      {SHOW_ACTIVITY_TICKER ? <ActivityTicker /> : null}
+      <ActivityTicker />
     </>
   );
 };

@@ -47,4 +47,18 @@ describe('ListingCard', () => {
     const tree = render(<ListingCard listing={listing} intl={fakeIntl} />, { config });
     expect(tree.asFragment().firstChild).toMatchSnapshot();
   });
+
+  it('shows the availability badge when showAvailabilityBadge is true', () => {
+    const listing = createListing('listing1', {}, { author: createUser('user1') });
+    const { getByText } = render(
+      <ListingCard listing={listing} intl={fakeIntl} showAvailabilityBadge />
+    );
+    expect(getByText('ListingCard.availabilityBadge')).toBeInTheDocument();
+  });
+
+  it('does not show the availability badge by default', () => {
+    const listing = createListing('listing1', {}, { author: createUser('user1') });
+    const { queryByText } = render(<ListingCard listing={listing} intl={fakeIntl} />);
+    expect(queryByText('ListingCard.availabilityBadge')).not.toBeInTheDocument();
+  });
 });

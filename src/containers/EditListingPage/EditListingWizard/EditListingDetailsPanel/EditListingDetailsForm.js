@@ -5,7 +5,7 @@ import classNames from 'classnames';
 
 // Import util modules
 import { FormattedMessage, useIntl } from '../../../../util/reactIntl';
-import { displayDescription } from '../../../../util/configHelpers.js';
+import { displayDescription, SEARCH_ONLY_LISTING_FIELD_KEYS } from '../../../../util/configHelpers.js';
 import { useConfiguration } from '../../../../context/configurationContext.js';
 import { EXTENDED_DATA_SCHEMA_TYPES, propTypes } from '../../../../util/types';
 import {
@@ -273,12 +273,19 @@ const AddListingFields = props => {
     const { key, schemaType, scope } = fieldConfig || {};
     const namespacedKey = scope === 'public' ? `pub_${key}` : `priv_${key}`;
 
+    const isSearchOnlyField = SEARCH_ONLY_LISTING_FIELD_KEYS.includes(key);
     const isKnownSchemaType = EXTENDED_DATA_SCHEMA_TYPES.includes(schemaType);
     const isProviderScope = ['public', 'private'].includes(scope);
     const isTargetListingType = isFieldForListingType(listingType, fieldConfig);
     const isTargetCategory = isFieldForCategory(targetCategoryIds, fieldConfig);
 
-    return isKnownSchemaType && isProviderScope && isTargetListingType && isTargetCategory
+    return (
+      !isSearchOnlyField &&
+      isKnownSchemaType &&
+      isProviderScope &&
+      isTargetListingType &&
+      isTargetCategory
+    )
       ? [
           ...pickedFields,
           <CustomExtendedDataField

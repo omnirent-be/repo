@@ -280,6 +280,113 @@ describe('OrderPanel', () => {
     });
   });
 
+  it('Booking: price transparency notice (deposit + delivery + VAT)', async () => {
+    const listing = createListing('listing-day-transparency', {
+      title: 'the listing',
+      description: 'Lorem ipsum',
+      price: new Money(1000, 'USD'),
+      availabilityPlan: {
+        type: 'availability-plan/time',
+        timezone: 'Etc/UTC',
+        entries: [
+          { dayOfWeek: 'mon', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'tue', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'wed', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'thu', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'fri', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'sat', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'sun', startTime: '00:00', endTime: '00:00', seats: 0 },
+        ],
+      },
+
+      publicData: {
+        listingType: 'rent-bicycles-daily',
+        transactionProcessAlias: 'default-booking/release-1',
+        unitType: 'day',
+        amenities: ['dog_1'],
+        location: {
+          address: 'Main Street 123',
+          building: 'A 1',
+        },
+        depositInSubunits: 15000,
+        shippingEnabled: true,
+        shippingPriceInSubunitsOneItem: 1000,
+      },
+    });
+
+    const companyAuthor = createUser('company-author', {
+      profile: {
+        displayName: 'company-author display name',
+        abbreviatedName: 'CA',
+        publicData: { accountType: 'company' },
+      },
+    });
+
+    const props = {
+      ...commonProps,
+      author: companyAuthor,
+      listing,
+      isOwnListing: false,
+      validListingTypes,
+    };
+    const { getByText } = render(<OrderPanel {...props} />, {
+      config,
+      routeConfiguration,
+    });
+
+    await waitFor(() => {
+      expect(getByText('OrderPanel.staticDepositLabel')).toBeInTheDocument();
+      expect(getByText('OrderPanel.staticDepositNotice')).toBeInTheDocument();
+      expect(getByText('OrderPanel.staticDeliveryLabel')).toBeInTheDocument();
+      expect(getByText('OrderPanel.staticDeliveryFromNotice')).toBeInTheDocument();
+      expect(getByText('OrderPanel.staticVatNotice')).toBeInTheDocument();
+    });
+  });
+
+  it('Booking: price transparency notice hidden when nothing to show', async () => {
+    const listing = createListing('listing-day-no-transparency', {
+      title: 'the listing',
+      description: 'Lorem ipsum',
+      price: new Money(1000, 'USD'),
+      availabilityPlan: {
+        type: 'availability-plan/time',
+        timezone: 'Etc/UTC',
+        entries: [
+          { dayOfWeek: 'mon', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'tue', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'wed', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'thu', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'fri', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'sat', startTime: '00:00', endTime: '00:00', seats: 1 },
+          { dayOfWeek: 'sun', startTime: '00:00', endTime: '00:00', seats: 0 },
+        ],
+      },
+
+      publicData: {
+        listingType: 'rent-bicycles-daily',
+        transactionProcessAlias: 'default-booking/release-1',
+        unitType: 'day',
+        amenities: ['dog_1'],
+        location: {
+          address: 'Main Street 123',
+          building: 'A 1',
+        },
+      },
+    });
+
+    const props = { ...commonProps, listing, isOwnListing: false, validListingTypes };
+    const { queryByText } = render(<OrderPanel {...props} />, {
+      config,
+      routeConfiguration,
+    });
+
+    await waitFor(() => {
+      expect(queryByText('OrderPanel.staticDepositLabel')).not.toBeInTheDocument();
+      expect(queryByText('OrderPanel.staticDeliveryLabel')).not.toBeInTheDocument();
+      expect(queryByText('OrderPanel.staticVatNotice')).not.toBeInTheDocument();
+    });
+  });
+
   it('Booking: nightly', async () => {
     const listing = createListing('listing-night', {
       title: 'the listing',

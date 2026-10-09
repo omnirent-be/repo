@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: omnirent-marketplace
+    runtime: node
+    plan: starter
+    region: frankfurt
+    buildCommand: yarn install --frozen-lockfile && yarn build
+    startCommand: yarn start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: REACT_APP_ENV
+        value: production
+      - key: REACT_APP_MARKETPLACE_ROOT_URL
+        sync: false
+      - key: REACT_APP_MARKETPLACE_NAME
+        sync: false
+      - key: REACT_APP_SHARETRIBE_SDK_CLIENT_ID
+        sync: false
+      - key: SHARETRIBE_SDK_CLIENT_SECRET
+        sync: false
+      - key: REACT_APP_STRIPE_PUBLISHABLE_KEY
+        sync: false
+      - key: REACT_APP_MAPBOX_ACCESS_TOKEN
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: SENDGRID_CONTACT_FROM_EMAIL
+        sync: false
+      - key: SENDGRID_CONTACT_TO_EMAIL
+        sync: false
+      - key: REACT_APP_CSP
+        value: report
+      - key: SERVER_SHARETRIBE_TRUST_PROXY
+        value: 'true'
+      - key: SERVER_SHARETRIBE_REDIRECT_SSL
+        value: 'true'
+      # Soft launch: locks the .onrender.com URL behind a username/password
+      # so only people with the credentials can reach the live site before
+      # the public launch. Remove both vars in Render once it's time to go
+      # fully public on the real domain.
+      - key: BASIC_AUTH_USERNAME
+        sync: false
+      - key: BASIC_AUTH_PASSWORD
+        sync: false

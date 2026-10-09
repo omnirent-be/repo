@@ -126,18 +126,40 @@
   position: relative;
 }
 
-/* Icon-only inbox link (replaces the old "Postvak IN" text link) */
-.inboxIconLink {
+/* Wraps the avatar + the inbox badge pinned to its top-right corner - see
+   .inboxIconLink below. Sized to the avatar itself (40px) so the badge's
+   absolute positioning has a predictable box to pin against regardless of
+   the profile menu label's own padding. */
+.profileWithInbox {
   position: relative;
   flex-shrink: 0;
   display: flex;
   align-items: center;
+}
+
+/* Icon-only inbox link (replaces the old "Postvak IN" text link) - a small
+   badge pinned to the avatar's top-right corner (not a separate nav icon
+   floating to its left), so it reads as "this account has unread
+   messages" rather than an unrelated topbar item. */
+.inboxIconLink {
+  position: absolute;
+  top: 6px;
+  right: 2px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  margin: 0 4px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
+  background-color: var(--colorWhite);
+  box-shadow: 0 0 0 2px var(--colorWhite);
   transition: background-color var(--transitionStyleButton);
+
+  & svg {
+    width: 13px;
+    height: 13px;
+  }
 
   &:hover {
     background-color: var(--colorGrey50);
@@ -151,10 +173,10 @@
   height: 7px;
   border-radius: 50%;
 
-  /* Position */
+  /* Position: top-right corner of the small 20px badge itself */
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: -2px;
+  right: -2px;
 
   /* Style: red dot */
   background-color: var(--colorFail);

@@ -101,8 +101,6 @@
   text-overflow: ellipsis;
 }
 
-.segmentInput,
-.segmentSelect,
 .segmentValue {
   composes: marketplaceSmallFontStyles from global;
   display: block;
@@ -119,23 +117,6 @@
   text-overflow: ellipsis;
 }
 
-.segmentInput {
-  cursor: text;
-
-  &::placeholder {
-    color: var(--colorGrey300);
-  }
-}
-
-.segmentSelect {
-  appearance: none;
-  cursor: pointer;
-}
-
-.segmentValue {
-  cursor: pointer;
-}
-
 .divider {
   width: 1px;
   background-color: var(--colorGrey100);
@@ -146,14 +127,17 @@
   display: none;
 }
 
-/* Shared panel shape for every segment's expanded-state popover (quick
-   keywords, region list, date range calendar). */
+/* Shared panel shape for the date range calendar's expanded-state popover
+   (the product and location segments now render their own dropdown/
+   predictions panel directly - see ProductSearchField and FilterLocation). */
 .popover {
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
   z-index: var(--zIndexPopup);
   min-width: 280px;
+  max-height: 70vh;
+  overflow-y: auto;
   background-color: var(--colorWhite);
   border-radius: var(--borderRadiusMedium);
   box-shadow: var(--boxShadowPopup);
@@ -162,60 +146,6 @@
 
 .datePickerPopup {
   composes: popover;
-}
-
-.quickOptions {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.quickOptionButton {
-  composes: marketplaceSmallFontStyles from global;
-  text-align: left;
-  padding: 10px 12px;
-  border: none;
-  border-radius: var(--borderRadiusMedium);
-  background: none;
-  color: var(--colorGrey700);
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    background-color: var(--colorGrey50);
-  }
-}
-
-.optionList {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 220px;
-}
-
-.optionListItem {
-  composes: marketplaceSmallFontStyles from global;
-  text-align: left;
-  padding: 10px 12px;
-  border: none;
-  border-radius: var(--borderRadiusMedium);
-  background: none;
-  color: var(--colorGrey700);
-  cursor: pointer;
-  white-space: nowrap;
-
-  &:hover {
-    background-color: var(--colorGrey50);
-  }
-}
-
-.optionListItemActive {
-  background-color: var(--marketplaceColor);
-  color: var(--colorWhite);
-
-  &:hover {
-    background-color: var(--marketplaceColor);
-  }
 }
 
 .submitButton {

@@ -1,24 +1,27 @@
 import React from 'react';
+import classNames from 'classnames';
 
 import { useConfiguration } from '../../../context/configurationContext';
-import { NamedLink } from '../../../components';
+import { trackEvent } from '../../../util/analytics';
 import { CATEGORY_ICONS } from '../../SearchPage/CategoryIcons';
 
 import css from './HomepageCategorySlider.module.css';
 
 /**
- * Horizontal, swipeable row of category chips right under the hero - reuses
- * the same icon set and subcategory data as SearchPage's own
- * CategoryQuickNav (SearchPageWithGrid.js), just as plain NamedLinks
- * instead of imperative history.push, since this is an entry point into
- * search rather than a live filter already on the results page.
+ * Horizontal, swipeable row of category chips right under the hero. Each
+ * chip toggles the homepage product grid's category filter via client
+ * state (see LandingPage.js's selectedCategory) rather than navigating
+ * away to SearchPage - a single click should narrow "HET AANBOD" in
+ * place, with no page reload.
  *
  * @component
+ * @param {Object} props
+ * @param {{topCategoryId: string, subCategoryId: string}|null} props.selected currently active category, or null for "all"
+ * @param {Function} props.onSelect ({topCategoryId, subCategoryId}|null) => void
  * @returns {JSX.Element}
  */
-const HomepageCategorySlider = () => {
+const HomepageCategorySlider = ({ selected, onSelect }) => {
   const config = useConfiguration();
-  const categoryKey = config.categoryConfiguration?.key || 'categoryLevel';
   const topCategory = config.categoryConfiguration?.categories?.[0];
   const subcategories = topCategory?.subcategories || [];
 
@@ -31,16 +34,21 @@ const HomepageCategorySlider = () => {
       <div className={css.track}>
         {subcategories.map(sub => {
           const CategoryIcon = CATEGORY_ICONS[sub.id];
+          const isActive = selected?.subCategoryId === sub.id;
           return (
-            <NamedLink
+            <button
               key={sub.id}
-              name="SearchPage"
-              to={{
-                search: `?pub_${categoryKey}1=${encodeURIComponent(
-                  topCategory.id
-                )}&pub_${categoryKey}2=${encodeURIComponent(sub.id)}`,
+              type="button"
+              className={classNames(css.chip, { [css.chipActive]: isActive })}
+              aria-pressed={isActive}
+              onClick={() => {
+                if (!isActive) {
+                  trackEvent('category_clicked', { category: sub.id });
+                }
+                onSelect(
+                  isActive ? null : { topCategoryId: topCategory.id, subCategoryId: sub.id }
+                );
               }}
-              className={css.chip}
             >
               {CategoryIcon ? (
                 <span className={css.chipIcon} aria-hidden="true">
@@ -48,7 +56,7 @@ const HomepageCategorySlider = () => {
                 </span>
               ) : null}
               <span className={css.chipLabel}>{sub.name}</span>
-            </NamedLink>
+            </button>
           );
         })}
       </div>

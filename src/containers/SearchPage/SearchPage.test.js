@@ -2,7 +2,7 @@ import React from 'react';
 import '@testing-library/jest-dom';
 
 import { createImageVariantConfig } from '../../util/sdkLoader';
-import { createCurrentUser, createListing } from '../../util/testData';
+import { createCurrentUser, createListing, createImage } from '../../util/testData';
 import {
   renderWithProviders as render,
   testingLibrary,
@@ -241,8 +241,11 @@ const getConfig = (variantType, customListingFields) => {
   };
 };
 
-const l1 = createListing('l1');
-const l2 = createListing('l2');
+// SearchResultsPanel filters out listings with no real photo (see
+// testListings.js) - these fixtures need at least one image or they'd
+// never render and these tests would fail for the wrong reason.
+const l1 = createListing('l1', {}, { images: [createImage('l1-image')] });
+const l2 = createListing('l2', {}, { images: [createImage('l2-image')] });
 
 // We'll initialize the store with relevant listing data
 const initialState = {
@@ -345,7 +348,7 @@ describe('SearchPage', () => {
 
     await waitFor(() => {
       // Has main search capsule in Topbar.
-      expect(getByText('SearchCapsule.keywordsLabel')).toBeInTheDocument();
+      expect(getByText('SearchCapsule.productLabel')).toBeInTheDocument();
 
       // Has filter column
       expect(screen.getByTestId('filterColumnAside')).toBeInTheDocument();
@@ -423,7 +426,7 @@ describe('SearchPage', () => {
 
     await waitFor(() => {
       // Has main search capsule in Topbar.
-      expect(getByText('SearchCapsule.keywordsLabel')).toBeInTheDocument();
+      expect(getByText('SearchCapsule.productLabel')).toBeInTheDocument();
 
       // Does not have filter column
       expect(screen.queryByTestId('filterColumnAside')).not.toBeInTheDocument();

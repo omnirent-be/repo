@@ -1,23 +1,21 @@
 import SocialLoginButtons from './SocialLoginButtons';
 
-export const SignupWithItsmeComingSoon = {
+export const Signup = {
   component: SocialLoginButtons,
   props: {
     isLogin: false,
     showFacebookLogin: true,
     showGoogleLogin: true,
-    showItsmeComingSoon: true,
   },
   group: 'page:AuthenticationPage',
 };
 
-export const LoginWithItsmeComingSoon = {
+export const Login = {
   component: SocialLoginButtons,
   props: {
     isLogin: true,
     showFacebookLogin: true,
     showGoogleLogin: true,
-    showItsmeComingSoon: true,
   },
   group: 'page:AuthenticationPage',
 };

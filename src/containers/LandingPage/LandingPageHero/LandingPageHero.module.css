@@ -41,10 +41,10 @@
       color-mix(in srgb, var(--marketplaceColorDark) 20%, transparent),
       transparent 65%
     );
-  padding: 48px 24px 56px 24px;
+  padding: 32px 24px 40px 24px;
 
   @media (--viewportMedium) {
-    padding: 72px 24px 88px 24px;
+    padding: 48px 24px 56px 24px;
   }
 }
 
@@ -188,7 +188,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 65%;
+  object-position: center;
   transition: transform 0.6s ease;
 
   .imageFrame:hover & {
@@ -513,12 +513,9 @@
   }
 }
 
-/* The combined huren/verhuren module: RoleTabs sit directly above the body
-   (SearchCTA's own card, or QuickListForm's matching one below), grouped
-   via proximity/spacing rather than a single shared box - SearchCTA is a
-   shared PageBuilder primitive (also usable from hosted CMS pages via
-   Console), so its own card styling (background/shadow/radius/margin)
-   isn't something to override from here. */
+/* Wraps SearchCTA, a shared PageBuilder primitive (also usable from hosted
+   CMS pages via Console) - its own card styling (background/shadow/radius/
+   margin) isn't something to override from here. */
 .actionModule {
   display: flex;
   flex-direction: column;
@@ -526,91 +523,15 @@
   width: 100%;
 }
 
-.actionModuleTabs {
-  display: inline-flex;
-  padding: 4px;
-  gap: 2px;
-  border-radius: 999px;
-  background-color: var(--colorWhite);
-  box-shadow: var(--boxShadowLight);
-}
-
-.actionModuleTab {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 999px;
-  background: none;
-  appearance: none;
-  cursor: pointer;
-  white-space: nowrap;
-  font-weight: var(--fontWeightSemiBold);
-  font-size: 14px;
+.providerLink {
+  composes: p from global;
+  display: inline-block;
+  margin: 14px 0 0 0;
   color: var(--colorGrey600);
-  transition: background-color var(--transitionStyle), color var(--transitionStyle);
+  text-decoration: underline;
 
   &:hover {
     color: var(--marketplaceColor);
-  }
-}
-
-.actionModuleTabActive {
-  color: var(--colorWhite);
-  background-color: var(--marketplaceColor);
-
-  &:hover {
-    color: var(--colorWhite);
-  }
-}
-
-.actionModuleBody {
-  width: 100%;
-}
-
-.quickListForm {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  max-width: 480px;
-  margin-top: 24px;
-  padding: 20px;
-  background-color: var(--colorWhite);
-  border-radius: 8px;
-  box-shadow: var(--boxShadowPopup);
-}
-
-.quickListInput {
-  composes: marketplaceSmallFontStyles from global;
-  width: 100%;
-  padding: 14px 16px;
-  border: 1px solid var(--colorGrey100);
-  border-radius: 8px;
-  color: var(--colorGrey700);
-
-  &::placeholder {
-    color: var(--colorGrey300);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: var(--marketplaceColor);
-  }
-}
-
-.quickListButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14px 24px;
-  background-color: var(--marketplaceColor);
-  color: var(--colorWhite);
-  font-weight: var(--fontWeightSemiBold);
-  border-radius: 8px;
-
-  &:hover {
-    background-color: var(--marketplaceColorDark);
-    color: var(--colorWhite);
-    text-decoration: none;
   }
 }
 
@@ -618,9 +539,9 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  column-gap: 10px;
-  row-gap: 4px;
-  margin: 14px 0 0 0;
+  list-style: none;
+  gap: 8px 20px;
+  margin: 16px 0 0 0;
   padding: 0;
   animation: landingHeroFadeIn 0.2s ease;
 
@@ -632,29 +553,64 @@
 .trustItem {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   font-size: 13px;
   font-weight: var(--fontWeightMedium);
   color: var(--colorGrey600);
-  white-space: nowrap;
 
   @media (--viewportMedium) {
     font-size: 14px;
   }
 }
 
-.trustSeparator {
-  color: var(--colorGrey300);
+.trustIcon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: var(--marketplaceColor);
 }
 
+/* Fixed height from the very first render (the fallback copy shows
+   immediately, before the real-activity fetch resolves) so swapping in
+   real items never shifts the layout below it. Deliberately subtler than
+   the categories/listings sections - a muted background and small text,
+   not a second competing attention-grabber. */
 .activityTicker {
   position: relative;
   width: 100%;
   min-width: 0;
-  height: 32px;
+  height: 44px;
   overflow: hidden;
-  background-color: var(--colorGrey100);
+  background-color: var(--colorGrey50);
+  border-top: 1px solid var(--colorGrey100);
   border-bottom: 1px solid var(--colorGrey100);
+}
+
+/* Mobile: one static item, no animation, no marquee - a moving strip is
+   harder to read at that width and risks horizontal overflow. */
+.activityStatic {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 20px;
+
+  @media (--viewportMedium) {
+    display: none;
+  }
+}
+
+.activityStatic .activityItem {
+  padding: 0;
+}
+
+.activityTrackViewport {
+  display: none;
+
+  @media (--viewportMedium) {
+    display: block;
+    position: absolute;
+    inset: 0;
+  }
 }
 
 /* Positioned out of flow so its (intentionally oversized, for the
@@ -670,10 +626,11 @@
   width: max-content;
   gap: 40px;
   padding: 0 20px;
-  animation: activityScroll 30s linear infinite;
+  animation: activityScroll 45s linear infinite;
 }
 
-.activityTicker:hover .activityTrack {
+.activityTrackViewport:hover .activityTrack,
+.activityTrackViewport:focus-within .activityTrack {
   animation-play-state: paused;
 }
 
@@ -695,18 +652,15 @@
 .activityItem {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
   white-space: nowrap;
-  font-size: 12.5px;
-  color: var(--colorGrey600);
+  font-size: 14px;
+  color: var(--colorGrey700);
   padding: 0 20px;
 }
 
-.activityDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--marketplaceColor);
-  flex-shrink: 0;
+.activityTime {
+  color: var(--colorGrey400);
 }
+

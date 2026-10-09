@@ -413,6 +413,128 @@
   }
 }
 
+/* City, shown directly under the title - see ListingPageCarousel.js's/
+   ListingPageCoverPhoto.js's locationCity - so a visitor can judge where a
+   listing is without scrolling down to the map section. */
+.locationLine {
+  composes: p from global;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 24px 0 24px;
+  color: var(--colorGrey600);
+
+  @media (--viewportMedium) {
+    margin: 8px 0 0 0;
+  }
+}
+
+.locationIcon {
+  flex-shrink: 0;
+}
+
+/* Real native-review average, shown next to the title - see
+   ListingPageCarousel.js's/ListingPageCoverPhoto.js's reviewsSummary. */
+.reviewsSummaryLine {
+  composes: p from global;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 24px 0 24px;
+  font-weight: var(--fontWeightBold);
+
+  @media (--viewportMedium) {
+    margin: 8px 0 0 0;
+  }
+}
+
+.reviewsSummaryStar {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.reviewsSummaryAverage {
+  color: var(--colorGrey700);
+}
+
+.reviewsSummaryCount {
+  font-weight: var(--fontWeightRegular);
+  color: var(--colorGrey500);
+}
+
+/* Real trust signals only (external rating, identity check, account age) -
+   see ListingPageCarousel.js's/ListingPageCoverPhoto.js's trust-badge block. */
+.trustBadgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 24px 0 24px;
+
+  @media (--viewportMedium) {
+    margin: 12px 0 0 0;
+  }
+}
+
+.trustBadge {
+  composes: marketplaceTinyFontStyles from global;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background-color: var(--colorGrey50);
+  color: var(--colorGrey700);
+  font-weight: var(--fontWeightSemiBold);
+}
+
+/* "Eerstvolgende beschikbare data" teaser - see ListingPageCarousel.js's/
+   ListingPageCoverPhoto.js's upcomingAvailableDays. */
+.availabilityTeaser {
+  margin: 16px 24px 0 24px;
+
+  @media (--viewportMedium) {
+    margin: 16px 0 0 0;
+  }
+}
+
+.availabilityTeaserLabel {
+  composes: marketplaceTinyFontStyles from global;
+  margin: 0 0 8px 0;
+  color: var(--colorGrey500);
+  font-weight: var(--fontWeightSemiBold);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.availabilityTeaserDays {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 320px;
+}
+
+.availabilityTeaserDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 0;
+  border-radius: 10px;
+  background-color: var(--colorGrey50);
+}
+
+.availabilityTeaserWeekday {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey500);
+}
+
+.availabilityTeaserDate {
+  font-size: 14px;
+  font-weight: var(--fontWeightBold);
+  color: var(--colorGrey700);
+}
+
 /* "Kofferbak-Index" badge - see ListingPageCarousel.js's
    transportSizeMessageId. */
 .transportBadge {
@@ -784,8 +906,9 @@
 }
 
 .map {
-  /* Dimensions: Map takes all available space from viewport (excludes action button and section title) */
-  height: calc(100vh - 193px);
+  /* Compact, fixed height - a full-viewport map was overkill for a section
+     embedded mid-page (it pushed everything else below it off-screen). */
+  height: 220px;
   width: 100%;
 
   /* Static map: dimensions are 640px */
@@ -797,7 +920,7 @@
   cursor: pointer;
 
   @media (--viewportMedium) {
-    height: 75vh;
+    height: 260px;
   }
 
   @media (--viewportLarge) {

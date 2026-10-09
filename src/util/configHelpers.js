@@ -1389,6 +1389,16 @@ const mergeDefaultTypesAndFieldsForDebugging = isDebugging => {
   return isDebugging && isDev;
 };
 
+// Keys injected below purely so they can be search filters (see
+// omniRentFiltersMaybe) - they're derived/written elsewhere (by
+// EditListingDeliveryPanel.js's submit handler), not meant to be a second,
+// independently-editable input. Any generic "render every listingField as
+// an edit-wizard input" component (AddListingFields in
+// EditListingDetailsForm.js and EditListingRentalDetailsForm.js) must skip
+// these, or it duplicates/conflicts with the dedicated Delivery step's own
+// fields that already own these keys.
+export const SEARCH_ONLY_LISTING_FIELD_KEYS = ['deliveryOptions', 'region'];
+
 // Note: by default, listing types and fields are only merged if explicitly set for debugging
 const mergeListingConfig = (hostedConfig, defaultConfigs, categoriesInUse) => {
   // Listing configuration is splitted to several assets in Console
@@ -1425,6 +1435,20 @@ const mergeListingConfig = (hostedConfig, defaultConfigs, categoriesInUse) => {
   // together). Gated to 'daily-rental' being present at all (OmniRent's
   // real booking listing type) so generic template test fixtures
   // (rent-bicycles-daily etc.) never pick these up.
+  //
+  // IMPORTANT: `listingFields` here does double duty as both "what can be
+  // a search filter" AND "what the generic custom-fields section of the
+  // edit-listing wizard renders as an editable input" (see AddListingFields
+  // in EditListingDetailsForm.js and EditListingRentalDetailsForm.js - both
+  // render every entry from this same array with no way to opt a field out
+  // of just one of those two uses). These two are read-only/derived
+  // elsewhere, not meant to be a second, independently-editable input - so
+  // SEARCH_ONLY_LISTING_FIELD_KEYS (exported below) lets those renderers
+  // explicitly skip them. Found as a real bug: without this, the "Details &
+  // Contract" step showed its own "Overdrachtsmethode"/"Locatie" fields
+  // alongside the dedicated Delivery step's own pickup/shipping/address
+  // fields, both silently writing the same `deliveryOptions` key - whichever
+  // step was saved last won, discarding the other's input.
   const omniRentFiltersMaybe = listingTypesInUse.includes('daily-rental')
     ? [
         {
@@ -1442,7 +1466,10 @@ const mergeListingConfig = (hostedConfig, defaultConfigs, categoriesInUse) => {
             group: 'secondary',
             filterType: 'SelectMultipleFilter',
           },
-          showConfig: { label: 'Overdrachtsmethode' },
+          // Already shown on the listing page via the dedicated delivery
+          // section (ListingCard.js's deliveryLabel etc.) - without this,
+          // CustomListingFields.js would show it a second time there too.
+          showConfig: { label: 'Overdrachtsmethode', displayOnListingPage: false },
           saveConfig: { label: 'Overdrachtsmethode' },
         },
         {
@@ -1461,7 +1488,9 @@ const mergeListingConfig = (hostedConfig, defaultConfigs, categoriesInUse) => {
             group: 'secondary',
             filterType: 'SelectSingleFilter',
           },
-          showConfig: { label: 'Locatie' },
+          // Already shown via the dedicated location/map section elsewhere
+          // on the listing page - see the Overdrachtsmethode field above.
+          showConfig: { label: 'Locatie', displayOnListingPage: false },
           saveConfig: { label: 'Locatie' },
         },
       ]

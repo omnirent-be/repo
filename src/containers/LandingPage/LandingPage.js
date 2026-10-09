@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import loadable from '@loadable/component';
 
 import { bool, object } from 'prop-types';
@@ -8,6 +8,7 @@ import { connect } from 'react-redux';
 import { useIntl } from '../../util/reactIntl';
 import { camelize } from '../../util/string';
 import { propTypes } from '../../util/types';
+import { trackEvent } from '../../util/analytics';
 
 import FallbackPage from './FallbackPage';
 import { ASSET_NAME } from './LandingPage.duck';
@@ -18,11 +19,13 @@ import LandingPageHero from './LandingPageHero/LandingPageHero';
 import AccountSetupChecklist from './AccountSetupChecklist/AccountSetupChecklist';
 import HomepageListingRows from './HomepageListingRows/HomepageListingRows';
 import HomepageCategorySlider from './HomepageCategorySlider/HomepageCategorySlider';
-// HomepageStorySection, HomepageHowItWorksSection, HomepagePartyCalculator
-// and HomepageEarningsCalculator used to render here too - deliberately
-// removed from the homepage (not deleted) to keep the page to search ->
-// categories -> offer. Re-import them if/when they get their own subpage
-// (e.g. /hoe-het-werkt, /over-ons, /verhuren).
+import HomepageTrustSteps from './HomepageTrustSteps/HomepageTrustSteps';
+import HomepageReviewsSection from './HomepageReviewsSection/HomepageReviewsSection';
+import HomepageProviderSection from './HomepageProviderSection/HomepageProviderSection';
+// HomepagePartyCalculator, HomepageEarningsCalculator, HomepageHowItWorksSection
+// and HomepageStorySection used to render here too - not shown on the
+// homepage for now, to keep the page compact (just the compact 3-step bar
+// below the offer, files still exist, not deleted).
 
 const PageBuilder = loadable(() =>
   import(/* webpackChunkName: "PageBuilder" */ '../PageBuilder/PageBuilder')
@@ -31,6 +34,15 @@ const PageBuilder = loadable(() =>
 export const LandingPageComponent = props => {
   const { pageAssetsData, inProgress, error } = props;
 
+  // Lifted here (rather than owned by HomepageListingRows) since the
+  // category bar and the product grid are separate components that both
+  // need it - the bar sets it, the grid reads it.
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  useEffect(() => {
+    trackEvent('homepage_view');
+  }, []);
+
   const intl = useIntl();
   const data = pageAssetsData?.[camelize(ASSET_NAME)]?.data;
   const metaTitle = intl.formatMessage({ id: 'LandingPage.metaTitle' });
@@ -38,11 +50,10 @@ export const LandingPageComponent = props => {
   // The hosted "hero", "how it works" and "listings" sections are all
   // filtered out: hero and listings are replaced by the code-defined
   // LandingPageHero/HomepageListingRows (mainContentPrepend below), and
-  // "how it works" is deliberately not shown on the homepage at all
-  // anymore (see the import comment above) - still filtered here so the
-  // hosted fallback can't reappear. It has no explicit sectionId set in
-  // Console (it's blank), so it's matched by sectionType ('columns')
-  // instead - the only 'columns' section on this page.
+  // "how it works" is not shown on the homepage at all right now - still
+  // filtered here so the hosted fallback can't reappear. It has no explicit
+  // sectionId set in Console (it's blank), so it's matched by sectionType
+  // ('columns') instead - the only 'columns' section on this page.
   const dataWithoutHostedSections = data
     ? {
         ...data,
@@ -76,21 +87,24 @@ export const LandingPageComponent = props => {
       featuredListings={getFeaturedListingsProps(camelize(ASSET_NAME), props)}
       mainContentPrepend={
         <>
-          {/* 1. Hero (koptekst + zoekmodule + visual) */}
+          {/* 1. Hero (koptekst + zoekmodule + visual) + Social Proof Ticker
+              (rendered inside LandingPageHero, right below the hero) */}
           <LandingPageHero />
-          {/* 2. Categoriebalk */}
-          <HomepageCategorySlider />
-          {/* 3. HET AANBOD - the main body of the page. FeaturedListings
-              ("Populair in regio Gent") + RecentListings ("Nieuw toegevoegd
-              in de buurt"), both real listings. PartyCalculator,
-              HowItWorks, EarningsCalculator and the "Ons verhaal"/trust
-              story section (HomepageStorySection) are deliberately not
-              rendered here anymore - per the decision to strip the
-              homepage down to search -> categories -> offer, matching
-              Airbnb/Vinted. Those components still exist (imports removed
-              below, not the files) and can be placed on their own
-              subpages (/hoe-het-werkt, /over-ons, /verhuren) later. */}
-          <HomepageListingRows />
+          {/* 2. Categoriebalk - filtert het grid hieronder via client state,
+              geen page reload (zie selectedCategory hierboven) */}
+          <HomepageCategorySlider selected={selectedCategory} onSelect={setSelectedCategory} />
+          {/* 3. "Populair voor feesten in Gent" - strak 2x4-grid i.p.v. de
+              eerdere losse carrousels per categorie */}
+          <HomepageListingRows categoryFilter={selectedCategory} />
+          {/* 4. "Zo werkt huren" - de 4 echte stappen van de request-to-book flow */}
+          <HomepageTrustSteps />
+          {/* 5. Echte, publieke reviews - rendert niets zolang er nog geen
+              echte zijn (zie recentReviews.duck.js), nooit verzonnen quotes. */}
+          <HomepageReviewsSection />
+          {/* 6. Aparte, volwaardige route voor de aanbodzijde (verhuurders) -
+              niet langer gelijkwaardig met de huurdersflow bovenaan, maar
+              een eigen sectie met het echte voordeel en een duidelijke CTA. */}
+          <HomepageProviderSection />
           {/* Profile-completion nudge - only ever shown to an authenticated
               user with an incomplete profile, so it never displaces listings
               for the anonymous visitors this order is optimized for. */}

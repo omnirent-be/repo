@@ -5,13 +5,15 @@ import classNames from 'classnames';
 
 // Utils
 import { FormattedMessage } from '../../util/reactIntl';
-import { LISTING_STATE_CLOSED, propTypes } from '../../util/types';
+import { LISTING_STATE_CLOSED, AVAILABILITY_MULTIPLE_SEATS, propTypes } from '../../util/types';
 import { OFFER, REQUEST } from '../../transactions/transaction';
+import { getExternalReview, getMemberSinceYear } from '../../util/userHelpers';
 
 // Global ducks (for Redux actions and thunks)
 import { getMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
 import { initializeCardPaymentData } from '../../ducks/stripe.duck.js';
+import { login, signup } from '../../ducks/auth.duck';
 
 // Shared components
 import {
@@ -23,6 +25,9 @@ import {
   OrderPanel,
   LayoutSingleColumn,
   SectionText,
+  IconLocation,
+  IconReviewStar,
+  ExternalReviewBadge,
 } from '../../components';
 
 // Related components and modules
@@ -47,6 +52,8 @@ import {
   handleSubmit,
   priceForSchemaMaybe,
   getDerivedRenderData,
+  getReviewsSummary,
+  getUpcomingAvailableDays,
 } from './ListingPage.shared';
 import SectionHero from './SectionHero';
 import SectionReviews from './SectionReviews';
@@ -56,7 +63,9 @@ import SectionMoreFromProvider from './SectionMoreFromProvider';
 import SectionMapMaybe from './SectionMapMaybe';
 import SectionDistanceMaybe from './SectionDistanceMaybe';
 import CustomListingFields from './CustomListingFields';
+import SectionRentalDetailsMaybe from './SectionRentalDetailsMaybe';
 import Notifications from './Notifications/Notifications';
+import CompleteBookingAccountModal from './CompleteBookingAccountModal';
 import ListingPageAccessWrapper from './ListingPageAccessWrapper';
 
 import css from './ListingPage.module.css';
@@ -70,6 +79,13 @@ export const ListingPageComponent = props => {
   const [imageCarouselOpen, setImageCarouselOpen] = useState(false);
 
   const [mounted, setMounted] = useState(false);
+  // "Vraag eerst aan, maak dan pas een account aan" - see
+  // CompleteBookingAccountModal.js. pendingOrderValues buffers the booking
+  // form's values (dates, quantity, etc.) between the anonymous visitor's
+  // click and the modal's onAuthenticated callback, which replays the exact
+  // same submit once signup/login succeeds.
+  const [showCompleteAccountModal, setShowCompleteAccountModal] = useState(false);
+  const [pendingOrderValues, setPendingOrderValues] = useState(null);
 
   useEffect(() => {
     setMounted(true);
@@ -88,6 +104,7 @@ export const ListingPageComponent = props => {
     showListingError,
     reviews = [],
     fetchReviewsError,
+    monthlyTimeSlots,
     sendInquiryInProgress,
     sendInquiryError,
     history,
@@ -97,6 +114,12 @@ export const ListingPageComponent = props => {
     config,
     routeConfiguration,
     showOwnListingsOnly,
+    onSignup,
+    onLogin,
+    signupInProgress,
+    signupError,
+    loginInProgress,
+    loginError,
     ...restOfProps
   } = props;
 
@@ -169,6 +192,35 @@ export const ListingPageComponent = props => {
   const unitType = publicData.unitType;
   const isNegotiation = processType === 'negotiation';
 
+  // City, shown directly under the title so a visitor can judge where a
+  // listing is without scrolling down to the map section further down.
+  const locationCity = publicData?.location?.address || null;
+
+  // Real native-review average + count next to the title - null (hidden)
+  // rather than a fabricated score when the listing has zero reviews yet.
+  const reviewsSummary = getReviewsSummary(reviews);
+
+  // Real trust signals only: a provider-entered external rating (e.g. an
+  // existing Google score) and the real account age - never a fabricated
+  // "responds within 2h" stat, since this marketplace has no such metric
+  // to back that claim.
+  const authorPublicData = ensuredAuthor?.attributes?.profile?.publicData;
+  const externalReview = getExternalReview(authorPublicData);
+  const memberSinceYear = getMemberSinceYear(ensuredAuthor);
+
+  // "Eerstvolgende beschikbare data" teaser - reuses the current/next
+  // month time slots the page's own loadData already fetches for the
+  // booking form, so this needs no extra request (see ListingPage.duck.js).
+  const timeZone = currentListing?.attributes?.availabilityPlan?.timezone;
+  const listingTypeConfigForAvailability = config.listing.listingTypes.find(
+    conf => conf.listingType === publicData.listingType
+  );
+  const seatsEnabled =
+    listingTypeConfigForAvailability?.availabilityType === AVAILABILITY_MULTIPLE_SEATS;
+  const upcomingAvailableDays = mounted
+    ? getUpcomingAvailableDays(monthlyTimeSlots, timeZone, seatsEnabled, 5)
+    : [];
+
   const commonParams = { params, history, routes: routeConfiguration };
   const onContactUser = handleContactUser({
     ...commonParams,
@@ -204,6 +256,12 @@ export const ListingPageComponent = props => {
         getListing,
       });
       onNavigateToRequestQuotePage(values);
+    } else if (!isAuthenticated) {
+      // Hold here instead of navigating to checkout (whose auth-gated route
+      // would otherwise bounce an anonymous visitor straight to the signup
+      // page) - see CompleteBookingAccountModal.js.
+      setPendingOrderValues(values);
+      setShowCompleteAccountModal(true);
     } else {
       const onSubmit = handleSubmit({
         ...commonParams,
@@ -213,6 +271,21 @@ export const ListingPageComponent = props => {
         onInitializeCardPaymentData,
       });
       onSubmit(values);
+    }
+  };
+
+  const handleAccountCompleted = () => {
+    setShowCompleteAccountModal(false);
+    if (pendingOrderValues) {
+      const onSubmit = handleSubmit({
+        ...commonParams,
+        currentUser,
+        callSetInitialValues,
+        getListing,
+        onInitializeCardPaymentData,
+      });
+      onSubmit(pendingOrderValues);
+      setPendingOrderValues(null);
     }
   };
 
@@ -304,6 +377,64 @@ export const ListingPageComponent = props => {
                 </H3>
               )}
             </div>
+            {reviewsSummary ? (
+              <p className={css.reviewsSummaryLine}>
+                <IconReviewStar rootClassName={css.reviewsSummaryStar} isFilled />
+                <span className={css.reviewsSummaryAverage}>
+                  <FormattedMessage
+                    id="ListingPage.reviewsSummaryAverage"
+                    values={{ average: reviewsSummary.average }}
+                  />
+                </span>
+                <span className={css.reviewsSummaryCount}>
+                  <FormattedMessage
+                    id="ListingPage.reviewsSummaryCount"
+                    values={{ count: reviewsSummary.count }}
+                  />
+                </span>
+              </p>
+            ) : null}
+            {locationCity ? (
+              <p className={css.locationLine}>
+                <IconLocation rootClassName={css.locationIcon} />
+                {locationCity}
+              </p>
+            ) : null}
+            {externalReview || memberSinceYear ? (
+              <div className={css.trustBadgeRow}>
+                {externalReview ? (
+                  <ExternalReviewBadge
+                    externalReview={externalReview}
+                    rootClassName={css.trustBadge}
+                  />
+                ) : null}
+                {memberSinceYear ? (
+                  <div className={css.trustBadge}>
+                    <FormattedMessage
+                      id="ListingPage.memberSinceBadge"
+                      values={{ year: memberSinceYear }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {upcomingAvailableDays.length > 0 ? (
+              <div className={css.availabilityTeaser}>
+                <p className={css.availabilityTeaserLabel}>
+                  <FormattedMessage id="ListingPage.availabilityTeaserLabel" />
+                </p>
+                <div className={css.availabilityTeaserDays}>
+                  {upcomingAvailableDays.map(day => (
+                    <div key={day.toISOString()} className={css.availabilityTeaserDay}>
+                      <span className={css.availabilityTeaserWeekday}>
+                        {intl.formatDate(day, { weekday: 'short' })}
+                      </span>
+                      <span className={css.availabilityTeaserDate}>{intl.formatDate(day, { day: 'numeric' })}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             {showDescription && <SectionText text={description} showAsIngress />}
 
             <SectionDistanceMaybe
@@ -313,6 +444,8 @@ export const ListingPageComponent = props => {
               mapsConfig={config.maps}
               isOwnListing={isOwnListing}
             />
+
+            <SectionRentalDetailsMaybe publicData={publicData} />
 
             <CustomListingFields
               publicData={publicData}
@@ -373,6 +506,7 @@ export const ListingPageComponent = props => {
               author={ensuredAuthor}
               onManageDisableScrolling={onManageDisableScrolling}
               onContactUser={onContactUser}
+              monthlyTimeSlots={monthlyTimeSlots}
               {...restOfProps}
               validListingTypes={config.listing.listingTypes}
               marketplaceCurrency={config.currency}
@@ -383,6 +517,18 @@ export const ListingPageComponent = props => {
           </div>
         </div>
       </LayoutSingleColumn>
+      <CompleteBookingAccountModal
+        isOpen={!isAuthenticated && showCompleteAccountModal}
+        onClose={() => setShowCompleteAccountModal(false)}
+        onManageDisableScrolling={onManageDisableScrolling}
+        onSignup={onSignup}
+        onLogin={onLogin}
+        signupInProgress={signupInProgress}
+        signupError={signupError}
+        loginInProgress={loginInProgress}
+        loginError={loginError}
+        onAuthenticated={handleAccountCompleted}
+      />
     </Page>
   );
 };
@@ -425,7 +571,13 @@ const ListingPage = props => {
   const dispatch = useDispatch();
   const store = useStore();
 
-  const { isAuthenticated } = useSelector(state => state.auth);
+  const {
+    isAuthenticated,
+    signupInProgress,
+    signupError,
+    loginInProgress,
+    loginError,
+  } = useSelector(state => state.auth);
   const {
     showListingError,
     reviews,
@@ -486,6 +638,10 @@ const ListingPage = props => {
       dispatch(fetchTimeSlots(listingId, start, end, timeZone, options)),
     [dispatch]
   );
+  const onSignup = useCallback(params => dispatch(signup(params)), [dispatch]);
+  const onLogin = useCallback((username, password) => dispatch(login(username, password)), [
+    dispatch,
+  ]);
 
   return (
     <ListingPageAccessWrapper
@@ -513,6 +669,12 @@ const ListingPage = props => {
       onSendInquiry={onSendInquiry}
       onInitializeCardPaymentData={onInitializeCardPaymentData}
       onFetchTimeSlots={onFetchTimeSlots}
+      onSignup={onSignup}
+      onLogin={onLogin}
+      signupInProgress={signupInProgress}
+      signupError={signupError}
+      loginInProgress={loginInProgress}
+      loginError={loginError}
     />
   );
 };

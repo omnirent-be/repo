@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import classNames from 'classnames';
 
 import { FormattedMessage } from '../../../../../util/reactIntl';
+import { trackEvent } from '../../../../../util/analytics';
 
 import { ExternalLink, NamedLink } from '../../../../../components';
 
@@ -16,7 +17,11 @@ import css from './PriorityLinks.module.css';
 export const CreateListingMenuLink = props => {
   return (
     <div className={props.customLinksMenuClass}>
-      <NamedLink name="NewListingPage" className={classNames(css.priorityLink, css.highlight)}>
+      <NamedLink
+        name="NewListingPage"
+        className={classNames(css.priorityLink, css.highlight)}
+        onClick={() => trackEvent('provider_cta_clicked', { cta_location: 'header' })}
+      >
         <span className={css.priorityLinkLabel}>
           <FormattedMessage id="TopbarDesktop.createListing" />
         </span>

@@ -25,6 +25,7 @@ import {
 import { formatMoney } from '../../util/currency';
 import { types as sdkTypes } from '../../util/sdkLoader';
 import { createSlug, parse, stringify } from '../../util/urlHelpers';
+import { parseDateFromISO8601 } from '../../util/dates';
 import { userDisplayNameAsString } from '../../util/data';
 import {
   OFFER,
@@ -275,6 +276,93 @@ const TieredPriceTable = props => {
   );
 };
 
+// Static, always-visible price-transparency facts (waarborg, levering) that
+// don't require picking dates first. The booking form's own price-breakdown
+// popover (see BookingDatesForm.js's extraCostsNotice) only appears once a
+// renter has opened it and picked dates - too late for the "duidelijke
+// prijs vóór de aanvraag" requirement from the UX brief this was built
+// from, which asks for the deposit and delivery cost to be visible
+// "boven de vouw of direct naast de boekingsmodule".
+const PriceTransparencyNotice = props => {
+  const { publicData, author, marketplaceCurrency, intl } = props;
+  const {
+    depositInSubunits,
+    pickupEnabled,
+    shippingEnabled,
+    shippingPriceInSubunitsOneItem,
+  } = publicData || {};
+
+  const hasDeposit = Number.isInteger(depositInSubunits) && depositInSubunits > 0;
+  const hasDeliveryInfo = pickupEnabled || shippingEnabled;
+  // Belgian WER/FOD Economie compliance (see server/api-util/lineItems.js's
+  // PROVIDER_VAT_PERCENTAGE): only company-type providers owe VAT on top of
+  // their price, so this note only ever applies to them. accountType comes
+  // from the author's own public profile data, already included on the
+  // listing page's author fetch - no extra request needed.
+  const providerAccountType = author?.attributes?.profile?.publicData?.accountType;
+  const showVatNotice = providerAccountType === 'company';
+
+  if (!hasDeposit && !hasDeliveryInfo && !showVatNotice) {
+    return null;
+  }
+
+  const deliveryFromAmount =
+    shippingEnabled && Number.isInteger(shippingPriceInSubunitsOneItem)
+      ? formatMoney(intl, new Money(shippingPriceInSubunitsOneItem, marketplaceCurrency))
+      : null;
+
+  return (
+    <div className={css.priceTransparency}>
+      {hasDeposit ? (
+        <div className={css.priceTransparencyRow}>
+          <span className={css.priceTransparencyLabel}>
+            <FormattedMessage id="OrderPanel.staticDepositLabel" />
+          </span>
+          <span className={css.priceTransparencyValue}>
+            <FormattedMessage
+              id="OrderPanel.staticDepositNotice"
+              values={{
+                depositAmount: formatMoney(intl, new Money(depositInSubunits, marketplaceCurrency)),
+              }}
+            />
+          </span>
+        </div>
+      ) : null}
+      {pickupEnabled && !shippingEnabled ? (
+        <div className={css.priceTransparencyRow}>
+          <span className={css.priceTransparencyLabel}>
+            <FormattedMessage id="OrderPanel.staticDeliveryLabel" />
+          </span>
+          <span className={css.priceTransparencyValue}>
+            <FormattedMessage id="OrderPanel.staticPickupOnlyNotice" />
+          </span>
+        </div>
+      ) : shippingEnabled ? (
+        <div className={css.priceTransparencyRow}>
+          <span className={css.priceTransparencyLabel}>
+            <FormattedMessage id="OrderPanel.staticDeliveryLabel" />
+          </span>
+          <span className={css.priceTransparencyValue}>
+            {deliveryFromAmount ? (
+              <FormattedMessage
+                id="OrderPanel.staticDeliveryFromNotice"
+                values={{ deliveryFromAmount }}
+              />
+            ) : (
+              <FormattedMessage id="OrderPanel.staticDeliveryUnknownNotice" />
+            )}
+          </span>
+        </div>
+      ) : null}
+      {showVatNotice ? (
+        <p className={css.priceTransparencyVatNote}>
+          <FormattedMessage id="OrderPanel.staticVatNotice" />
+        </p>
+      ) : null}
+    </div>
+  );
+};
+
 const PriceMissing = () => {
   return (
     <p className={css.error}>
@@ -462,6 +550,28 @@ const OrderPanel = props => {
   const isOrderOpen = !!searchParams.orderOpen;
   const preselectedPriceVariantSlug = searchParams.bookableOption;
 
+  // Carries a date range picked on the search results page through to this
+  // listing's own booking form (see ListingCard.js, which only adds `dates`
+  // to the link when the current page itself had a date filter active) -
+  // the renter shouldn't have to pick the same date twice.
+  const initialBookingDates = (() => {
+    if (!searchParams.dates) {
+      return null;
+    }
+    const [start, end] = searchParams.dates.split(',');
+    // parseDateFromISO8601 (not `new Date(isoString)`) - a plain Date-only
+    // string parses as UTC midnight, which shifts a day in any timezone
+    // behind UTC once displayed locally (confirmed live: carrying
+    // "2026-10-17" through with `new Date()` pre-filled the form with
+    // Oct 16 instead).
+    return start && end
+      ? {
+          startDate: parseDateFromISO8601(start, timeZone),
+          endDate: parseDateFromISO8601(end, timeZone),
+        }
+      : null;
+  })();
+
   const seatsEnabled = [AVAILABILITY_MULTIPLE_SEATS].includes(listingTypeConfig?.availabilityType);
 
   // Note: publicData contains priceVariationsEnabled if listing is created with priceVariations enabled.
@@ -580,6 +690,15 @@ const OrderPanel = props => {
           />
         ) : null}
 
+        {!hidePrice && isPaymentProcess ? (
+          <PriceTransparencyNotice
+            publicData={publicData}
+            author={author}
+            marketplaceCurrency={marketplaceCurrency}
+            intl={intl}
+          />
+        ) : null}
+
         {!hideAuthorInfo && (
           <div className={css.author}>
             <AvatarSmall user={author} className={css.providerAvatar} />
@@ -640,6 +759,7 @@ const OrderPanel = props => {
             onFetchTimeSlots={onFetchTimeSlots}
             timeZone={timeZone}
             finePrintComponent={SubmitFinePrint}
+            initialBookingDates={initialBookingDates}
             {...priceVariantsMaybe}
             {...sharedProps}
           />

@@ -1,6 +1,7 @@
 // ⚠️ If you modify the styling of this component and you're using the SectionListings component in your marketplace (featured listings)
 // please reflect those changes in the calculateCarouselHeight function in SectionListing.js to avoid layout issues
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import classNames from 'classnames';
 
 import { useConfiguration } from '../../context/configurationContext';
@@ -8,7 +9,8 @@ import { useConfiguration } from '../../context/configurationContext';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { requireListingImage } from '../../util/configHelpers';
 import { lazyLoadWithDimensions } from '../../util/uiHelpers';
-import { createSlug } from '../../util/urlHelpers';
+import { createSlug, parse } from '../../util/urlHelpers';
+import { trackEvent } from '../../util/analytics';
 import { formatPostcodeDistrictLabel } from '../../util/maps';
 import { haversineDistanceKm, formatDistanceKm } from '../../util/distance';
 import { getExternalReview } from '../../util/userHelpers';
@@ -27,6 +29,19 @@ import css from './ListingCard.module.css';
 
 const LazyImage = lazyLoadWithDimensions(ResponsiveImage, { loadAfterInitialRendering: 3000 });
 const SWIPE_THRESHOLD_PX = 40;
+
+const IconMapPin = () => (
+  <svg className={css.locationIcon} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path
+      d="M12 21s7-6.1 7-11.5a7 7 0 10-14 0C5 14.9 12 21 12 21z"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="12" cy="9.5" r="2.3" stroke="currentColor" strokeWidth="2" />
+  </svg>
+);
 
 /**
  * ListingCardImage
@@ -146,6 +161,7 @@ const ListingCardImage = props => {
  * @param {Function?} props.onToggleFavoriteListing (listingId) => Promise - if omitted, no favorite button is shown
  * @param {string?} props.favoriteListingIdInProgress the listing id currently being toggled, to show a spinner on that one card
  * @param {{lat: number, lng: number}} [props.visitorPosition] - visitor's (or Gent-center fallback) coordinates, for the "X km van jou" distance label - see useVisitorPosition.js
+ * @param {boolean?} props.showAvailabilityBadge - when true, shows a "Beschikbaar op jouw datum" badge. Pass this only when the listing is already known to match a selected date filter (e.g. search results after `dates` is set) - this never checks availability itself.
  * @returns {JSX.Element} listing card to be used in search result panel etc.
  */
 export const ListingCard = props => {
@@ -167,6 +183,7 @@ export const ListingCard = props => {
     onToggleFavoriteListing,
     favoriteListingIdInProgress,
     visitorPosition,
+    showAvailabilityBadge = false,
   } = props;
 
   const translations = getListingCardTranslations(listing, config, intl);
@@ -184,6 +201,15 @@ export const ListingCard = props => {
   const id = listing?.id?.uuid;
   const { title = '', publicData, geolocation } = listing?.attributes || {};
   const slug = createSlug(title);
+
+  // Carries a date range the visitor already picked (e.g. on SearchPage)
+  // through to the listing page's own booking form - see OrderPanel.js,
+  // which reads this same `dates` param to pre-fill BookingDatesForm. Only
+  // present when the current page itself has a dates filter active, so
+  // this is a no-op on pages without one (homepage grid, favorites, ...).
+  const location = useLocation();
+  const currentDates = parse(location.search).dates;
+  const toMaybe = currentDates ? { to: { search: `dates=${currentDates}` } } : {};
 
   const { listingType, cardStyle } = publicData || {};
   // Public, pre-booking location hint - never the exact address (that's
@@ -261,9 +287,23 @@ export const ListingCard = props => {
     </div>
   ) : null;
 
+  // Search results are already server-side filtered to listings available
+  // for the picked date range (see SearchPage.duck.js's datesSearchParams) -
+  // this just echoes that fact back onto the card, matching the "Resultaten
+  // moeten alleen producten tonen die werkelijk beschikbaar zijn" / "Beschikbaarheid
+  // op de gekozen datum" requirements. It never independently checks
+  // availability itself; showAvailabilityBadge must only be passed true
+  // when the caller already knows a date filter produced this result set.
+  const availabilityBadgeMaybe = showAvailabilityBadge ? (
+    <div className={css.availabilityBadge}>
+      <FormattedMessage id="ListingCard.availabilityBadge" />
+    </div>
+  ) : null;
+
   const topLeftBadgesMaybe =
-    depositBadgeMaybe || transportBadgeMaybe ? (
+    depositBadgeMaybe || transportBadgeMaybe || availabilityBadgeMaybe ? (
       <div className={css.badgeStack}>
+        {availabilityBadgeMaybe}
         {depositBadgeMaybe}
         {transportBadgeMaybe}
       </div>
@@ -313,6 +353,13 @@ export const ListingCard = props => {
       name="ListingPage"
       params={{ id, slug }}
       ariaLabel={cardAriaLabel}
+      onClick={() =>
+        trackEvent('listing_clicked', {
+          listing_id: id,
+          category: publicData?.categoryLevel2 || null,
+        })
+      }
+      {...toMaybe}
     >
       {showListingImage ? (
         <ListingCardImage
@@ -346,6 +393,7 @@ export const ListingCard = props => {
         <div className={css.mainInfo}>
           {locationLabel ? (
             <div className={classNames(css.locationLabel, { [css.lightText]: darkMode })}>
+              <IconMapPin />
               {locationLabel}
             </div>
           ) : null}

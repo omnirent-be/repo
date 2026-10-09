@@ -1,7 +1,7 @@
 import { displayPrice, isPriceVariationsEnabled } from '../../util/configHelpers';
 import { formatMoney, formatMoneyWhole } from '../../util/currency';
 import { richText } from '../../util/richText';
-import { isBookingProcessAlias } from '../../transactions/transaction';
+import { isBookingProcessAlias, isNegotiationProcessAlias } from '../../transactions/transaction';
 
 import css from './ListingCard.module.css';
 
@@ -64,10 +64,20 @@ export const getListingCardTranslations = (listing, config, intl) => {
   const isPriceVariationsInUse = isPriceVariationsEnabled(publicData, listingTypeConfig);
   const hasMultiplePriceVariants = isPriceVariationsInUse && publicData?.priceVariants?.length > 1;
   const isBookable = isBookingProcessAlias(publicData?.transactionProcessAlias);
+  // OmniRent's "request-quote" listing type has Console's defaultListingFields.price
+  // switched off (stale config left over from before this was a real,
+  // payment-taking negotiation process - same issue already bypassed for
+  // Pricing/Delivery, see EditListingPricingForm.js/EditListingDeliveryForm.js's
+  // isNegotiation-aware fixes). EditListingPricingForm.js now requires a
+  // real starting price for every quote listing, so showPrice being false
+  // must not hide it - that's exactly what previously produced a bare
+  // "Prijs op aanvraag" even on listings that do have a real "vanaf"-price.
+  const isNegotiation = isNegotiationProcessAlias(publicData?.transactionProcessAlias);
 
-  const priceMessageId = hasMultiplePriceVariants
-    ? 'ListingCard.priceStartingFrom'
-    : 'ListingCard.price';
+  const priceMessageId =
+    hasMultiplePriceVariants || isNegotiation
+      ? 'ListingCard.priceStartingFrom'
+      : 'ListingCard.price';
 
   const perUnitString = isBookable
     ? intl.formatMessage({ id: 'ListingCard.perUnit' }, { unitType: publicData?.unitType })
@@ -77,14 +87,13 @@ export const getListingCardTranslations = (listing, config, intl) => {
   const priceValue = <span className={css.priceValue}>{formattedPrice}</span>;
   const pricePerUnit = isBookable ? <span className={css.perUnit}>{perUnitString}</span> : '';
   // A listing can legitimately have no price at all - either because this
-  // particular listing hasn't had one set yet, or because its listing type
-  // has the price field disabled entirely (e.g. a "price on request" /
-  // negotiation listing type). Either way, show "Price on request" instead
-  // of leaving the price line blank - this intentionally ignores showPrice,
-  // since a type with the price field off is exactly the "ask for a price"
-  // case, not a reason to hide the line.
+  // particular listing hasn't had one set yet (an old quote listing from
+  // before the starting-price requirement existed), or because its listing
+  // type has the price field disabled entirely for a reason other than the
+  // negotiation bypass above. Either way, show "Price on request" instead
+  // of leaving the price line blank.
   const priceMessage =
-    showPrice && formattedPrice != null
+    (showPrice || isNegotiation) && formattedPrice != null
       ? intl.formatMessage({ id: priceMessageId }, { priceValue, pricePerUnit })
       : intl.formatMessage({ id: 'ListingCard.priceOnRequest' });
 

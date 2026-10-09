@@ -120,6 +120,68 @@ describe('EditListingDetailsForm', () => {
     expect(screen.getByRole('button', { name: saveActionMsg })).toBeEnabled();
   });
 
+  it('never renders the search-only deliveryOptions/region listing fields as inputs', () => {
+    const saveActionMsg = 'Save details';
+    const selectableListingTypes = [
+      {
+        listingType: 'sell-bicycles',
+        transactionProcessAlias: 'default-purchase/release-1',
+        unitType: 'item',
+      },
+    ];
+
+    // Same shape as the synthetic fields injected in configHelpers.js's
+    // mergeListingConfig (omniRentFiltersMaybe) - these must never show up
+    // as a second, independently-editable input here, since
+    // EditListingDeliveryForm.js already owns these exact publicData keys.
+    const listingFieldsConfig = [
+      {
+        key: 'deliveryOptions',
+        scope: 'public',
+        schemaType: 'multi-enum',
+        enumOptions: [
+          { option: 'pickup', label: 'Ophalen bij verhuurder' },
+          { option: 'shipping', label: 'Levering aan huis mogelijk' },
+        ],
+        showConfig: { label: 'Overdrachtsmethode' },
+        saveConfig: { label: 'Overdrachtsmethode' },
+      },
+      {
+        key: 'region',
+        scope: 'public',
+        schemaType: 'enum',
+        enumOptions: [{ option: 'gent-centrum', label: 'Gent Centrum (9000)' }],
+        showConfig: { label: 'Locatie' },
+        saveConfig: { label: 'Locatie' },
+      },
+    ];
+
+    render(
+      <EditListingDetailsForm
+        intl={fakeIntl}
+        dispatch={noop}
+        onListingTypeChange={noop}
+        onSubmit={v => v}
+        saveActionMsg={saveActionMsg}
+        updated={false}
+        updateInProgress={false}
+        disabled={false}
+        ready={false}
+        listingFieldsConfig={listingFieldsConfig}
+        categoryPrefix="categoryLevel"
+        selectableCategories={[]}
+        pickSelectedCategories={values => pickCategoryFields(values, 'categoryLevel', 1, [])}
+        selectableListingTypes={selectableListingTypes}
+        hasExistingListingType={true}
+        initialValues={selectableListingTypes[0]}
+        marketplaceCurrency="EUR"
+      />
+    );
+
+    expect(screen.queryByText('Overdrachtsmethode')).not.toBeInTheDocument();
+    expect(screen.queryByText('Locatie')).not.toBeInTheDocument();
+  });
+
   it('suggests a category from the title, but backs off once the provider picks one themselves', async () => {
     jest.useFakeTimers({ advanceTimers: true });
     const user = userEvent.setup({ delay: null });

@@ -12,6 +12,8 @@ import { ensureTransaction } from '../../util/data';
 import { createSlug } from '../../util/urlHelpers';
 import { isTransactionInitiateListingNotFoundError } from '../../util/errors';
 import { markReferralConversion } from '../../util/api';
+import { formatMoney } from '../../util/currency';
+import { types as sdkTypes } from '../../util/sdkLoader';
 import {
   getProcess,
   resolveLatestProcessName,
@@ -44,6 +46,8 @@ import MobileListingImage from './MobileListingImage';
 import MobileOrderBreakdown from './MobileOrderBreakdown';
 
 import css from './CheckoutPage.module.css';
+
+const { Money } = sdkTypes;
 
 // Stripe PaymentIntent statuses, where user actions are already completed
 // https://stripe.com/docs/payments/payment-intents/status
@@ -587,6 +591,33 @@ export const CheckoutPageWithPayment = props => {
     </form>
   ) : null;
 
+  // The waarborg is never a transaction line item (see the deposit-hold API
+  // under server/api/deposit/* - it's authorized separately, not charged as
+  // part of this payment), so OrderBreakdown above never shows it. Without
+  // this, a renter could reach the final "pay now" step having only seen
+  // the deposit amount earlier (listing page / booking form popover) - the
+  // UX brief this was built from explicitly requires it to be visible,
+  // shown separately from the rental price, on every checkout step. Reuses
+  // the exact same copy the renter already saw in BookingDatesForm.js, for
+  // consistency rather than a second, slightly different wording.
+  const depositInSubunits = listing?.attributes?.publicData?.depositInSubunits;
+  const depositNoticeMaybe =
+    Number.isInteger(depositInSubunits) && depositInSubunits > 0 && config.currency ? (
+      <div className={css.depositNotice}>
+        <p className={css.depositNoticeRow}>
+          <FormattedMessage
+            id="BookingDatesForm.depositNotice"
+            values={{
+              depositAmount: formatMoney(intl, new Money(depositInSubunits, config.currency)),
+            }}
+          />
+        </p>
+        <p className={css.depositNoticeRow}>
+          <FormattedMessage id="BookingDatesForm.depositReassurance" />
+        </p>
+      </div>
+    ) : null;
+
   const breakdown =
     tx.id && tx.attributes.lineItems?.length > 0 ? (
       <>
@@ -598,6 +629,7 @@ export const CheckoutPageWithPayment = props => {
           currency={config.currency}
           marketplaceName={config.marketplaceName}
         />
+        {depositNoticeMaybe}
         {couponCodeSection}
       </>
     ) : null;

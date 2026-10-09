@@ -8,6 +8,7 @@ import { required, composeValidators, numberAtLeast } from '../../../../util/val
 import appSettings from '../../../../config/settings';
 import { EXTENDED_DATA_SCHEMA_TYPES } from '../../../../util/types';
 import { isFieldForCategory, isFieldForListingType } from '../../../../util/fieldHelpers';
+import { SEARCH_ONLY_LISTING_FIELD_KEYS } from '../../../../util/configHelpers';
 
 import {
   Form,
@@ -47,12 +48,19 @@ const AddListingFields = props => {
     const { key, schemaType, scope } = fieldConfig || {};
     const namespacedKey = scope === 'public' ? `pub_${key}` : `priv_${key}`;
 
+    const isSearchOnlyField = SEARCH_ONLY_LISTING_FIELD_KEYS.includes(key);
     const isKnownSchemaType = EXTENDED_DATA_SCHEMA_TYPES.includes(schemaType);
     const isProviderScope = ['public', 'private'].includes(scope);
     const isTargetListingType = isFieldForListingType(listingType, fieldConfig);
     const isTargetCategory = isFieldForCategory(targetCategoryIds, fieldConfig);
 
-    return isKnownSchemaType && isProviderScope && isTargetListingType && isTargetCategory
+    return (
+      !isSearchOnlyField &&
+      isKnownSchemaType &&
+      isProviderScope &&
+      isTargetListingType &&
+      isTargetCategory
+    )
       ? [
           ...pickedFields,
           <CustomExtendedDataField

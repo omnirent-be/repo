@@ -2,6 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { FormattedMessage } from '../../../../util/reactIntl';
 import { LinkedLogo, NamedLink } from '../../../../components';
+import { trackEvent } from '../../../../util/analytics';
 
 import Field from '../../Field';
 import BlockBuilder from '../../BlockBuilder';
@@ -134,10 +135,18 @@ const SectionFooter = props => {
             </p>
           </div>
           <div className={css.ctaButtons}>
-            <NamedLink name="SearchPage" className={css.ctaPrimary}>
+            <NamedLink
+              name="SearchPage"
+              className={css.ctaPrimary}
+              onClick={() => trackEvent('renter_cta_clicked', { cta_location: 'footer' })}
+            >
               <FormattedMessage id="SectionFooter.cta.rent" />
             </NamedLink>
-            <NamedLink name="NewListingPage" className={css.ctaGhost}>
+            <NamedLink
+              name="NewListingPage"
+              className={css.ctaGhost}
+              onClick={() => trackEvent('provider_cta_clicked', { cta_location: 'footer' })}
+            >
               <FormattedMessage id="SectionFooter.cta.list" />
             </NamedLink>
           </div>

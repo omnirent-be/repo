@@ -3,20 +3,67 @@ import * as log from '../util/log';
 import { storableError } from '../util/errors';
 import { addMarketplaceEntities } from './marketplaceData.duck';
 import { createImageVariantConfig } from '../util/sdkLoader';
-import { isTestListing, hasUsableTitle, isTestAuthor } from '../util/testListings';
+import { hasUsableTitle } from '../util/testListings';
 
 const ROW_LISTING_COUNT = 8;
-// Sharetribe's search API has no "has images"/"has price"/"is test" filter
-// to query server-side, so this over-fetches and filters client-side
-// instead (same pattern as recentActivity.duck.js's test-listing
-// filtering) - a homepage row card with no photo, no price, a one-letter
-// title, or test/seed data looks broken and kills trust, so those are
-// dropped rather than shown.
-const ROW_FETCH_COUNT = ROW_LISTING_COUNT * 3;
+// Sharetribe's search API has no "has images"/"has price" filter to query
+// server-side, so this over-fetches and filters client-side instead - this
+// is the production-facing "Populair voor feesten in Gent" grid, so a card
+// with no photo, no price or a one-letter title (looks broken) is dropped
+// rather than shown. Fetches the API's max page size rather than a small
+// multiple of ROW_LISTING_COUNT - on a catalog where "good" listings (real
+// photo + price + title) are a minority of what's been created, a small
+// over-fetch can come up short of 8 even though enough exist overall,
+// leaving a half-empty row.
+const ROW_FETCH_COUNT = 100;
+
+// Picks up to ROW_LISTING_COUNT listings with good category spread, rather
+// than just the N most recent - a visitor should see the breadth of the
+// marketplace on the one homepage grid, not (for example) 8 tents in a row
+// just because that category happened to get a recent batch of listings.
+// Round-robins one listing per subcategory at a time (each group keeping
+// its own recency order), then tops up with whatever's left over if there
+// aren't enough distinct subcategories to fill every slot.
+export const diversifyByCategory = (listings, categoryField, count) => {
+  const groups = new Map();
+  const order = [];
+  listings.forEach(listing => {
+    const key = listing.attributes?.publicData?.[categoryField] || 'none';
+    if (!groups.has(key)) {
+      groups.set(key, []);
+      order.push(key);
+    }
+    groups.get(key).push(listing);
+  });
+
+  const picked = [];
+  let round = 0;
+  while (picked.length < count) {
+    let addedThisRound = false;
+    for (const key of order) {
+      const group = groups.get(key);
+      if (group[round]) {
+        picked.push(group[round]);
+        addedThisRound = true;
+        if (picked.length === count) {
+          break;
+        }
+      }
+    }
+    if (!addedThisRound) {
+      break;
+    }
+    round += 1;
+  }
+  return picked;
+};
 
 export const fetchHomepageRow = createAsyncThunk(
   'homepageRows/fetchHomepageRow',
-  async ({ rowId, searchParams, listingImageConfig }, { extra: sdk, dispatch, rejectWithValue }) => {
+  async (
+    { rowId, searchParams, listingImageConfig, diversify, categoryField },
+    { extra: sdk, dispatch, rejectWithValue }
+  ) => {
     const { aspectWidth = 1, aspectHeight = 1, variantPrefix = 'listing-card' } = listingImageConfig;
     const aspectRatio = aspectHeight / aspectWidth;
 
@@ -34,7 +81,6 @@ export const fetchHomepageRow = createAsyncThunk(
           'price',
           'deleted',
           'state',
-          'metadata.isTest',
           'publicData.listingType',
           'publicData.transactionProcessAlias',
           'publicData.unitType',
@@ -43,6 +89,7 @@ export const fetchHomepageRow = createAsyncThunk(
           'publicData.shippingEnabled',
           'publicData.priceVariationsEnabled',
           'publicData.priceVariants',
+          `publicData.${categoryField}`,
         ],
         'fields.user': ['profile.displayName', 'metadata.isTest'],
         'fields.image': [
@@ -56,23 +103,17 @@ export const fetchHomepageRow = createAsyncThunk(
         'limit.images': 1,
       });
       dispatch(addMarketplaceEntities(response));
-      const included = response.data.included || [];
-      const trustworthyListings = response.data.data
-        .filter(listing => {
-          const authorRef = listing.relationships?.author?.data;
-          const author = included.find(
-            inc => inc.type === 'user' && inc.id.uuid === authorRef?.id?.uuid
-          );
-          return (
-            listing.relationships?.images?.data?.length > 0 &&
-            listing.attributes?.price != null &&
-            hasUsableTitle(listing) &&
-            !isTestListing(listing) &&
-            !isTestAuthor(author)
-          );
-        })
-        .slice(0, ROW_LISTING_COUNT);
-      return { rowId, ids: trustworthyListings.map(l => l.id) };
+      const goodListings = response.data.data.filter(
+        listing =>
+          listing.relationships?.images?.data?.length > 0 &&
+          listing.attributes?.price != null &&
+          hasUsableTitle(listing)
+      );
+      const listings = diversify
+        ? diversifyByCategory(goodListings, categoryField, ROW_LISTING_COUNT)
+        : goodListings.slice(0, ROW_LISTING_COUNT);
+      const totalCount = response.data.meta?.totalItems ?? listings.length;
+      return { rowId, ids: listings.map(l => l.id), totalCount };
     } catch (error) {
       log.error(error, 'homepage-row-fetch-failed', { rowId });
       return rejectWithValue({ rowId, error: storableError(error) });
@@ -91,8 +132,8 @@ const homepageRowsSlice = createSlice({
         state.rows[rowId] = { ids: [], inProgress: true, fetched: false, error: null };
       })
       .addCase(fetchHomepageRow.fulfilled, (state, action) => {
-        const { rowId, ids } = action.payload;
-        state.rows[rowId] = { ids, inProgress: false, fetched: true, error: null };
+        const { rowId, ids, totalCount } = action.payload;
+        state.rows[rowId] = { ids, totalCount, inProgress: false, fetched: true, error: null };
       })
       .addCase(fetchHomepageRow.rejected, (state, action) => {
         const { rowId } = action.meta.arg;

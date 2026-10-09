@@ -47,6 +47,52 @@ const FilterDateRange = props => {
     }
   }, []);
 
+  // Positions the calendar itself, fixed to the viewport, directly under
+  // the toggle button - rather than relying on the page scrolling to make
+  // room for it (which depends on window.scrollBy actually taking effect,
+  // unreliable across browsers/setups). Its max-height is capped to
+  // whatever room is actually left below the toggle button on screen, so
+  // it can never extend past the bottom of the viewport: if the calendar
+  // is taller than that, it scrolls internally instead. It's expected and
+  // fine for this to overlap whatever page content sits below the search
+  // bar (e.g. the category icons) - it's a floating popover, not something
+  // that needs to make room for itself in the page layout.
+  const [popoverStyle, setPopoverStyle] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setPopoverStyle(null);
+      return undefined;
+    }
+
+    const updatePosition = () => {
+      const btn = toggleButtonRef.current;
+      if (!btn) {
+        return;
+      }
+      const rect = btn.getBoundingClientRect();
+      const margin = 8;
+      const maxHeight = Math.max(160, window.innerHeight - rect.bottom - margin);
+      setPopoverStyle({
+        position: 'fixed',
+        top: rect.bottom + margin,
+        ...(alignLeft
+          ? { left: rect.left }
+          : { right: Math.max(8, window.innerWidth - rect.right) }),
+        maxHeight,
+        overflowY: 'auto',
+      });
+    };
+
+    updatePosition();
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen, alignLeft]);
+
   const classes = classNames(rootClassName || css.root, className);
 
   const formatDateRange = (start, end) => {
@@ -73,20 +119,7 @@ const FilterDateRange = props => {
     }
   };
 
-  const handleClick = event => {
-    const el = event.currentTarget;
-    const dropdownHeight = 350; // approximately
-    const toBottom = window.innerHeight - el.getBoundingClientRect().bottom;
-    // If there's not enough space under the toggle button, scroll down to make space for the dropdown.
-    if (!isOpen && toBottom < dropdownHeight) {
-      const topbarOffset = 72;
-      const toTop = el.getBoundingClientRect().top - topbarOffset;
-      const scrollDownNeed = dropdownHeight - toBottom;
-      // Scroll page as little down as possible to get toggle button more space below it - or move it just under the topbar.
-      // This mitigates browsers' own accessibility features that autoscrolls too much.
-      const top = toTop < scrollDownNeed ? toTop : scrollDownNeed;
-      window.scrollBy({ top });
-    }
+  const handleClick = () => {
     setIsOpen(prevState => !prevState);
   };
 
@@ -121,17 +154,17 @@ const FilterDateRange = props => {
             : intl.formatMessage({ id: 'PageBuilder.SearchCTA.dateFilterPlaceholder' })}
         </span>
       </div>
-      {isOpen ? (
-        <FieldDateRangeController
-          onChange={handleDateRangeChange}
-          showClearButton
-          className={classNames(css.datePicker, {
-            [css.alignLeft]: alignLeft,
-          })}
-          name="dateRange"
-          id="dateRange"
-          minimumNights={isNightlyMode ? 1 : 0}
-        />
+      {isOpen && popoverStyle ? (
+        <div className={css.datePickerPositioner} style={popoverStyle}>
+          <FieldDateRangeController
+            onChange={handleDateRangeChange}
+            showClearButton
+            className={css.datePicker}
+            name="dateRange"
+            id="dateRange"
+            minimumNights={isNightlyMode ? 1 : 0}
+          />
+        </div>
       ) : null}
     </OutsideClickHandler>
   );

@@ -243,6 +243,17 @@ const TopbarDesktop = props => {
     />
   ) : null;
 
+  // Inbox link rendered as a small badge pinned to the avatar's own top-right
+  // corner (see .profileWithInbox/.inboxIconLink) rather than as a separate
+  // icon floating to its left, so unread messages read as "this account has
+  // something for you" instead of looking like an unrelated nav item.
+  const profileWithInboxMaybe = authenticatedOnClientSide ? (
+    <div className={css.profileWithInbox}>
+      {profileMenuMaybe}
+      {inboxLinkMaybe}
+    </div>
+  ) : null;
+
   const signupLinkMaybe = isAuthenticatedOrJustHydrated ? null : <SignupLink />;
   const loginLinkMaybe = isAuthenticatedOrJustHydrated ? null : <LoginLink />;
 
@@ -289,8 +300,7 @@ const TopbarDesktop = props => {
       />
 
       {faqLinkMaybe}
-      {inboxLinkMaybe}
-      {profileMenuMaybe}
+      {profileWithInboxMaybe}
       {signupLinkMaybe}
       {loginLinkMaybe}
     </nav>

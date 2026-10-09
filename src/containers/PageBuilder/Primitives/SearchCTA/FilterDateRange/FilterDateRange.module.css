@@ -6,32 +6,25 @@
   height: 100%;
 }
 
+/* Positioned fixed to the viewport (inline style in FilterDateRange.js sets
+   top/left-or-right/max-height, computed from the toggle button's live
+   on-screen position) rather than flowing under the toggle button in the
+   page - this is what lets the calendar always fully fit on screen,
+   scrolling internally if needed, by capping its height to whatever room
+   is actually left below the toggle button, instead of depending on the
+   page itself scrolling to make room. It's expected to overlap whatever
+   page content sits below the search bar. */
+.datePickerPositioner {
+  z-index: var(--zIndexPopup);
+  width: 310px;
+  max-width: calc(100vw - 16px);
+}
+
 .datePicker {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% + 16px);
-  margin-top: 4px;
   background-color: white;
   padding-bottom: 16px;
   border-radius: var(--borderRadiusMedium);
   box-shadow: var(--boxShadowPopup);
-  z-index: 1;
-
-  @media (--viewportLarge) {
-    top: 51px;
-    right: 0;
-    left: auto;
-    transform: none;
-    width: 100%;
-    min-width: 310px;
-    margin-top: 0;
-    &.alignLeft {
-      left: -8px;
-      right: auto;
-    }
-  }
 }
 
 .toggleButton {

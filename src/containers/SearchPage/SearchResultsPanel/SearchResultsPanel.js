@@ -5,6 +5,7 @@ import { FormattedMessage } from '../../../util/reactIntl';
 import { propTypes } from '../../../util/types';
 import { ListingCard, IconSpinner } from '../../../components';
 import useVisitorPosition from '../../../hooks/useVisitorPosition';
+import { isPubliclyPresentableListing } from '../../../util/testListings';
 
 import css from './SearchResultsPanel.module.css';
 
@@ -25,6 +26,7 @@ import css from './SearchResultsPanel.module.css';
  * @param {string} [props.favoriteListingIdInProgress] - the listing id currently being toggled
  * @param {Function} [props.onLoadMore] - Called (with no args) when the "load more" button is clicked, to fetch the next page of results
  * @param {boolean} [props.loadMoreInProgress] - Whether the next page is currently being fetched
+ * @param {Object} [props.search] - Parsed current search query params (from `parse(location.search)`), used only to check whether a `dates` filter is active
  * @returns {JSX.Element}
  */
 const SearchResultsPanel = props => {
@@ -41,9 +43,15 @@ const SearchResultsPanel = props => {
     favoriteListingIdInProgress,
     onLoadMore,
     loadMoreInProgress = false,
+    search,
   } = props;
   const classes = classNames(rootClassName || css.root, className);
   const hasMore = !!pagination && pagination.page < pagination.totalPages;
+  // These results are already server-side filtered to this date range (see
+  // SearchPage.duck.js) - this just controls whether the cards echo that
+  // back as a badge, see ListingCard.js's showAvailabilityBadge.
+  const hasActiveDateFilter = !!search?.dates;
+  const presentableListings = listings.filter(isPubliclyPresentableListing);
   // Asked once per page load (not per card) - see useVisitorPosition.js.
   const visitorPosition = useVisitorPosition();
 
@@ -75,7 +83,7 @@ const SearchResultsPanel = props => {
   return (
     <div className={classes}>
       <ul className={isMapVariant ? css.listingCardsMapVariant : css.listingCards}>
-        {listings.map(l => (
+        {presentableListings.map(l => (
           <li key={l.id.uuid} className={css.resultItem}>
             <ListingCard
               className={css.listingCard}
@@ -87,6 +95,7 @@ const SearchResultsPanel = props => {
               onToggleFavoriteListing={onToggleFavoriteListing}
               favoriteListingIdInProgress={favoriteListingIdInProgress}
               visitorPosition={visitorPosition}
+              showAvailabilityBadge={hasActiveDateFilter}
             />
           </li>
         ))}

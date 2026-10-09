@@ -4,7 +4,8 @@ import { types as sdkTypes } from '../../util/sdkLoader';
 import { LISTING_STATE_CLOSED } from '../../util/types';
 import { createResourceLocatorString, findRouteByRouteName } from '../../util/routes';
 import { convertMoneyToNumber, formatMoney } from '../../util/currency';
-import { timestampToDate } from '../../util/dates';
+import { timestampToDate, getStartOf, addTime } from '../../util/dates';
+import { getAllTimeSlots } from '../../components/OrderPanel/booking.shared';
 import { requireListingImage } from '../../util/configHelpers';
 import { richText } from '../../util/richText';
 import { hasPermissionToInitiateTransactions, isUserAuthorized } from '../../util/userHelpers';
@@ -92,6 +93,72 @@ export const priceForSchemaMaybe = price => {
 export const categoryLabel = (categories, value) => {
   const cat = categories.find(c => c.key === value);
   return cat ? cat.label : value;
+};
+
+/**
+ * Average rating + count from the listing's own (native) reviews, for
+ * showing a star score next to the title - real data only, so this
+ * returns null when there are zero reviews rather than a fabricated
+ * score. Rounded to 1 decimal, matching how review scores are usually
+ * shown (e.g. "4.8").
+ *
+ * @param {Array} reviews
+ * @returns {{ average: number, count: number }|null}
+ */
+export const getReviewsSummary = reviews => {
+  if (!Array.isArray(reviews) || reviews.length === 0) {
+    return null;
+  }
+  const ratings = reviews
+    .map(r => r?.attributes?.rating)
+    .filter(r => Number.isFinite(r));
+  if (ratings.length === 0) {
+    return null;
+  }
+  const sum = ratings.reduce((total, r) => total + r, 0);
+  const average = Math.round((sum / ratings.length) * 10) / 10;
+  return { average, count: ratings.length };
+};
+
+/**
+ * The next few calendar days that have at least one open time slot - for a
+ * compact "eerstvolgende beschikbare data" teaser near the top of the page,
+ * using the monthlyTimeSlots the page's own loadData already fetches for
+ * the current and next month (see ListingPage.duck.js), so this needs no
+ * extra request. Real availability only: an empty result (e.g. monthlyTimeSlots
+ * not loaded yet, or everything booked) just hides the teaser.
+ *
+ * @param {Object} monthlyTimeSlots { '2024-07': { timeSlots: [] }, }
+ * @param {string} timeZone IANA time zone key
+ * @param {boolean} seatsEnabled
+ * @param {number} maxCount how many available days to return
+ * @returns {Array<Date>}
+ */
+export const getUpcomingAvailableDays = (monthlyTimeSlots, timeZone, seatsEnabled, maxCount = 5) => {
+  if (!monthlyTimeSlots || !timeZone) {
+    return [];
+  }
+  const timeSlots = getAllTimeSlots(monthlyTimeSlots, seatsEnabled);
+  if (!timeSlots || timeSlots.length === 0) {
+    return [];
+  }
+
+  const today = getStartOf(new Date(), 'day', timeZone);
+  const days = [];
+  // Only the current + next month are ever fetched, so 60 days is plenty
+  // of lookahead without scanning indefinitely.
+  for (let i = 0; days.length < maxCount && i < 60; i++) {
+    const day = addTime(today, i, 'days', timeZone);
+    const dayEnd = addTime(day, 1, 'days', timeZone);
+    const isAvailable = timeSlots.some(ts => {
+      const { start, end } = ts.attributes;
+      return start < dayEnd && end > day;
+    });
+    if (isAvailable) {
+      days.push(day);
+    }
+  }
+  return days;
 };
 
 /**

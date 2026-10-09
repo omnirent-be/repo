@@ -15,6 +15,7 @@ import { ModalInMobile, Page } from '../../components';
 import TopbarContainer from '../../containers/TopbarContainer/TopbarContainer';
 
 import { setActiveListing, loadMoreSearchResults } from './SearchPage.duck';
+import useAutoLoadMorePresentableResults from '../../hooks/useAutoLoadMorePresentableResults';
 import {
   initialValues,
   validUrlQueryParamsFromProps,
@@ -550,6 +551,14 @@ const SearchPage = props => {
     dispatch,
     config,
   ]);
+
+  useAutoLoadMorePresentableResults({
+    listings,
+    pagination,
+    searchInProgress,
+    loadMoreInProgress,
+    onLoadMore,
+  });
 
   return (
     <SearchPageAccessWrapper

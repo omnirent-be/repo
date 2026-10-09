@@ -45,7 +45,6 @@ import {
   ButtonTabNavHorizontal,
   LayoutSideNavigation,
   ExternalReviewBadge,
-  IdentityVerifiedBadge,
   NamedRedirect,
   CustomExtendedDataSection,
 } from '../../components';
@@ -303,13 +302,12 @@ export const MainContent = props => {
           <FormattedMessage id="ProfilePage.memberSince" values={{ year: memberSinceYear }} />
         </p>
       ) : null}
-      {getExternalReview(publicData)?.rating || publicData?.identityVerifiedVia === 'itsme' ? (
+      {getExternalReview(publicData)?.rating ? (
         <div className={css.badgeRow}>
           <ExternalReviewBadge
             externalReview={getExternalReview(publicData)}
             className={css.externalReviewBadge}
           />
-          <IdentityVerifiedBadge publicData={publicData} className={css.externalReviewBadge} />
         </div>
       ) : null}
       {hasBio ? <p className={css.bio}>{bioWithLinks}</p> : null}

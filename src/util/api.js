@@ -225,3 +225,14 @@ export const createUserWithIdp = body => {
 export const deleteUserAccount = body => {
   return post('/api/delete-account', body);
 };
+
+// Sends the public contact form (src/containers/ContactPage/ContactPage.js)
+// to OmniRent's inbox via SendGrid - see server/api/contact.js and
+// server/api-util/sendgrid.js. Requires SENDGRID_API_KEY and
+// SENDGRID_CONTACT_FROM_EMAIL to be configured server-side; the caller
+// should fall back to a mailto: link if this rejects (e.g. not configured
+// yet, or the request fails), so a visitor's message is never silently
+// lost.
+export const sendContactMessage = body => {
+  return post('/api/contact', body);
+};

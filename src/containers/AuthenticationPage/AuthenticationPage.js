@@ -397,11 +397,6 @@ export const AuthenticationPageComponent = props => {
                     isLogin={isLogin}
                     showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
                     showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
-                    // Scaffold only - no real itsme OIDC integration exists
-                    // yet (see socialLoginLogos.js's ItsmeMark). Flip to a
-                    // real showItsmeLogin flag once server/api/auth/itsme.js
-                    // exists and real credentials are configured.
-                    showItsmeComingSoon
                     {...fromMaybe}
                     {...userTypeMaybe}
                   />
@@ -412,7 +407,6 @@ export const AuthenticationPageComponent = props => {
                     isLogin={isLogin}
                     showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
                     showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
-                    showItsmeComingSoon
                     dividerPosition="after"
                     dividerMessageId="AuthenticationPage.orEmail"
                     {...fromMaybe}

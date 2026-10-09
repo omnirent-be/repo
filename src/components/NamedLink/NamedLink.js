@@ -51,6 +51,7 @@ const handleBlur = event => {
  * @param {any} props.children - the content of the link
  * @param {Object?} props.style - inline css for the link
  * @param {string?} props.title - title attribute for the 'a' element.
+ * @param {Function?} props.onClick - click handler for the 'a' element (e.g. an analytics event)
  * @param {Object?} props.match - match from React Router
  * @returns {JSX.Element} containing form that allows adding availability exceptions
  */
@@ -63,6 +64,7 @@ export const NamedLink = withRouter(props => {
     params = {}, // pathParams
     title,
     ariaLabel,
+    onClick,
     // Link props
     to = {},
     children,
@@ -89,6 +91,7 @@ export const NamedLink = withRouter(props => {
   const ariaLabelMaybe = ariaLabel ? { ['aria-label']: ariaLabel } : {};
 
   // <a> element props
+  const onClickMaybe = onClick ? { onClick } : {};
   const aElemProps = {
     id,
     className: classNames(className, { [activeClassName]: active }),
@@ -96,6 +99,7 @@ export const NamedLink = withRouter(props => {
     title,
     ...ariaLabelMaybe,
     ...focusHandlers,
+    ...onClickMaybe,
   };
 
   return (

@@ -229,16 +229,39 @@ const TopbarComponent = props => {
   // the results page.
   const handleSubmit = values => {
     const { currentSearchParams, history, location, routeConfiguration } = props;
-    const { keywords, pub_region, dates } = values || {};
+    const {
+      keywords,
+      pub_categoryLevel1,
+      pub_categoryLevel2,
+      address,
+      bounds,
+      origin,
+      dates,
+    } = values || {};
     const capsuleParamsMaybe = {
       ...(keywords ? { keywords } : {}),
-      ...(pub_region ? { pub_region } : {}),
+      ...(pub_categoryLevel1 ? { pub_categoryLevel1 } : {}),
+      ...(pub_categoryLevel2 ? { pub_categoryLevel2 } : {}),
+      ...(address ? { address } : {}),
+      ...(bounds ? { bounds } : {}),
+      ...(origin ? { origin } : {}),
       ...(dates ? { dates } : {}),
     };
     const searchParams = {
       ...currentSearchParams,
       ...capsuleParamsMaybe,
     };
+    // The capsule's product field holds either a category or free-text
+    // keywords, never both - so submitting one must clear any previously
+    // active instance of the other (currentSearchParams spread above
+    // wouldn't otherwise drop it, since an empty field is simply omitted
+    // from capsuleParamsMaybe rather than sent as an explicit "clear").
+    if (keywords) {
+      delete searchParams.pub_categoryLevel1;
+      delete searchParams.pub_categoryLevel2;
+    } else if (pub_categoryLevel1 || pub_categoryLevel2) {
+      delete searchParams.keywords;
+    }
 
     const { routeName, pathParams } = getSearchPageResourceLocatorStringParams(
       routeConfiguration,
@@ -287,7 +310,17 @@ const TopbarComponent = props => {
     ? 'sales'
     : 'orders';
 
-  const { mobilemenu, mobilesearch, keywords, pub_region, dates } = parse(location.search);
+  const {
+    mobilemenu,
+    mobilesearch,
+    keywords,
+    pub_categoryLevel1,
+    pub_categoryLevel2,
+    address,
+    bounds,
+    origin,
+    dates,
+  } = parse(location.search, { latlng: ['origin'], latlngBounds: ['bounds'] });
 
   // Custom links are sorted so that group="primary" are always at the beginning of the list.
   const sortedCustomLinks = sortCustomLinks(config.topbar?.customLinks);
@@ -320,7 +353,15 @@ const TopbarComponent = props => {
   // read straight off whatever's currently in the URL, so the topbar
   // capsule reflects the active search/filters on any page, not just
   // SearchPage.
-  const initialSearchFormValues = { keywords, pub_region, dates };
+  const initialSearchFormValues = {
+    keywords,
+    pub_categoryLevel1,
+    pub_categoryLevel2,
+    address,
+    bounds,
+    origin,
+    dates,
+  };
 
   const classes = classNames(rootClassName || css.root, className);
 

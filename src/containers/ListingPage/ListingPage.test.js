@@ -235,7 +235,7 @@ describe('ListingPage variants', () => {
 
     await waitFor(() => {
       // Has main search capsule in Topbar.
-      expect(getByText('SearchCapsule.keywordsLabel')).toBeInTheDocument();
+      expect(getByText('SearchCapsule.productLabel')).toBeInTheDocument();
 
       // Has hero (coverPhoto) section
       expect(screen.getByTestId('hero')).toBeInTheDocument();
@@ -290,7 +290,7 @@ describe('ListingPage variants', () => {
     );
     await waitFor(() => {
       // Has main search capsule in Topbar.
-      expect(getByText('SearchCapsule.keywordsLabel')).toBeInTheDocument();
+      expect(getByText('SearchCapsule.productLabel')).toBeInTheDocument();
 
       // Does not have hero (coverPhoto) section on carousel mode
       expect(screen.getByTestId('carousel')).toBeInTheDocument();

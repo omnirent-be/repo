@@ -1,29 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { Form as FinalForm, Field } from 'react-final-form';
+import { Form as FinalForm } from 'react-final-form';
 import classNames from 'classnames';
 
 import { FormattedMessage, useIntl } from '../../../util/reactIntl';
-import { stringifyDateToISO8601 } from '../../../util/dates';
-import { OutsideClickHandler, FieldDateRangeController, IconSearch } from '../../../components';
+import { useConfiguration } from '../../../context/configurationContext';
+import { stringifyDateToISO8601, parseDateFromISO8601 } from '../../../util/dates';
+import { isOriginInUse } from '../../../util/search';
+import defaultLocations from '../../../config/configDefaultLocationSearches';
+import {
+  OutsideClickHandler,
+  FieldDateRangeController,
+  IconSearch,
+  ProductSearchField,
+} from '../../../components';
+import FilterLocation from '../../PageBuilder/Primitives/SearchCTA/FilterLocation/FilterLocation';
 
 import css from './SearchCapsule.module.css';
 
-// Same 3 buckets as the 'region' listing field injected in
-// configHelpers.js's mergeListingConfig - kept as a plain constant here
-// rather than read from config, since this is just display text for a
-// fixed, known set of options (adding a 4th option means updating both
-// places, same as any other hardcoded UI copy).
-const REGION_OPTIONS = [
-  { key: 'gent-centrum', label: 'Gent Centrum (9000)' },
-  { key: 'groot-gent', label: 'Groot-Gent (< 10 km)' },
-  { key: 'regio-oost-vlaanderen', label: 'Regio Oost-Vlaanderen' },
-];
-
-// Quick-fill shortcuts for the keyword segment's expanded popover - the
-// same kind of thing a "popular searches" list would show, but there's no
-// real search-term tracking to draw that from yet, so this is a fixed set
-// of OmniRent's actual, common categories rather than invented copy.
-const QUICK_KEYWORDS = ['Partytent', 'Cortenstaal BBQ', 'Biertafels', 'Mobiele tapbar'];
+const GENT_DEFAULT = defaultLocations.find(l => l.id === 'default-gent');
 
 const formatDateRangeLabel = (intl, startDate, endDate) => {
   if (!startDate || !endDate) {
@@ -34,40 +28,45 @@ const formatDateRangeLabel = (intl, startDate, endDate) => {
 };
 
 /**
- * A single combined search bar for the search results page: keywords,
- * location (region), and a date range, submitted together. Reuses the
- * exact same URL query params as the sidebar's own keyword/Locatie/Datums
- * filters (keywords, pub_region, dates) via the same onSubmit handler
- * (getHandleChangedValueFn from SearchPage.shared.js), so this is just a
- * second, faster entry point to the same filters - not a parallel
- * filtering mechanism.
+ * The single unified search module (homepage conversion audit, Oct 2026),
+ * used as the Topbar's search form everywhere: Product ("Wat zoek je?",
+ * autocomplete over categories and real listings), Locatie ("Gent of
+ * postcode", prefilled but editable) and Datum, submitted together -
+ * exactly the same three fields and the same URL query params
+ * (keywords/pub_categoryLevel1/pub_categoryLevel2, bounds/address/origin,
+ * dates) as the hero's own UnifiedSearchForm and the SearchPage sidebar's
+ * own filters, so this is one predictable search model, not a second,
+ * parallel one.
  *
  * Desktop behaviour (the "expanding pill" pattern): at rest it's a
  * compact, centered pill showing the current values as plain text; a
  * click on any segment expands it in place (with a dimmed page backdrop)
- * into a larger bar where that segment's own editable control/popover is
- * shown, and the other two segments stay visible as smaller tabs that
- * switch which popover is active. Collapses on an outside click or
- * Escape. The mobile variant (isMobile) skips all of this - it's always
- * "expanded" (full-height stacked fields), since there's no spare space
- * for a resting/expanded distinction on a phone screen.
+ * into a larger bar where that segment's own editable control is shown,
+ * and the other two segments stay visible as smaller tabs that switch
+ * which one is active. Collapses on an outside click or Escape. The
+ * mobile variant (isMobile) skips all of this - it's always "expanded"
+ * (full-height stacked fields), since there's no spare space for a
+ * resting/expanded distinction on a phone screen.
  *
  * @component
  * @param {Object} props
  * @param {boolean} [props.isMobile] - use the stacked, always-visible layout
  *   (Topbar's mobile search modal) instead of the default pill shape, which
  *   is hidden below the viewportMedium breakpoint
- * @param {Object} props.initialValues - { keywords, pub_region, dates } from the current URL
+ * @param {Object} props.initialValues - { keywords, pub_categoryLevel1,
+ *   pub_categoryLevel2, address, bounds, origin, dates } from the current URL
  * @param {Function} props.onSubmit - called with the updated URL params object
  * @returns {JSX.Element}
  */
 const SearchCapsule = props => {
   const { className, rootClassName, isMobile, initialValues = {}, onSubmit } = props;
   const intl = useIntl();
+  const config = useConfiguration();
   // Which segment's popover is currently showing. On mobile every segment
   // is always "active" at once (they're just stacked, see .mobileRoot), so
   // this only matters for the desktop pill.
   const [activeSegment, setActiveSegment] = useState(null);
+  const [submitDisabled, setSubmitDisabled] = useState(false);
   const isExpanded = isMobile || activeSegment != null;
 
   const collapse = () => setActiveSegment(null);
@@ -85,25 +84,68 @@ const SearchCapsule = props => {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isMobile, activeSegment]);
 
+  // parseDateFromISO8601 (not `new Date(isoString)`) - a plain Date-only
+  // string parses as UTC midnight, which shifts a day in any timezone
+  // behind UTC once displayed locally.
   const initialDates = initialValues.dates
     ? (() => {
         const [start, end] = initialValues.dates.split(',');
-        return start && end ? { startDate: new Date(start), endDate: new Date(end) } : null;
+        return start && end
+          ? { startDate: parseDateFromISO8601(start), endDate: parseDateFromISO8601(end) }
+          : null;
       })()
     : null;
 
+  const topCategory = config.categoryConfiguration?.categories?.[0];
+  const subcategories = topCategory?.subcategories || [];
+  const initialCategory = initialValues.pub_categoryLevel2
+    ? (() => {
+        const sub = subcategories.find(s => s.id === initialValues.pub_categoryLevel2);
+        return sub
+          ? { topCategoryId: initialValues.pub_categoryLevel1, subCategoryId: sub.id, name: sub.name }
+          : null;
+      })()
+    : null;
+  const initialProduct = {
+    text: initialCategory?.name || initialValues.keywords || '',
+    category: initialCategory,
+  };
+  const initialLocation = initialValues.address
+    ? {
+        search: initialValues.address,
+        predictions: [],
+        selectedPlace: {
+          address: initialValues.address,
+          bounds: initialValues.bounds,
+          origin: initialValues.origin,
+        },
+      }
+    : GENT_DEFAULT
+    ? {
+        search: GENT_DEFAULT.predictionPlace.address,
+        predictions: [],
+        selectedPlace: GENT_DEFAULT.predictionPlace,
+      }
+    : undefined;
+
   const handleSubmit = values => {
-    const { keywords, region, dates } = values;
+    const { product, location, dates } = values;
     const { startDate, endDate } = dates || {};
     const datesParam =
       startDate && endDate
         ? `${stringifyDateToISO8601(startDate)},${stringifyDateToISO8601(endDate)}`
         : null;
+    const hasOrigin =
+      location?.selectedPlace?.origin && isOriginInUse(config) ? location.selectedPlace.origin : null;
 
     collapse();
     onSubmit({
-      keywords: keywords || null,
-      pub_region: region || null,
+      keywords: product?.category ? null : product?.text || null,
+      pub_categoryLevel1: product?.category?.topCategoryId || null,
+      pub_categoryLevel2: product?.category?.subCategoryId || null,
+      address: location?.selectedPlace ? location.search : null,
+      bounds: location?.selectedPlace ? location.selectedPlace.bounds : null,
+      origin: hasOrigin ? `${hasOrigin.lat},${hasOrigin.lng}` : null,
       dates: datesParam,
     });
   };
@@ -117,8 +159,8 @@ const SearchCapsule = props => {
       <FinalForm
         onSubmit={handleSubmit}
         initialValues={{
-          keywords: initialValues.keywords || '',
-          region: initialValues.pub_region || '',
+          product: initialProduct,
+          location: initialLocation,
           dates: initialDates,
         }}
         render={({ handleSubmit: formHandleSubmit, values }) => {
@@ -127,9 +169,6 @@ const SearchCapsule = props => {
             values.dates?.startDate,
             values.dates?.endDate
           );
-          const regionLabel = values.region
-            ? REGION_OPTIONS.find(opt => opt.key === values.region)?.label
-            : intl.formatMessage({ id: 'SearchCapsule.regionAny' });
 
           const segmentClasses = (segment, extra) =>
             classNames(css.segment, extra, {
@@ -150,114 +189,40 @@ const SearchCapsule = props => {
                 onSubmit={formHandleSubmit}
               >
                 <div
-                  className={segmentClasses('keywords')}
-                  onClick={() => !isMobile && setActiveSegment('keywords')}
+                  className={segmentClasses('product')}
+                  onClick={() => !isMobile && setActiveSegment('product')}
                 >
-                  <label className={css.segmentLabel} htmlFor="searchCapsuleKeywords">
-                    <FormattedMessage id="SearchCapsule.keywordsLabel" />
+                  <label className={css.segmentLabel} htmlFor="searchCapsuleProduct">
+                    <FormattedMessage id="SearchCapsule.productLabel" />
                   </label>
-                  <Field name="keywords">
-                    {({ input }) =>
-                      isMobile || activeSegment === 'keywords' ? (
-                        <input
-                          {...input}
-                          id="searchCapsuleKeywords"
-                          className={css.segmentInput}
-                          type="text"
-                          autoFocus={!isMobile}
-                          placeholder={intl.formatMessage({
-                            id: 'SearchCapsule.keywordsPlaceholder',
-                          })}
-                        />
-                      ) : (
-                        <span className={css.segmentValue}>
-                          {input.value ||
-                            intl.formatMessage({ id: 'SearchCapsule.keywordsPlaceholder' })}
-                        </span>
-                      )
-                    }
-                  </Field>
-                  {!isMobile && activeSegment === 'keywords' ? (
-                    <div className={css.popover}>
-                      <div className={css.quickOptions}>
-                        {QUICK_KEYWORDS.map(keyword => (
-                          <Field name="keywords" key={keyword}>
-                            {({ input }) => (
-                              <button
-                                type="button"
-                                className={css.quickOptionButton}
-                                onClick={() => input.onChange(keyword)}
-                              >
-                                {keyword}
-                              </button>
-                            )}
-                          </Field>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
+                  {isMobile || activeSegment === 'product' ? (
+                    <ProductSearchField name="product" alignLeft />
+                  ) : (
+                    <span id="searchCapsuleProduct" className={css.segmentValue}>
+                      {values.product?.category?.name ||
+                        values.product?.text ||
+                        intl.formatMessage({ id: 'ProductSearchField.placeholder' })}
+                    </span>
+                  )}
                 </div>
 
                 <div className={css.divider} />
 
                 <div
-                  className={segmentClasses('region')}
-                  onClick={() => !isMobile && setActiveSegment('region')}
+                  className={segmentClasses('location')}
+                  onClick={() => !isMobile && setActiveSegment('location')}
                 >
-                  <label className={css.segmentLabel} htmlFor="searchCapsuleRegionToggle">
-                    <FormattedMessage id="SearchCapsule.regionLabel" />
+                  <label className={css.segmentLabel} htmlFor="searchCapsuleLocation">
+                    <FormattedMessage id="SearchCapsule.locationLabel" />
                   </label>
-                  {isMobile ? (
-                    <Field name="region">
-                      {({ input }) => (
-                        <select {...input} id="searchCapsuleRegionToggle" className={css.segmentSelect}>
-                          <option value="">
-                            {intl.formatMessage({ id: 'SearchCapsule.regionAny' })}
-                          </option>
-                          {REGION_OPTIONS.map(opt => (
-                            <option key={opt.key} value={opt.key}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </Field>
+                  {isMobile || activeSegment === 'location' ? (
+                    <FilterLocation setSubmitDisabled={setSubmitDisabled} alignLeft />
                   ) : (
-                    <span id="searchCapsuleRegionToggle" className={css.segmentValue}>
-                      {regionLabel}
+                    <span id="searchCapsuleLocation" className={css.segmentValue}>
+                      {values.location?.search ||
+                        intl.formatMessage({ id: 'UnifiedSearchForm.locationPlaceholder' })}
                     </span>
                   )}
-                  {!isMobile && activeSegment === 'region' ? (
-                    <div className={css.popover}>
-                      <Field name="region">
-                        {({ input }) => (
-                          <div className={css.optionList}>
-                            <button
-                              type="button"
-                              className={classNames(css.optionListItem, {
-                                [css.optionListItemActive]: !input.value,
-                              })}
-                              onClick={() => input.onChange('')}
-                            >
-                              {intl.formatMessage({ id: 'SearchCapsule.regionAny' })}
-                            </button>
-                            {REGION_OPTIONS.map(opt => (
-                              <button
-                                type="button"
-                                key={opt.key}
-                                className={classNames(css.optionListItem, {
-                                  [css.optionListItemActive]: input.value === opt.key,
-                                })}
-                                onClick={() => input.onChange(opt.key)}
-                              >
-                                {opt.label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </Field>
-                    </div>
-                  ) : null}
                 </div>
 
                 <div className={css.divider} />
@@ -291,7 +256,12 @@ const SearchCapsule = props => {
                   ) : null}
                 </div>
 
-                <button type="submit" className={css.submitButton} aria-label="Search">
+                <button
+                  type="submit"
+                  className={css.submitButton}
+                  aria-label="Search"
+                  disabled={submitDisabled}
+                >
                   <IconSearch rootClassName={css.submitIcon} />
                 </button>
               </form>

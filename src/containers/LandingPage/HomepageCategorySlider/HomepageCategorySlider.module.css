@@ -11,44 +11,82 @@
 }
 
 .track {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  padding-bottom: 4px;
 
-  &::-webkit-scrollbar {
-    display: none;
+  @media (--viewportMedium) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (--viewportLarge) {
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 
 .chip {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  white-space: nowrap;
-  padding: 10px 18px;
-  border-radius: 999px;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px 10px;
+  min-height: 96px;
+  border-radius: 14px;
   border: 1px solid var(--colorGrey100);
   background-color: var(--colorWhite);
   color: var(--colorGrey700);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: var(--fontWeightSemiBold);
+  text-align: center;
+  cursor: pointer;
   transition: var(--transitionStyleButton);
+
+  @media (--viewportMedium) {
+    gap: 12px;
+    padding: 24px 12px;
+    min-height: 112px;
+    font-size: 14px;
+  }
 
   &:hover {
     border-color: var(--marketplaceColor);
     color: var(--marketplaceColor);
+    box-shadow: var(--boxShadowLight);
     text-decoration: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--marketplaceColor);
+    outline-offset: 2px;
+  }
+}
+
+.chipActive {
+  border-color: var(--marketplaceColor);
+  background-color: var(--marketplaceColor);
+  color: var(--colorWhite);
+
+  &:hover {
+    color: var(--colorWhite);
+  }
+
+  & .chipIcon {
+    color: var(--colorWhite);
   }
 }
 
 .chipIcon {
   display: inline-flex;
   flex-shrink: 0;
-  width: 18px;
-  height: 18px;
+  width: 28px;
+  height: 28px;
+  color: var(--marketplaceColor);
+
+  @media (--viewportMedium) {
+    width: 32px;
+    height: 32px;
+  }
 }
 
 .chipLabel {

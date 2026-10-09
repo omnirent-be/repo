@@ -100,8 +100,13 @@
   margin-bottom: 8px;
   border-radius: 50%;
   background-color: var(--colorGrey50);
-  font-size: 19px;
 }
+
+.channelIconSvg {
+  width: 18px;
+  height: 18px;
+}
+
 
 .channelLabel {
   font-size: 12px;

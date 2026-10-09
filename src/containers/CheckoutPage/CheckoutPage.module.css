@@ -367,6 +367,25 @@
   }
 }
 
+.depositNotice {
+  padding: 0 24px 20px 24px;
+
+  @media (--viewportLarge) {
+    padding: 0 48px 20px 48px;
+  }
+}
+
+.depositNoticeRow {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey700);
+  margin-top: 0;
+  margin-bottom: 4px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
 .couponCode {
   padding: 0 24px 20px 24px;
 

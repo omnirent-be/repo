@@ -1,0 +1,4 @@
+.root {
+  stroke: var(--colorGrey700);
+  transition: var(--transitionStyleButton);
+}

@@ -1,0 +1,108 @@
+@import '../../../styles/customMediaQueries.css';
+
+.root {
+  background-color: var(--colorGrey50);
+  border-top: 1px solid var(--colorGrey100);
+  border-bottom: 1px solid var(--colorGrey100);
+  padding: 32px 0;
+
+  @media (--viewportMedium) {
+    padding: 56px 0;
+  }
+}
+
+.inner {
+  max-width: var(--contentMaxWidthPages);
+  margin: 0 auto;
+  padding: 0 16px;
+
+  @media (--viewportMedium) {
+    padding: 0 32px;
+  }
+}
+
+.heading {
+  margin: 0 0 20px 0;
+  font-size: 22px;
+  line-height: 1.3;
+  color: var(--colorGrey700);
+  text-align: center;
+
+  @media (--viewportMedium) {
+    font-size: 28px;
+    margin-bottom: 32px;
+  }
+}
+
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+
+  @media (--viewportMedium) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+.card {
+  background-color: var(--colorWhite);
+  border-radius: 16px;
+  border: 1px solid var(--colorGrey100);
+  padding: 24px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+}
+
+.stars {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 12px;
+  color: #fbbf24;
+}
+
+.star {
+  width: 16px;
+  height: 16px;
+}
+
+.quote {
+  margin: 0 0 16px 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--colorGrey700);
+}
+
+.author {
+  margin: 0;
+  font-size: 14px;
+  color: var(--colorGrey700);
+}
+
+.authorName {
+  font-weight: var(--fontWeightBold);
+}
+
+.district {
+  color: var(--colorGrey400);
+}
+
+.listingTitle {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  color: var(--colorGrey500);
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--marketplaceColor) 10%, var(--colorWhite));
+  color: var(--marketplaceColor);
+  font-size: 12px;
+  font-weight: var(--fontWeightSemiBold);
+}

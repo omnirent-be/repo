@@ -96,6 +96,17 @@ const localeMessages = isTestEnv
 // which was deliberately renamed to "Aantal"/"stuk(s)" this session, and
 // there is no Console write access this session to fix it at the source.
 // Force these specific keys to always use the current local value.
+//
+// OrderPanel.ctaButtonMessageBooking is here for the same reason: the
+// hosted value is "Nu boeken", which overpromises instant booking on
+// OmniRent's sticky mobile CTA even though every daily-rental listing is
+// request-to-book only today (the "Direct boeken" mode is shown in the
+// listing wizard but disabled - see EditListingDeliveryForm.js). The
+// submit buttons were renamed to the lower-commitment "Beschikbaarheid
+// controleren" (requestToBook keys below) for the same reason - a
+// conversion-focused UX review felt "Boeking aanvragen" read as a bigger
+// commitment than a pending-approval request actually is. These 3 keys are
+// forced local too, in case Console ever hosts its own values for them.
 const FORCED_LOCAL_MESSAGE_KEYS = [
   'BookingDatesForm.seatsTitle',
   'BookingFixedDurationForm.seatsTitle',
@@ -110,6 +121,10 @@ const FORCED_LOCAL_MESSAGE_KEYS = [
   'OrderBreakdown.baseUnitHourSeats',
   'OrderBreakdown.baseUnitNightSeats',
   'TopbarSearchForm.placeholder',
+  'OrderPanel.ctaButtonMessageBooking',
+  'BookingDatesForm.requestToBook',
+  'BookingFixedDurationForm.requestToBook',
+  'BookingTimeForm.requestToBook',
 ];
 const forcedLocalMessages = FORCED_LOCAL_MESSAGE_KEYS.reduce((messages, key) => {
   return localeMessages[key] != null ? { ...messages, [key]: localeMessages[key] } : messages;

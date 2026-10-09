@@ -31,7 +31,7 @@ export const listingTypeFilter = {
 };
 
 export const categoryFilter = {
-  enabled: false,
+  enabled: true,
   schemaType: 'category',
   // schemaType, key, and other built-in config values are completely filled in configHelper.js
 };

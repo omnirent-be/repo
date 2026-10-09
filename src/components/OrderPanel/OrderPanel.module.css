@@ -98,6 +98,44 @@
   }
 }
 
+.priceTransparency {
+  margin: 0 24px 20px 24px;
+  padding: 12px 14px;
+  background-color: var(--colorWhite);
+  border: 1px solid var(--colorGrey100);
+  border-radius: var(--borderRadius);
+
+  @media (--viewportMedium) {
+    margin: 0 0 20px 0;
+  }
+}
+
+.priceTransparencyRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0;
+  font-size: 14px;
+  color: var(--colorGrey700);
+}
+
+.priceTransparencyLabel {
+  color: var(--colorGrey500);
+  white-space: nowrap;
+}
+
+.priceTransparencyValue {
+  font-weight: var(--fontWeightSemiBold);
+  text-align: right;
+}
+
+.priceTransparencyVatNote {
+  composes: marketplaceTinyFontStyles from global;
+  margin: 6px 0 0 0;
+  color: var(--colorGrey500);
+}
+
 .author {
   composes: p from global;
   margin: 0px 24px 32px 24px;

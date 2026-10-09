@@ -10,6 +10,7 @@ import { makeGetListingsByIdSelector } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
 import { toggleFavoriteListing, getFavoriteListingIds } from '../../ducks/user.duck';
 import { loadMoreSearchResults } from './SearchPage.duck';
+import useAutoLoadMorePresentableResults from '../../hooks/useAutoLoadMorePresentableResults';
 
 import { Page } from '../../components';
 import TopbarContainer from '../TopbarContainer/TopbarContainer';
@@ -570,6 +571,14 @@ const SearchPage = props => {
     dispatch,
     config,
   ]);
+
+  useAutoLoadMorePresentableResults({
+    listings,
+    pagination,
+    searchInProgress,
+    loadMoreInProgress,
+    onLoadMore,
+  });
 
   return (
     <SearchPageAccessWrapper

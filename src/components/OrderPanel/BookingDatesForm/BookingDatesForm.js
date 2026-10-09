@@ -545,16 +545,30 @@ export const BookingDatesForm = props => {
     preselectedPriceVariant,
     isPublishedListing,
     publicData,
+    initialBookingDates,
     ...rest
   } = props;
   const intl = useIntl();
   const [currentMonth, setCurrentMonth] = useState(getStartOf(TODAY, 'month', timeZone));
   const [isBreakdownOpen, setBreakdownOpen] = useState(false);
-  const initialValuesMaybe =
+  const priceVariantInitialValuesMaybe =
     priceVariants.length > 1 && preselectedPriceVariant
-      ? { initialValues: { priceVariantName: preselectedPriceVariant?.name } }
+      ? { priceVariantName: preselectedPriceVariant?.name }
       : priceVariants.length === 1
-      ? { initialValues: { priceVariantName: priceVariants?.[0]?.name } }
+      ? { priceVariantName: priceVariants?.[0]?.name }
+      : {};
+  // Carries a date range selected on the search results page through to the
+  // listing's own booking form - so a renter who already picked a date
+  // doesn't have to pick it again (see ListingCard.js, which only adds this
+  // when the current page itself had a `dates` filter active).
+  const initialValuesMaybe =
+    Object.keys(priceVariantInitialValuesMaybe).length > 0 || initialBookingDates
+      ? {
+          initialValues: {
+            ...priceVariantInitialValuesMaybe,
+            ...(initialBookingDates ? { bookingDates: initialBookingDates } : {}),
+          },
+        }
       : {};
 
   const allTimeSlots = getAllTimeSlots(monthlyTimeSlots);
@@ -885,17 +899,22 @@ export const BookingDatesForm = props => {
                       {depositInSubunits || extraDayPriceInSubunits ? (
                         <div className={css.extraCostsNotice}>
                           {depositInSubunits ? (
-                            <p className={css.extraCostsRow}>
-                              <FormattedMessage
-                                id="BookingDatesForm.depositNotice"
-                                values={{
-                                  depositAmount: formatMoney(
-                                    intl,
-                                    new Money(depositInSubunits, unitPrice.currency)
-                                  ),
-                                }}
-                              />
-                            </p>
+                            <>
+                              <p className={css.extraCostsRow}>
+                                <FormattedMessage
+                                  id="BookingDatesForm.depositNotice"
+                                  values={{
+                                    depositAmount: formatMoney(
+                                      intl,
+                                      new Money(depositInSubunits, unitPrice.currency)
+                                    ),
+                                  }}
+                                />
+                              </p>
+                              <p className={css.extraCostsRow}>
+                                <FormattedMessage id="BookingDatesForm.depositReassurance" />
+                              </p>
+                            </>
                           ) : null}
                           {extraDayPriceInSubunits ? (
                             <p className={css.extraCostsRow}>
@@ -928,6 +947,9 @@ export const BookingDatesForm = props => {
                 <FormattedMessage id="BookingDatesForm.requestToBook" />
               </PrimaryButton>
             </div>
+            <p className={css.bookingReassurance}>
+              <FormattedMessage id="BookingDatesForm.bookingReassurance" />
+            </p>
             <FinePrint payoutDetailsWarning={payoutDetailsWarning} isOwnListing={isOwnListing} />
           </Form>
         );

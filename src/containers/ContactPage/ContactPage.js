@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { composeValidators, emailFormatValid, required } from '../../util/validators';
+import { sendContactMessage } from '../../util/api';
 
 import {
   FieldSelect,
@@ -12,6 +13,9 @@ import {
   Form,
   H1,
   H3,
+  IconMail,
+  IconSocialMediaFacebook,
+  IconSocialMediaInstagram,
   LayoutSingleColumn,
   NamedLink,
   Page,
@@ -32,21 +36,21 @@ const TOPICS = ['general', 'rent', 'list', 'booking', 'payment', 'other'];
 const CHANNELS = [
   {
     key: 'email',
-    icon: '✉️',
+    icon: IconMail,
     href: `mailto:${CONTACT_EMAIL}`,
     value: CONTACT_EMAIL,
     external: false,
   },
   {
     key: 'facebook',
-    icon: '👍',
+    icon: IconSocialMediaFacebook,
     href: FACEBOOK_URL,
     valueId: 'ContactPage.channel.facebook.value',
     external: true,
   },
   {
     key: 'instagram',
-    icon: '📷',
+    icon: IconSocialMediaInstagram,
     href: INSTAGRAM_URL,
     value: '@omnirent.be',
     external: true,
@@ -63,10 +67,12 @@ const buildMailto = (values, intl) => {
 };
 
 /**
- * ContactPage - channels (real e-mail + social links), a message form that
- * opens the visitor's mail client with everything filled in (no backend
- * needed, nothing is stored), and shortcuts to the pages that already answer
- * most questions.
+ * ContactPage - channels (real e-mail + social links) and a message form.
+ * The form is sent server-side via SendGrid (see server/api/contact.js,
+ * server/api-util/sendgrid.js) when configured; if that isn't set up yet,
+ * or the request fails for any other reason, it falls back to opening the
+ * visitor's own mail client with everything filled in, so a message is
+ * never silently lost either way.
  *
  * @component
  * @returns {JSX.Element}
@@ -75,10 +81,29 @@ export const ContactPageComponent = () => {
   const intl = useIntl();
   const scrollingDisabled = useSelector(state => isScrollingDisabled(state));
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sentViaMailto, setSentViaMailto] = useState(false);
 
-  const onSubmit = values => {
-    window.location.href = buildMailto(values, intl);
-    setSent(true);
+  const onSubmit = async values => {
+    setSending(true);
+    const topicLabel = intl.formatMessage({ id: `ContactPage.topic.${values.topic}` });
+    try {
+      await sendContactMessage({
+        name: values.name,
+        email: values.email,
+        topicLabel,
+        message: values.message,
+      });
+      setSent(true);
+    } catch (error) {
+      // Not configured yet (no SendGrid account set up), or the request
+      // failed for some other reason - fall back to the visitor's own mail
+      // client so the message is never silently lost.
+      setSentViaMailto(true);
+      window.location.href = buildMailto(values, intl);
+    } finally {
+      setSending(false);
+    }
   };
 
   const requiredMessage = id => intl.formatMessage({ id });
@@ -110,7 +135,7 @@ export const ContactPageComponent = () => {
                 {...(channel.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               >
                 <span className={css.channelIcon} aria-hidden="true">
-                  {channel.icon}
+                  <channel.icon className={css.channelIconSvg} />
                 </span>
                 <span className={css.channelLabel}>
                   <FormattedMessage id={`ContactPage.channel.${channel.key}.label`} />
@@ -181,14 +206,22 @@ export const ContactPageComponent = () => {
                       validate={required(requiredMessage('ContactPage.form.messageRequired'))}
                     />
 
-                    <PrimaryButton type="submit" disabled={invalid} className={css.submit}>
+                    <PrimaryButton
+                      type="submit"
+                      inProgress={sending}
+                      ready={sent}
+                      disabled={invalid || sending}
+                      className={css.submit}
+                    >
                       <FormattedMessage id="ContactPage.form.submit" />
                     </PrimaryButton>
 
                     <p className={css.formNote}>
                       {sent ? (
+                        <FormattedMessage id="ContactPage.form.sentNote" />
+                      ) : sentViaMailto ? (
                         <FormattedMessage
-                          id="ContactPage.form.sentNote"
+                          id="ContactPage.form.sentViaMailtoNote"
                           values={{
                             email: <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>,
                           }}

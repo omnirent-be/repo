@@ -181,6 +181,7 @@ const ListingImageGallery = props => {
       renderLeftNav={renderLeftNav}
       renderRightNav={renderRightNav}
       renderFullscreenButton={renderFullscreenButton}
+      showThumbnails={items.length > 1}
       {...IMAGE_GALLERY_OPTIONS}
     />
   );
