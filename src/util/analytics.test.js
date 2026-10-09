@@ -47,11 +47,8 @@ describe('getTrafficSource', () => {
 });
 
 describe('trackEvent', () => {
-  it('does nothing when gtag is not available', () => {
-    const original = window.gtag;
-    delete window.gtag;
+  it('does nothing when neither gtag nor fbq is available', () => {
     expect(() => trackEvent('category_clicked', { category: 'tent-structuren' })).not.toThrow();
-    window.gtag = original;
   });
 
   it('calls gtag with the event name and merged params', () => {
@@ -63,5 +60,31 @@ describe('trackEvent', () => {
       expect.objectContaining({ category: 'tent-structuren' })
     );
     delete window.gtag;
+  });
+
+  it('sends a custom event to fbq', () => {
+    window.fbq = jest.fn();
+    trackEvent('category_clicked', { category: 'tent-structuren' });
+    expect(window.fbq).toHaveBeenCalledWith(
+      'trackCustom',
+      'category_clicked',
+      expect.objectContaining({ category: 'tent-structuren' })
+    );
+    delete window.fbq;
+  });
+
+  it('also sends a mapped Meta Standard Event when one exists', () => {
+    window.fbq = jest.fn();
+    trackEvent('booking_request_sent', { listing_id: 'abc' });
+    expect(window.fbq).toHaveBeenCalledWith('trackCustom', 'booking_request_sent', expect.anything());
+    expect(window.fbq).toHaveBeenCalledWith('track', 'Lead', expect.anything());
+    delete window.fbq;
+  });
+
+  it('does not send a Standard Event for unmapped event names', () => {
+    window.fbq = jest.fn();
+    trackEvent('category_clicked', { category: 'tent-structuren' });
+    expect(window.fbq).not.toHaveBeenCalledWith('track', expect.anything(), expect.anything());
+    delete window.fbq;
   });
 });

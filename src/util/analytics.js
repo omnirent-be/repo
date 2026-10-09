@@ -1,17 +1,39 @@
-// A small, direct GA4 custom-event helper for interaction-time analytics
-// (a click, a form submit) - distinct from src/analytics/handlers.js, which
-// only reacts to route changes. No-ops outside the browser or when GA4
-// hasn't loaded (gtag.js is injected via util/includeScripts.js and may not
-// be present in dev/test).
+// Our own custom event names mapped to the closest Meta Pixel Standard Event,
+// sent alongside the custom event so Meta Ads can optimize/report on them
+// (Standard Events get richer support in Ads Manager than trackCustom alone).
+// See https://developers.facebook.com/docs/meta-pixel/reference#standard-events
+const META_STANDARD_EVENTS = {
+  hero_search_started: 'Search',
+  listing_clicked: 'ViewContent',
+  booking_request_started: 'InitiateCheckout',
+  booking_request_sent: 'Lead',
+};
+
+// A small, direct custom-event helper for interaction-time analytics (a
+// click, a form submit) - distinct from src/analytics/handlers.js, which
+// only reacts to route changes. Sends to both GA4 (gtag.js) and Meta Pixel
+// (fbq), each injected via util/includeScripts.js and each independently
+// optional - no-ops for whichever hasn't loaded (e.g. in dev/test, or when
+// the corresponding env var/id isn't configured).
 export const trackEvent = (name, params = {}) => {
-  if (typeof window === 'undefined' || !window.gtag) {
+  if (typeof window === 'undefined') {
     return;
   }
-  window.gtag('event', name, {
+  const enrichedParams = {
     device_type: getDeviceType(),
     traffic_source: getTrafficSource(),
     ...params,
-  });
+  };
+  if (window.gtag) {
+    window.gtag('event', name, enrichedParams);
+  }
+  if (window.fbq) {
+    window.fbq('trackCustom', name, enrichedParams);
+    const standardEvent = META_STANDARD_EVENTS[name];
+    if (standardEvent) {
+      window.fbq('track', standardEvent, enrichedParams);
+    }
+  }
 };
 
 const MOBILE_MAX_WIDTH = 767;

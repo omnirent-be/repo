@@ -35,6 +35,9 @@ services:
         value: 'true'
       - key: SERVER_SHARETRIBE_REDIRECT_SSL
         value: 'true'
+      # Meta (Facebook) Pixel - not a secret, so set directly rather than sync: false.
+      - key: REACT_APP_FACEBOOK_PIXEL_ID
+        value: '1026773429933253'
       # Soft launch: locks the .onrender.com URL behind a username/password
       # so only people with the credentials can reach the live site before
       # the public launch. Remove both vars in Render once it's time to go
