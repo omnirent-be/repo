@@ -5,6 +5,7 @@ import { clearCurrentUser, fetchCurrentUser } from './user.duck';
 import { createUserWithIdp } from '../util/api';
 import { clearStoredReferralData } from '../util/webStorageHelpers';
 import { clearReferralCode } from '../util/referral';
+import { trackEvent, trackStandardEvent } from '../util/analytics';
 
 const authenticated = authInfo => authInfo?.isAnonymous === false;
 const loggedInAs = authInfo => authInfo?.isLoggedInAs === true;
@@ -116,6 +117,8 @@ const signupThunk = createAsyncThunk(
         // Clear potential referral data from session storage
         clearStoredReferralData();
         clearReferralCode();
+        trackEvent('signup_completed', { user_type: params?.publicData?.userType });
+        trackStandardEvent('CompleteRegistration');
         return params;
       })
       .catch(e => {
@@ -147,6 +150,8 @@ const signupWithIdpThunk = createAsyncThunk(
         // Clear potential referral data from session storage
         clearStoredReferralData();
         clearReferralCode();
+        trackEvent('signup_completed', { user_type: params?.publicData?.userType, via: 'idp' });
+        trackStandardEvent('CompleteRegistration');
         return params;
       })
       .catch(e => {

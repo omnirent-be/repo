@@ -6,6 +6,7 @@ import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { composeValidators, emailFormatValid, required } from '../../util/validators';
 import { sendContactMessage } from '../../util/api';
+import { trackEvent, trackStandardEvent } from '../../util/analytics';
 
 import {
   FieldSelect,
@@ -95,6 +96,11 @@ export const ContactPageComponent = () => {
         message: values.message,
       });
       setSent(true);
+      // Only fire on a confirmed send, not the mailto fallback below (we
+      // have no way to know whether the visitor's mail client actually sent
+      // that one).
+      trackEvent('contact_form_sent', { topic: values.topic });
+      trackStandardEvent('Contact');
     } catch (error) {
       // Not configured yet (no SendGrid account set up), or the request
       // failed for some other reason - fall back to the visitor's own mail

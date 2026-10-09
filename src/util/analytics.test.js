@@ -1,4 +1,4 @@
-import { trackEvent, getDeviceType, getTrafficSource } from './analytics';
+import { trackEvent, trackStandardEvent, getDeviceType, getTrafficSource } from './analytics';
 
 describe('getDeviceType', () => {
   const setWidth = width => {
@@ -77,6 +77,19 @@ describe('trackEvent', () => {
     window.fbq = jest.fn();
     trackEvent('listing_clicked', { listing_id: 'abc' });
     expect(window.fbq).not.toHaveBeenCalledWith('track', expect.anything(), expect.anything());
+    delete window.fbq;
+  });
+});
+
+describe('trackStandardEvent', () => {
+  it('does nothing when fbq is not available', () => {
+    expect(() => trackStandardEvent('Contact')).not.toThrow();
+  });
+
+  it('sends the Standard Event straight to fbq', () => {
+    window.fbq = jest.fn();
+    trackStandardEvent('Contact', { topic: 'support' });
+    expect(window.fbq).toHaveBeenCalledWith('track', 'Contact', { topic: 'support' });
     delete window.fbq;
   });
 });

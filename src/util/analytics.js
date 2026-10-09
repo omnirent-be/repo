@@ -27,6 +27,20 @@ export const trackEvent = (name, params = {}) => {
   }
 };
 
+// For the rare interaction that has no route-change equivalent in
+// handlers.js's MetaPixelHandler (so no risk of double-counting) and
+// genuinely warrants its own Meta Pixel Standard Event - e.g. a completed
+// signup or a sent contact-form message, neither of which lands on a route
+// that's distinctive enough to match reliably. Deliberately separate from
+// trackEvent: most of our custom events DO have a route-based counterpart,
+// and must never get a Standard Event from both places.
+export const trackStandardEvent = (name, params = {}) => {
+  if (typeof window === 'undefined' || !window.fbq) {
+    return;
+  }
+  window.fbq('track', name, params);
+};
+
 const MOBILE_MAX_WIDTH = 767;
 const TABLET_MAX_WIDTH = 1023;
 
