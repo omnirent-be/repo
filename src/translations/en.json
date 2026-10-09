@@ -876,6 +876,7 @@
   "LandingPageHero.providerLink": "Zelf materiaal te huur aanbieden? Verhuur het via OmniRent",
   "ProductSearchField.placeholder": "Wat zoek je?",
   "ProductSearchField.categoriesGroupLabel": "Categorieën",
+  "ProductSearchField.popularCategoriesGroupLabel": "Populaire categorieën",
   "ProductSearchField.listingsGroupLabel": "Materiaal",
   "UnifiedSearchForm.locationPlaceholder": "Gent of postcode",
   "UnifiedSearchForm.datesPlaceholder": "Wanneer?",

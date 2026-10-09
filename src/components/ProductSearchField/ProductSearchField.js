@@ -17,6 +17,7 @@ import css from './ProductSearchField.module.css';
 
 const DEBOUNCE_MS = 300;
 const MIN_CHARS_FOR_LISTING_SUGGESTIONS = 2;
+const DEFAULT_CATEGORY_SUGGESTIONS_COUNT = 6;
 
 const ProductSearchFieldComponent = props => {
   const { input, alignLeft, className, rootClassName } = props;
@@ -36,10 +37,14 @@ const ProductSearchFieldComponent = props => {
   const topCategory = config.categoryConfiguration?.categories?.[0];
   const subcategories = topCategory?.subcategories || [];
 
+  // With no text yet, suggest a handful of subcategories up front (e.g.
+  // "Entertainment & Kinderanimatie") instead of showing an empty dropdown
+  // until the visitor starts typing.
   const categoryMatches =
     text.length > 0
       ? subcategories.filter(sub => sub.name.toLowerCase().includes(text.toLowerCase()))
-      : [];
+      : subcategories.slice(0, DEFAULT_CATEGORY_SUGGESTIONS_COUNT);
+  const showingDefaultCategories = text.length === 0 && categoryMatches.length > 0;
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
@@ -102,7 +107,13 @@ const ProductSearchFieldComponent = props => {
         >
           {categoryMatches.length > 0 ? (
             <li className={css.groupLabel} aria-hidden="true">
-              <FormattedMessage id="ProductSearchField.categoriesGroupLabel" />
+              <FormattedMessage
+                id={
+                  showingDefaultCategories
+                    ? 'ProductSearchField.popularCategoriesGroupLabel'
+                    : 'ProductSearchField.categoriesGroupLabel'
+                }
+              />
             </li>
           ) : null}
           {categoryMatches.map(sub => (
@@ -144,7 +155,9 @@ const ProductSearchFieldComponent = props => {
  * categories (instant, client-side, from config.categoryConfiguration's
  * subcategories) and matching real listings (debounced sdk.listings.query)
  * as the visitor types - "autocomplete met producten én categorieën" per
- * the audit's own field spec. Selecting a category suggestion sets that
+ * the audit's own field spec. Before any text is typed, it already shows a
+ * handful of subcategories as suggestions (DEFAULT_CATEGORY_SUGGESTIONS_COUNT)
+ * so the field isn't an empty dead end on focus. Selecting a category suggestion sets that
  * category as the value's `category`; selecting a listing suggestion
  * navigates straight to it. Submitting without picking a suggestion is
  * still meaningful - the caller falls back to a plain keyword search using
