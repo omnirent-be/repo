@@ -338,6 +338,17 @@ const searchListingsPayloadCreator = ({ searchParams, config }, thunkAPI) => {
       const listingFields = config?.listing?.listingFields;
       const sanitizeConfig = { listingFields };
 
+      // Nothing at the exact searched location (e.g. a small town with no
+      // listings yet) - rather than showing an empty page, broaden the
+      // search to the whole region by dropping the location bounds.
+      if (response.data.meta?.totalItems === 0 && params.bounds) {
+        const { bounds, ...paramsWithoutBounds } = params;
+        return sdk.listings.query(paramsWithoutBounds).then(widerResponse => {
+          dispatch(addMarketplaceEntities(widerResponse, sanitizeConfig));
+          return widerResponse;
+        });
+      }
+
       dispatch(addMarketplaceEntities(response, sanitizeConfig));
       return response;
     })

@@ -159,3 +159,18 @@ bottom of the container.
 .invert {
   filter: invert(80%);
 }
+
+.suggestedLocation {
+  composes: p from global;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.suggestedLabel {
+  font-size: 12px;
+  color: var(--colorGrey400);
+  margin-left: 12px;
+  flex-shrink: 0;
+}

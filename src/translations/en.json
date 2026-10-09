@@ -1092,6 +1092,7 @@
   "LoadableComponentErrorBoundaryPage.landingPageLink": "startpagina",
   "LocationAutocompleteInput.currentLocation": "Huidige locatie",
   "LocationAutocompleteInput.screenreader.search": "Zoeken",
+  "LocationAutocompleteInput.suggested": "Voorgesteld",
   "LoginForm.emailInvalid": "Een geldig e-mailadres is verplicht.",
   "LoginForm.emailLabel": "E-mail",
   "LoginForm.emailPlaceholder": "jane.doe@example.com",

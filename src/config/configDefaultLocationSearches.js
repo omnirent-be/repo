@@ -19,6 +19,20 @@ const defaultLocations = [
       bounds: new LatLngBounds(new LatLng(51.1075, 3.8231), new LatLng(51.0024, 3.6211)),
     },
   },
+  {
+    id: 'default-eeklo',
+    predictionPlace: {
+      address: 'Eeklo, België',
+      bounds: new LatLngBounds(new LatLng(51.22, 3.61), new LatLng(51.15, 3.51)),
+    },
+  },
+  {
+    id: 'default-deinze',
+    predictionPlace: {
+      address: 'Deinze, België',
+      bounds: new LatLngBounds(new LatLng(51.02, 3.57), new LatLng(50.95, 3.49)),
+    },
+  },
   // {
   //   id: 'default-helsinki',
   //   predictionPlace: {

@@ -11,8 +11,15 @@ import IconLookingGlass from './IconLookingGlass';
 import IconCurrentLocation from './IconCurrentLocation';
 import * as geocoderMapbox from './GeocoderMapbox';
 import * as geocoderGoogleMaps from './GeocoderGoogleMaps';
+import defaultLocations from '../../config/configDefaultLocationSearches';
 
 import css from './LocationAutocompleteInput.module.css';
+
+// The first configured default location (e.g. Gent) is the one most likely
+// to match the marketplace's actual coverage area, so it gets a "Voorgesteld"
+// (Suggested) label to stand out from the other default-prediction entries
+// (Eeklo, Deinze, ...) shown below it.
+const SUGGESTED_LOCATION_ID = defaultLocations[0]?.id;
 
 const DEBOUNCE_WAIT_TIME = 300;
 const DEBOUNCE_WAIT_TIME_FOR_SHORT_QUERIES = 1000;
@@ -96,6 +103,13 @@ const LocationPredictionsList = props => {
           <span className={css.currentLocation}>
             <IconCurrentLocation />
             <FormattedMessage id="LocationAutocompleteInput.currentLocation" />
+          </span>
+        ) : predictionId === SUGGESTED_LOCATION_ID ? (
+          <span className={css.suggestedLocation}>
+            {geocoder.getPredictionAddress(prediction)}
+            <span className={css.suggestedLabel}>
+              <FormattedMessage id="LocationAutocompleteInput.suggested" />
+            </span>
           </span>
         ) : (
           geocoder.getPredictionAddress(prediction)
