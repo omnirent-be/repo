@@ -6,7 +6,6 @@ import { FormattedMessage, useIntl } from '../../../util/reactIntl';
 import { useConfiguration } from '../../../context/configurationContext';
 import { stringifyDateToISO8601, parseDateFromISO8601 } from '../../../util/dates';
 import { isOriginInUse } from '../../../util/search';
-import defaultLocations from '../../../config/configDefaultLocationSearches';
 import {
   OutsideClickHandler,
   FieldDateRangeController,
@@ -16,8 +15,6 @@ import {
 import FilterLocation from '../../PageBuilder/Primitives/SearchCTA/FilterLocation/FilterLocation';
 
 import css from './SearchCapsule.module.css';
-
-const GENT_DEFAULT = defaultLocations.find(l => l.id === 'default-gent');
 
 const formatDateRangeLabel = (intl, startDate, endDate) => {
   if (!startDate || !endDate) {
@@ -119,12 +116,6 @@ const SearchCapsule = props => {
           bounds: initialValues.bounds,
           origin: initialValues.origin,
         },
-      }
-    : GENT_DEFAULT
-    ? {
-        search: GENT_DEFAULT.predictionPlace.address,
-        predictions: [],
-        selectedPlace: GENT_DEFAULT.predictionPlace,
       }
     : undefined;
 

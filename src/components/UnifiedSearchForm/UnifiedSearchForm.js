@@ -15,11 +15,8 @@ import { trackEvent } from '../../util/analytics';
 import { Form, PrimaryButton, ProductSearchField } from '../../components';
 import FilterLocation from '../../containers/PageBuilder/Primitives/SearchCTA/FilterLocation/FilterLocation';
 import FilterDateRange from '../../containers/PageBuilder/Primitives/SearchCTA/FilterDateRange/FilterDateRange';
-import defaultLocations from '../../config/configDefaultLocationSearches';
 
 import css from '../../containers/PageBuilder/Primitives/SearchCTA/SearchCTA.module.css';
-
-const GENT_DEFAULT = defaultLocations.find(l => l.id === 'default-gent');
 
 const formatDateValue = (dateRange, queryParamName) => {
   const { startDate, endDate } = dateRange || {};
@@ -38,7 +35,8 @@ const formatDateValue = (dateRange, queryParamName) => {
  *  - Product ("Wat zoek je?"): ProductSearchField, autocomplete over both
  *    categories and real listings.
  *  - Locatie ("Gent of postcode"): the existing geo location autocomplete,
- *    prefilled with Gent but editable.
+ *    empty by default - Gent is only offered as the top ("Voorgesteld")
+ *    suggestion once the field is focused, see configDefaultLocationSearches.js.
  *  - Datum ("Wanneer?"): a date range, never required - the audit
  *    explicitly asks to allow searching without a date and ask again on
  *    the results/listing page.
@@ -51,16 +49,6 @@ const UnifiedSearchForm = () => {
   const routeConfiguration = useRouteConfiguration();
   const config = useConfiguration();
   const [submitDisabled, setSubmitDisabled] = useState(false);
-
-  const initialValues = GENT_DEFAULT
-    ? {
-        location: {
-          search: GENT_DEFAULT.predictionPlace.address,
-          predictions: [],
-          selectedPlace: GENT_DEFAULT.predictionPlace,
-        },
-      }
-    : {};
 
   const onSubmit = values => {
     const queryParams = {};
@@ -105,7 +93,6 @@ const UnifiedSearchForm = () => {
     <div className={classNames(css.searchBarContainer, css.gridCol3)}>
       <FinalForm
         onSubmit={onSubmit}
-        initialValues={initialValues}
         render={({ handleSubmit }) => (
           <Form
             role="search"
