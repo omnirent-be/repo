@@ -16,6 +16,12 @@ import FilterLocation from '../../PageBuilder/Primitives/SearchCTA/FilterLocatio
 
 import css from './SearchCapsule.module.css';
 
+// The initial values are rebuilt on every render (nested objects, Dates), so
+// Final Form's default shallow comparison would see them as new values each
+// time the active segment changes and reset whatever the visitor had typed.
+// Comparing the content keeps the form state until the URL itself changes.
+const initialValuesEqual = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
 const formatDateRangeLabel = (intl, startDate, endDate) => {
   if (!startDate || !endDate) {
     return null;
@@ -149,6 +155,7 @@ const SearchCapsule = props => {
       {isExpanded && !isMobile ? <div className={css.backdrop} onClick={collapse} /> : null}
       <FinalForm
         onSubmit={handleSubmit}
+        initialValuesEqual={initialValuesEqual}
         initialValues={{
           product: initialProduct,
           location: initialLocation,
