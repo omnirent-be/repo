@@ -406,15 +406,6 @@ export const AuthenticationPageComponent = props => {
                 </>
               ) : (
                 <>
-                  <SocialLoginButtons
-                    isLogin={isLogin}
-                    showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
-                    showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
-                    dividerPosition="after"
-                    dividerMessageId="AuthenticationPage.orEmail"
-                    {...fromMaybe}
-                    {...userTypeMaybe}
-                  />
                   <SignupForm
                     className={css.signupForm}
                     onSubmit={getHandleSubmitSignup({
@@ -427,6 +418,13 @@ export const AuthenticationPageComponent = props => {
                     preselectedUserType={preselectedUserType}
                     userTypes={userTypes}
                     userFields={userFields}
+                  />
+                  <SocialLoginButtons
+                    isLogin={isLogin}
+                    showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
+                    showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
+                    {...fromMaybe}
+                    {...userTypeMaybe}
                   />
                 </>
               )}
