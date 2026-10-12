@@ -45,7 +45,7 @@ export const fetchHeroPhotosThunk = createAsyncThunk(
   'heroPhotos/fetch',
   async ({ aspectRatio = 1 } = {}, { extra: sdk }) => {
     const baseParams = {
-      sort: '-createdAt',
+      sort: 'createdAt',
       perPage: CANDIDATE_COUNT,
       include: ['images'],
       'fields.listing': [

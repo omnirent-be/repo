@@ -37,7 +37,7 @@ const HomepageListingRowsComponent = props => {
   }, []);
 
   // Always newest first, independent of the site-wide default sort.
-  const sort = '-createdAt';
+  const sort = 'createdAt';
 
   const rowId = categoryFilter ? `category:${categoryFilter.subCategoryId}` : POPULAR_ROW_ID;
   const title = categoryFilter
