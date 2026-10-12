@@ -1,9 +1,12 @@
 @import '../../../styles/customMediaQueries.css';
 
 .root {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   max-width: var(--contentMaxWidthPages);
   margin: 0 auto;
-  padding: 16px 16px 0 16px;
+  padding: 16px 12px 0 12px;
 
   @media (--viewportMedium) {
     padding: 24px 32px 0 32px;
@@ -26,20 +29,19 @@
   }
 }
 
+/* Phones: all categories visible at once, wrapped over two centered rows
+   (4 + 3), instead of a row that scrolls off-screen. From --viewportMedium
+   they sit in a single row. */
 .track {
   display: flex;
+  flex-wrap: wrap;
   align-items: stretch;
-  justify-content: space-between;
-  gap: 4px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
+  justify-content: center;
+  gap: 6px 0;
 
   @media (--viewportMedium) {
+    flex-wrap: nowrap;
+    justify-content: space-between;
     gap: 8px;
   }
 }
@@ -48,11 +50,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex: 1 0 auto;
-  min-width: 76px;
-  padding: 12px 10px 10px 10px;
+  justify-content: flex-start;
+  gap: 6px;
+  flex: 0 0 25%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 2px 8px 2px;
   border: none;
   border-radius: 10px;
   background-color: transparent;
@@ -66,6 +69,7 @@
   transition: var(--transitionStyleButton);
 
   @media (--viewportMedium) {
+    flex: 1 0 auto;
     min-width: 88px;
     gap: 10px;
     padding: 14px 14px 12px 14px;
@@ -116,7 +120,14 @@
 
 .chipLabel {
   display: inline-block;
-  white-space: nowrap;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+
+  @media (--viewportMedium) {
+    white-space: nowrap;
+    overflow-wrap: normal;
+  }
 }
 
 .viewAllRow {
