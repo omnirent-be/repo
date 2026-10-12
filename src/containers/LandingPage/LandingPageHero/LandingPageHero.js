@@ -25,6 +25,9 @@ const TRUST_ITEMS_RENT = ['secure', 'noObligation', 'payAfterAcceptance'];
 
 const PHOTO_ROTATE_MS = 5000;
 
+// Temporarily hide the live activity ticker (set to true to bring it back).
+const SHOW_ACTIVITY_TICKER = false;
+
 // Shown instead of real activity whenever there are fewer than
 // MIN_REAL_ACTIVITY_ITEMS real (non-test) ones - a ticker with 1-2 real
 // items would undersell activity more than it builds confidence. Swapped
@@ -472,7 +475,7 @@ const LandingPageHero = () => {
           </div>
         </div>
       </section>
-      <ActivityTicker />
+      {SHOW_ACTIVITY_TICKER ? <ActivityTicker /> : null}
     </>
   );
 };
