@@ -54,8 +54,8 @@ const port = rootURL => {
  */
 exports.getRootURL = options => {
   const { rootURL, useDevApiServerPort = false } = options || {};
-  const protocol = USING_SSL ? 'https' : 'http';
   const rUrl = rootURL || marketplaceRootUrl;
+  const protocol = USING_SSL || /^https:\/\//i.test(rUrl) ? 'https' : 'http';
   const portInRootUrl = port(rUrl);
   const portMaybe =
     portInRootUrl && useDevApiServer && useDevApiServerPort
