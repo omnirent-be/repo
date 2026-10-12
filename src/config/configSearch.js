@@ -63,6 +63,18 @@ export const priceFilter = {
 //   schemaType: 'keywords',
 // }
 
+// Most viewed first. `viewCount` is listing metadata counted by
+// server/api/listing-view.js. The Marketplace API only accepts this sort key once
+// `viewCount` has a metadata search schema (one-time flex-cli step, see
+// server/api-util/listingViews.js), and an unknown sort key makes the search fail -
+// so the option stays hidden until REACT_APP_POPULAR_SORT_ENABLED=true is set.
+// Listings without any views yet tie, and ties come out oldest first, so only make
+// it the default (REACT_APP_POPULAR_SORT_DEFAULT=true) once views are being stored.
+const popularSortEnabled = process.env.REACT_APP_POPULAR_SORT_ENABLED === 'true';
+const popularSortIsDefault =
+  popularSortEnabled && process.env.REACT_APP_POPULAR_SORT_DEFAULT === 'true';
+const popularSortOption = { key: 'meta_viewCount', labelTranslationKey: 'SortBy.mostPopular' };
+
 export const sortConfig = {
   // Enable/disable the sorting control in the SearchPage
   active: true,
@@ -84,20 +96,15 @@ export const sortConfig = {
   conflictingFilters: [],
 
   options: [
+    // The first option is the default sort. With REACT_APP_POPULAR_SORT_DEFAULT=true
+    // "Populairste" takes that place (see popularSortOption below).
+    ...(popularSortIsDefault ? [popularSortOption] : []),
     // These are default sort options
     { key: 'createdAt', labelTranslationKey: 'SortBy.newest' },
     { key: '-createdAt', labelTranslationKey: 'SortBy.oldest' },
     { key: '-price', labelTranslationKey: 'SortBy.lowestPrice' },
     { key: 'price', labelTranslationKey: 'SortBy.highestPrice' },
-    // Most viewed first. `viewCount` is listing metadata counted by
-    // server/api/listing-view.js. The Marketplace API only accepts this sort
-    // key once `viewCount` has a metadata search schema (one-time flex-cli
-    // step, see server/api-util/listingViews.js), and an unknown sort key
-    // makes the search fail - so the option stays hidden until
-    // REACT_APP_POPULAR_SORT_ENABLED=true is set (after that setup is done).
-    ...(process.env.REACT_APP_POPULAR_SORT_ENABLED === 'true'
-      ? [{ key: 'meta_viewCount', labelTranslationKey: 'SortBy.mostPopular' }]
-      : []),
+    ...(popularSortEnabled && !popularSortIsDefault ? [popularSortOption] : []),
     // If you add own sort options, you can also use label key: { key: 'meta_rating', label: 'Highest rated' },
 
     // The relevance is only used for keyword search, but the

@@ -40,6 +40,10 @@ services:
       # server/api-util/listingViews.js), otherwise the sort option stays hidden.
       - key: REACT_APP_POPULAR_SORT_ENABLED
         sync: false
+      # Set to 'true' to make "Populairste" the default sort. Only do this once
+      # view counts are actually being stored.
+      - key: REACT_APP_POPULAR_SORT_DEFAULT
+        sync: false
       - key: REACT_APP_CSP
         value: report
       - key: SERVER_SHARETRIBE_TRUST_PROXY
