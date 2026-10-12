@@ -112,6 +112,9 @@ const getResolvedCurrentPage = (location, routeConfiguration) => {
   }
 };
 
+// Temporarily hide the promo banner (set to true to bring it back).
+const SHOW_PROMO_BANNER = false;
+
 // Promo banner for the launch campaign: the €10 discount is now only the
 // public GENT10 coupon code (see server/api-util/coupons.js), not a
 // per-user claim, so it's shown to everyone - logged in or not - rather
@@ -431,7 +434,7 @@ const TopbarComponent = props => {
         <FormattedMessage id="Topbar.skipToMainContent" />
         <IconArrowHead direction="right" size="small" rootClassName={css.skiptoMainArrow} />
       </Button>
-      <PromoBanner isAuthenticated={isAuthenticated} />
+      {SHOW_PROMO_BANNER ? <PromoBanner isAuthenticated={isAuthenticated} /> : null}
       <LimitedAccessBanner
         isAuthenticated={isAuthenticated}
         isLoggedInAs={isLoggedInAs}

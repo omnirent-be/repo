@@ -3,24 +3,28 @@
 .root {
   max-width: var(--contentMaxWidthPages);
   margin: 0 auto;
-  padding: 20px 24px 0 24px;
+  padding: 16px 16px 0 16px;
 
   @media (--viewportMedium) {
-    padding: 28px 32px 0 32px;
+    padding: 24px 32px 0 32px;
   }
 }
 
 .track {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 
-  @media (--viewportMedium) {
-    grid-template-columns: repeat(3, 1fr);
+  &::-webkit-scrollbar {
+    display: none;
   }
 
-  @media (--viewportLarge) {
-    grid-template-columns: repeat(6, 1fr);
+  @media (--viewportMedium) {
+    gap: 8px;
   }
 }
 
@@ -29,31 +33,33 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 20px 10px;
-  min-height: 96px;
-  border-radius: 14px;
-  border: 1px solid var(--colorGrey100);
-  background-color: var(--colorWhite);
-  color: var(--colorGrey700);
-  font-size: 13px;
-  font-weight: var(--fontWeightSemiBold);
+  gap: 8px;
+  flex: 1 0 auto;
+  min-width: 76px;
+  padding: 12px 10px 10px 10px;
+  border: none;
+  border-radius: 10px;
+  background-color: transparent;
+  color: var(--marketplaceColor);
+  font-size: 12px;
+  font-weight: var(--fontWeightMedium);
+  line-height: 1.2;
   text-align: center;
   cursor: pointer;
+  box-shadow: inset 0 -2px 0 transparent;
   transition: var(--transitionStyleButton);
 
   @media (--viewportMedium) {
-    gap: 12px;
-    padding: 24px 12px;
-    min-height: 112px;
-    font-size: 14px;
+    min-width: 88px;
+    gap: 10px;
+    padding: 14px 14px 12px 14px;
+    font-size: 13px;
   }
 
   &:hover {
-    border-color: var(--marketplaceColor);
     color: var(--marketplaceColor);
-    box-shadow: var(--boxShadowLight);
     text-decoration: none;
+    background-color: color-mix(in srgb, var(--marketplaceColor) 8%, white);
   }
 
   &:focus-visible {
@@ -63,16 +69,13 @@
 }
 
 .chipActive {
-  border-color: var(--marketplaceColor);
-  background-color: var(--marketplaceColor);
-  color: var(--colorWhite);
+  background-color: color-mix(in srgb, var(--marketplaceColor) 12%, white);
+  box-shadow: inset 0 -2px 0 var(--marketplaceColor);
+  color: var(--marketplaceColor);
 
   &:hover {
-    color: var(--colorWhite);
-  }
-
-  & .chipIcon {
-    color: var(--colorWhite);
+    background-color: color-mix(in srgb, var(--marketplaceColor) 12%, white);
+    color: var(--marketplaceColor);
   }
 }
 
@@ -87,8 +90,15 @@
     width: 32px;
     height: 32px;
   }
+
+  & svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .chipLabel {
   display: inline-block;
+  white-space: nowrap;
 }
