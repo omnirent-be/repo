@@ -5,13 +5,55 @@
 .buttonIcon {
   position: absolute;
   left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
   margin-left: 20px;
 }
 
+.button {
+  display: block;
+  width: 100%;
+  min-height: 54px;
+  margin: 0;
+  padding: 0 20px;
+  position: relative;
+  cursor: pointer;
+
+  font-family: var(--fontFamily);
+  font-size: 16px;
+  font-weight: var(--fontWeightSemiBold);
+  line-height: 24px;
+  text-align: center;
+  color: var(--colorGrey800);
+
+  background-color: var(--colorWhite);
+  border: 1.5px solid var(--colorGrey100);
+  border-radius: 999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover,
+  &:focus-visible {
+    outline: none;
+    border-color: var(--colorGrey300);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+    background-color: var(--colorWhite);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+}
+
 .socialButtonWrapper {
+  margin-top: 20px;
   margin-bottom: 6px;
+
   @media (--viewportMedium) {
-    margin-top: 8px;
+    margin-top: 24px;
   }
 }
 
@@ -25,8 +67,8 @@
 
 .socialButtonsOr {
   width: 100%;
-  height: 32px;
-  margin: 28px 0 20px 0;
+  height: 24px;
+  margin: 24px 0 8px 0;
   text-align: center;
   position: relative;
   background-color: var(--colorWhite);
@@ -34,7 +76,7 @@
   &:after {
     content: '';
     width: 100%;
-    border-bottom: solid 1px #d2d2d2;
+    border-bottom: solid 1px var(--colorGrey100);
     position: absolute;
     left: 0;
     top: 50%;
@@ -42,8 +84,8 @@
   }
 
   @media (--viewportMedium) {
-    height: 34px;
-    margin: 15px 0;
+    height: 24px;
+    margin: 28px 0 8px 0;
   }
 }
 
@@ -52,7 +94,10 @@
   width: auto;
   display: inline-block;
   z-index: 3;
-  padding: 0 20px 0 20px;
+  padding: 0 16px;
   position: relative;
   margin: 0;
+  font-size: 13px;
+  line-height: 24px;
+  color: var(--colorGrey500);
 }

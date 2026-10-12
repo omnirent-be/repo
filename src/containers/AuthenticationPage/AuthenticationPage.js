@@ -61,7 +61,10 @@ import css from './AuthenticationPage.module.css';
 
 const getTabHeading = ({ messageId, isSelected }) => {
   return (
-    <Heading as={isSelected ? 'h1' : 'h2'} rootClassName={css.tab}>
+    <Heading
+      as={isSelected ? 'h1' : 'h2'}
+      rootClassName={classNames(css.tab, isSelected ? css.tabSelected : css.tabInactive)}
+    >
       <FormattedMessage id={messageId} />
     </Heading>
   );
