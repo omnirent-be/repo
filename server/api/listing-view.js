@@ -2,6 +2,8 @@ const { getIntegrationSdk, isIntegrationSdkConfigured } = require('../api-util/i
 const { createViewCounter } = require('../api-util/listingViews');
 
 const counter = createViewCounter({ getSdk: getIntegrationSdk });
+let warnedNotConfigured = false;
+let warnedIgnored = false;
 
 /**
  * Records one page view of a listing (see src/hooks/useTrackListingView.js).
@@ -13,16 +15,30 @@ const counter = createViewCounter({ getSdk: getIntegrationSdk });
  */
 module.exports = (req, res) => {
   if (!isIntegrationSdkConfigured()) {
+    if (!warnedNotConfigured) {
+      warnedNotConfigured = true;
+      // eslint-disable-next-line no-console
+      console.warn(
+        'Listing views are not stored: SHARETRIBE_INTEGRATION_CLIENT_ID/SECRET are not set.'
+      );
+    }
     res.status(204).end();
     return;
   }
 
   counter.start();
-  counter.recordView({
+  const counted = counter.recordView({
     listingId: req.body?.listingId,
     visitor: req.ip || 'unknown',
     userAgent: req.get('User-Agent'),
   });
+  if (!counted && !warnedIgnored) {
+    warnedIgnored = true;
+    // eslint-disable-next-line no-console
+    console.log(
+      `Listing view ignored (invalid id, bot or duplicate). listingId=${req.body?.listingId}`
+    );
+  }
   res.status(204).end();
 };
 

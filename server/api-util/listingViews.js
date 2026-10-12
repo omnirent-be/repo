@@ -79,7 +79,12 @@ const createViewCounter = ({ getSdk, now = () => Date.now() }) => {
       .show({ id: listingId })
       .then(response => {
         const current = Number(response.data.data.attributes.metadata?.viewCount) || 0;
-        return sdk.listings.update({ id: listingId, metadata: { viewCount: current + delta } });
+        return sdk.listings
+          .update({ id: listingId, metadata: { viewCount: current + delta } })
+          .then(() => {
+            // eslint-disable-next-line no-console
+            console.log(`Stored view count for listing ${listingId}: ${current + delta}`);
+          });
       })
       .catch(error => {
         // Unknown listing: nothing to retry. Anything else (rate limit,
