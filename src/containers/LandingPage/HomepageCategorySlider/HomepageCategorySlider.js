@@ -4,7 +4,7 @@ import classNames from 'classnames';
 import { useConfiguration } from '../../../context/configurationContext';
 import { FormattedMessage, useIntl } from '../../../util/reactIntl';
 import { trackEvent } from '../../../util/analytics';
-import { AllCategoriesIcon, CATEGORY_ICONS } from '../../SearchPage/CategoryIcons';
+import { AllCategoriesIcon, iconForCategory } from '../../SearchPage/CategoryIcons';
 
 import css from './HomepageCategorySlider.module.css';
 
@@ -54,7 +54,7 @@ const HomepageCategorySlider = ({ selected, onSelect }) => {
           </span>
         </button>
         {subcategories.map(sub => {
-          const CategoryIcon = CATEGORY_ICONS[sub.id];
+          const CategoryIcon = iconForCategory(sub.id, sub.name);
           const isActive = selected?.subCategoryId === sub.id;
           return (
             <button
