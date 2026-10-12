@@ -1,8 +1,9 @@
 import React from 'react';
 
-// Category chip icons. Keyed by Console category id, with a name fallback
-// so a renamed id still gets the matching pictogram. Stroke icons match the
-// homepage category bar (tent, sofa, pot, speaker, party popper, camera).
+// Category chip icons, one per top-level subcategory configured in Console
+// (Build > Content > Categories). Matched on the real Console id first, then
+// on the display name, so a renamed id still gets a pictogram. Line icons in
+// the same style as the homepage category bar.
 
 const Svg = ({ children }) => (
   <svg
@@ -22,7 +23,7 @@ const Svg = ({ children }) => (
   </svg>
 );
 
-/** 2×2 grid — "Alles ontdekken" */
+/** 2x2 grid - "Alles ontdekken" */
 export const AllCategoriesIcon = () => (
   <Svg>
     <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -32,6 +33,7 @@ export const AllCategoriesIcon = () => (
   </Svg>
 );
 
+/** Tenten */
 const TentIcon = () => (
   <Svg>
     <path d="M3.5 21 14 3" />
@@ -41,6 +43,7 @@ const TentIcon = () => (
   </Svg>
 );
 
+/** Meubilair */
 const FurnitureIcon = () => (
   <Svg>
     <path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3" />
@@ -50,6 +53,17 @@ const FurnitureIcon = () => (
   </Svg>
 );
 
+/** Vloeren - tile / parquet pattern */
+const FloorIcon = () => (
+  <Svg>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M3 12h18" />
+    <path d="M9 4v8" />
+    <path d="M15 12v8" />
+  </Svg>
+);
+
+/** Bar & Catering - cooking pot */
 const CateringIcon = () => (
   <Svg>
     <path d="M12 2v3" />
@@ -60,27 +74,7 @@ const CateringIcon = () => (
   </Svg>
 );
 
-const SoundIcon = () => (
-  <Svg>
-    <rect x="4" y="4" width="16" height="16" rx="2" />
-    <circle cx="12" cy="12" r="5" />
-    <circle cx="12" cy="12" r="1.5" />
-  </Svg>
-);
-
-const FunIcon = () => (
-  <Svg>
-    <path d="M5.8 11.3 2 22l10.7-3.79" />
-    <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z" />
-    <path d="M14 8s.8-1.4 2.2-1.6c1.2-.2 2 .6 2.3 1.6" />
-    <path d="M17 4s.5-.9 1.4-1" />
-    <circle cx="19" cy="9" r="0.7" fill="currentColor" stroke="none" />
-    <circle cx="21" cy="12" r="0.7" fill="currentColor" stroke="none" />
-    <circle cx="16" cy="11" r="0.7" fill="currentColor" stroke="none" />
-    <circle cx="13.5" cy="6" r="0.7" fill="currentColor" stroke="none" />
-  </Svg>
-);
-
+/** Decoratie - light bulb */
 const DecorIcon = () => (
   <Svg>
     <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
@@ -89,6 +83,16 @@ const DecorIcon = () => (
   </Svg>
 );
 
+/** Geluid, Licht & AV-techniek - speaker */
+const SoundIcon = () => (
+  <Svg>
+    <rect x="4" y="2" width="16" height="20" rx="2" />
+    <circle cx="12" cy="14" r="4" />
+    <circle cx="12" cy="6" r="1" />
+  </Svg>
+);
+
+/** Verwarming - radiator with heat */
 const HeatIcon = () => (
   <Svg>
     <rect x="3" y="8" width="18" height="13" rx="2" />
@@ -102,6 +106,52 @@ const HeatIcon = () => (
   </Svg>
 );
 
+/** Entertainment & Kinderanimatie - party popper */
+const FunIcon = () => (
+  <Svg>
+    <path d="M5.8 11.3 2 22l10.7-3.79" />
+    <path d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z" />
+    <path d="M14 8s.8-1.4 2.2-1.6c1.2-.2 2 .6 2.3 1.6" />
+    <path d="M17 4s.5-.9 1.4-1" />
+    <circle cx="19" cy="9" r="0.7" fill="currentColor" stroke="none" />
+    <circle cx="21" cy="12" r="0.7" fill="currentColor" stroke="none" />
+    <circle cx="16" cy="11" r="0.7" fill="currentColor" stroke="none" />
+    <circle cx="13.5" cy="6" r="0.7" fill="currentColor" stroke="none" />
+  </Svg>
+);
+
+/** Sanitair - toilet */
+const SanitationIcon = () => (
+  <Svg>
+    <rect x="7" y="3" width="10" height="5" rx="1" />
+    <path d="M5 11h14c0 4-2 7-5 7h-4c-3 0-5-3-5-7Z" />
+    <path d="M9 18v3h6v-3" />
+  </Svg>
+);
+
+/** Podium & Constructie - stage platform on legs */
+const StageIcon = () => (
+  <Svg>
+    <rect x="2" y="7" width="20" height="4" rx="1" />
+    <path d="M5 11v9" />
+    <path d="M12 11v9" />
+    <path d="M19 11v9" />
+    <path d="M5 15l7 5" />
+    <path d="M12 15l7 5" />
+  </Svg>
+);
+
+/** Accessoires & Toebehoren - plug */
+const AccessoryIcon = () => (
+  <Svg>
+    <path d="M12 22v-5" />
+    <path d="M9 8V2" />
+    <path d="M15 8V2" />
+    <path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z" />
+  </Svg>
+);
+
+/** Fotografie & Video - camera */
 const CameraIcon = () => (
   <Svg>
     <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3Z" />
@@ -109,50 +159,61 @@ const CameraIcon = () => (
   </Svg>
 );
 
+// Keyed by the Console category id, lowercased (ids have mixed casing).
 export const CATEGORY_ICONS = {
   'tent-structuren': TentIcon,
-  'Meubilair-Decoratie': FurnitureIcon,
-  'Catering-Keuken': CateringIcon,
-  'Geluid-Lichtdj': SoundIcon,
-  'Springkastelen-Fun': FunIcon,
-  'Trouwfotografie-apparatuur': CameraIcon,
+  meubilair: FurnitureIcon,
+  vloeren: FloorIcon,
+  'bar-catering': CateringIcon,
+  decoratie: DecorIcon,
+  'geluid-licht-av': SoundIcon,
+  verwarming: HeatIcon,
+  'entertainment-kinderanimatie': FunIcon,
+  sanitair: SanitationIcon,
+  'podium-constructie': StageIcon,
+  'accessoires-toebehoren': AccessoryIcon,
+  // Older category ids, kept so nothing loses its icon.
+  'meubilair-decoratie': FurnitureIcon,
+  'catering-keuken': CateringIcon,
+  'geluid-lichtdj': SoundIcon,
+  'springkastelen-fun': FunIcon,
+  'trouwfotografie-apparatuur': CameraIcon,
 };
 
+// Fallback on the visible name, most specific first.
+const NAME_ICONS = [
+  ['sanitair', SanitationIcon],
+  ['podium', StageIcon],
+  ['accessoire', AccessoryIcon],
+  ['vloer', FloorIcon],
+  ['verwarm', HeatIcon],
+  ['entertainment', FunIcon],
+  ['animatie', FunIcon],
+  ['geluid', SoundIcon],
+  ['av-techniek', SoundIcon],
+  ['decor', DecorIcon],
+  ['cater', CateringIcon],
+  ['keuken', CateringIcon],
+  ['bar', CateringIcon],
+  ['meubel', FurnitureIcon],
+  ['foto', CameraIcon],
+  ['video', CameraIcon],
+  ['tent', TentIcon],
+];
+
 /**
- * Resolve the pictogram for a category by Console id, then by name.
+ * Resolve the pictogram for a category: by Console id, then by name.
  *
  * @param {string} id category id from Console
  * @param {string} [name] display name, used if the id is unknown
  * @returns {React.ComponentType|null}
  */
 export const iconForCategory = (id, name = '') => {
-  if (CATEGORY_ICONS[id]) {
-    return CATEGORY_ICONS[id];
+  const byId = CATEGORY_ICONS[String(id || '').toLowerCase()];
+  if (byId) {
+    return byId;
   }
-  const n = name.toLowerCase();
-  if (n.includes('tent')) {
-    return TentIcon;
-  }
-  if (n.includes('meubel')) {
-    return FurnitureIcon;
-  }
-  if (n.includes('cater') || n.includes('keuken') || n.includes('bar')) {
-    return CateringIcon;
-  }
-  if (n.includes('geluid') || n.includes('licht') || n.includes('dj')) {
-    return SoundIcon;
-  }
-  if (n.includes('fun') || n.includes('spring') || n.includes('entertain')) {
-    return FunIcon;
-  }
-  if (n.includes('foto') || n.includes('video') || n.includes('camera')) {
-    return CameraIcon;
-  }
-  if (n.includes('decor')) {
-    return DecorIcon;
-  }
-  if (n.includes('verwarm')) {
-    return HeatIcon;
-  }
-  return null;
+  const lowerName = String(name || '').toLowerCase();
+  const match = NAME_ICONS.find(([needle]) => lowerName.includes(needle));
+  return match ? match[1] : null;
 };
