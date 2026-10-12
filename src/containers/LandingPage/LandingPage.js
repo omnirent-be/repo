@@ -19,7 +19,7 @@ import LandingPageHero from './LandingPageHero/LandingPageHero';
 import AccountSetupChecklist from './AccountSetupChecklist/AccountSetupChecklist';
 import HomepageListingRows from './HomepageListingRows/HomepageListingRows';
 import HomepageCategorySlider from './HomepageCategorySlider/HomepageCategorySlider';
-import HomepageTrustSteps from './HomepageTrustSteps/HomepageTrustSteps';
+import HomepageStepsSection from './HomepageStepsSection/HomepageStepsSection';
 import HomepageReviewsSection from './HomepageReviewsSection/HomepageReviewsSection';
 import HomepageProviderSection from './HomepageProviderSection/HomepageProviderSection';
 // HomepagePartyCalculator, HomepageEarningsCalculator, HomepageHowItWorksSection
@@ -96,8 +96,10 @@ export const LandingPageComponent = props => {
           {/* 3. "Populair voor feesten in Gent" - strak 2x4-grid i.p.v. de
               eerdere losse carrousels per categorie */}
           <HomepageListingRows categoryFilter={selectedCategory} />
-          {/* 4. "Zo werkt huren" - de 4 echte stappen van de request-to-book flow */}
-          <HomepageTrustSteps />
+          {/* 4. Vier geruststellingen + "Jouw feest in vier stappen" - de echte
+              stappen van de request-to-book flow (HomepageTrustSteps is de
+              oudere, compactere variant en staat niet meer op de homepage) */}
+          <HomepageStepsSection />
           {/* 5. Echte, publieke reviews - rendert niets zolang er nog geen
               echte zijn (zie recentReviews.duck.js), nooit verzonnen quotes. */}
           <HomepageReviewsSection />
