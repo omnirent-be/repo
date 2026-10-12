@@ -29,6 +29,17 @@ services:
         sync: false
       - key: SENDGRID_CONTACT_TO_EMAIL
         sync: false
+      # Integration API application (Console > Build > Applications). Lets
+      # the server store each listing's view count for "Populairste" sorting
+      # (server/api/listing-view.js) and powers the referral admin report.
+      - key: SHARETRIBE_INTEGRATION_CLIENT_ID
+        sync: false
+      - key: SHARETRIBE_INTEGRATION_CLIENT_SECRET
+        sync: false
+      # Set to 'true' only after the viewCount search schema exists (see
+      # server/api-util/listingViews.js), otherwise the sort option stays hidden.
+      - key: REACT_APP_POPULAR_SORT_ENABLED
+        sync: false
       - key: REACT_APP_CSP
         value: report
       - key: SERVER_SHARETRIBE_TRUST_PROXY

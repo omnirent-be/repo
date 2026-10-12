@@ -1062,6 +1062,7 @@
   "SortBy.heading": "Sortieren nach",
   "SortBy.highestPrice": "Höchster Preis",
   "SortBy.lowestPrice": "Niedrigster Preis",
+  "SortBy.mostPopular": "Beliebteste",
   "SortBy.newest": "Neueste",
   "SortBy.numericSortOption": "{fieldLabel} ({direction, select, asc {Aufsteigend} desc {Absteigend} other {}})",
   "SortBy.oldest": "Älteste",

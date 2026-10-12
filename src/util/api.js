@@ -236,3 +236,10 @@ export const deleteUserAccount = body => {
 export const sendContactMessage = body => {
   return post('/api/contact', body);
 };
+
+// Reports one page view of a listing so the "Populairste" sort option has
+// something to order by. Fire-and-forget: see server/api/listing-view.js
+// and src/hooks/useTrackListingView.js.
+export const trackListingView = listingId => {
+  return post('/api/listing-view', { listingId });
+};

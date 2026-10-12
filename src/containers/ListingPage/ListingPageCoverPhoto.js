@@ -14,6 +14,7 @@ import { getMarketplaceEntities } from '../../ducks/marketplaceData.duck';
 import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck';
 import { initializeCardPaymentData } from '../../ducks/stripe.duck.js';
 import { login, signup } from '../../ducks/auth.duck';
+import useTrackListingView from '../../hooks/useTrackListingView';
 
 // Shared components
 import {
@@ -169,6 +170,12 @@ export const ListingPageComponent = props => {
     noIndexMaybe,
     hasInvalidListingData,
   } = derivedData;
+
+  // Counts towards the "Populairste" sort order (once per visitor).
+  useTrackListingView(
+    listingId?.uuid,
+    !!currentListing?.id && !isOwnListing && !isVariant && !showListingError
+  );
 
   const topbar = <TopbarContainer />;
 

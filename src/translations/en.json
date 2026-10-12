@@ -1650,6 +1650,7 @@
   "SortBy.heading": "Sorteer op",
   "SortBy.highestPrice": "Hoogste prijs",
   "SortBy.lowestPrice": "Laagste prijs",
+  "SortBy.mostPopular": "Populairste",
   "SortBy.newest": "Nieuwste",
   "SortBy.numericSortOption": "{fieldLabel} ({direction, select, asc {laag naar hoog} desc {hoog naar laag} other {}})",
   "SortBy.oldest": "Oudste",
