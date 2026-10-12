@@ -86,13 +86,9 @@ const DecorIcon = () => (
 /** Geluid, Licht & AV-techniek - mixing console with faders */
 const SoundIcon = () => (
   <Svg>
-    <rect x="2" y="5" width="20" height="14" rx="2" />
-    <path d="M7 8.5v7" />
-    <path d="M12 8.5v7" />
-    <path d="M17 8.5v7" />
-    <path d="M5.5 11h3" />
-    <path d="M10.5 14h3" />
-    <path d="M15.5 10h3" />
+    <path d="M11 5 6 9H3v6h3l5 4V5z" />
+    <path d="M15.5 9a4 4 0 0 1 0 6" />
+    <path d="M18.5 6.5a8 8 0 0 1 0 11" />
   </Svg>
 );
 
