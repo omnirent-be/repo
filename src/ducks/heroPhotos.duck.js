@@ -12,11 +12,11 @@ const PHOTOS_WANTED = 5;
 const VARIANT = 'hero-photo';
 
 // Hand-picked listings for the hero, shown first and in this order: strong
-// real photos, spread over tents, kids' entertainment, photobooth and food.
+// real photos, spread over barbecue, kids' entertainment, glamping, photobooth and food.
 // If one is unpublished or loses its photo it is skipped and the next
 // candidate takes its place. Replace the ids to change the selection.
 const CURATED_LISTING_IDS = [
-  '6a637ff2-f6f5-429b-834b-b75717ba4f4b', // Partyvouwtent
+  '6a9ea99a-1f13-4ac2-abe6-fb73f74807c8', // BBQ cortenstaal
   '6aa0633c-7e88-4b43-a4a9-7f72fd6c0780', // Wit springkasteel met ballenbad
   '6a4d74e3-352d-49c8-b289-fdc6027ee7b7', // Luxe Glampingtent met Houten Vloer
   '6aa06a3b-0d05-4ed3-af8e-ed90a62c3111', // Fotobooth
