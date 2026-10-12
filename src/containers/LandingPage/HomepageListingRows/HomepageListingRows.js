@@ -12,6 +12,7 @@ import { trackEvent } from '../../../util/analytics';
 import css from './HomepageListingRows.module.css';
 
 const POPULAR_ROW_ID = 'popular';
+const POPULAR_SORT_KEY = 'meta_viewCount';
 
 // One strict 2x4 grid ("Populair voor feesten in Gent") rather than
 // several separate carousels - with 200+ real listings behind this, one
@@ -36,17 +37,24 @@ const HomepageListingRowsComponent = props => {
       .catch(() => setTotalCount(null));
   }, []);
 
+  // Most viewed first once "Populairste" is the default sort (see
+  // REACT_APP_POPULAR_SORT_DEFAULT in configSearch.js); newest first until then.
+  const sort =
+    config.search?.sortConfig?.options?.[0]?.key === POPULAR_SORT_KEY
+      ? POPULAR_SORT_KEY
+      : '-createdAt';
+
   const rowId = categoryFilter ? `category:${categoryFilter.subCategoryId}` : POPULAR_ROW_ID;
   const title = categoryFilter
     ? subcategories.find(s => s.id === categoryFilter.subCategoryId)?.name || ''
     : intl.formatMessage({ id: 'HomepageListingRows.popular' });
   const searchParams = categoryFilter
     ? {
-        sort: '-createdAt',
+        sort,
         [`pub_${categoryKey}1`]: categoryFilter.topCategoryId,
         [`pub_${categoryKey}2`]: categoryFilter.subCategoryId,
       }
-    : { sort: '-createdAt' };
+    : { sort };
 
   useEffect(() => {
     if (!rows[rowId]) {
