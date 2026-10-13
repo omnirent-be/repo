@@ -87,6 +87,10 @@ export const LandingPageComponent = props => {
       featuredListings={getFeaturedListingsProps(camelize(ASSET_NAME), props)}
       mainContentPrepend={
         <>
+          {/* Profile-completion nudge - only ever shown to an authenticated
+              user with an incomplete profile. It sits at the very top so
+              it is the first thing they see, and renders nothing for anonymous visitors. */}
+          <AccountSetupChecklist />
           {/* 1. Hero (koptekst + zoekmodule + visual) + Social Proof Ticker
               (rendered inside LandingPageHero, right below the hero) */}
           <LandingPageHero />
@@ -107,10 +111,6 @@ export const LandingPageComponent = props => {
               niet langer gelijkwaardig met de huurdersflow bovenaan, maar
               een eigen sectie met het echte voordeel en een duidelijke CTA. */}
           <HomepageProviderSection />
-          {/* Profile-completion nudge - only ever shown to an authenticated
-              user with an incomplete profile, so it never displaces listings
-              for the anonymous visitors this order is optimized for. */}
-          <AccountSetupChecklist />
         </>
       }
     />

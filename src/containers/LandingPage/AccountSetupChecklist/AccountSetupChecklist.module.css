@@ -1,11 +1,11 @@
 @import '../../../styles/customMediaQueries.css';
 
 .root {
-  padding: 24px 16px 0 16px;
+  padding: 16px 16px 8px 16px;
   background-color: var(--colorWhite);
 
   @media (--viewportMedium) {
-    padding: 32px 32px 0 32px;
+    padding: 24px 32px 8px 32px;
   }
 }
 
