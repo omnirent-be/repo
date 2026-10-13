@@ -1,5 +1,7 @@
 import React from 'react';
+import { useConfiguration } from '../../../../context/configurationContext';
 import { FormattedMessage } from '../../../../util/reactIntl';
+import { openCookieSettings } from '../../../../util/consent';
 import { LinkedLogo, NamedLink } from '../../../../components';
 
 import Field from '../../Field';
@@ -85,6 +87,10 @@ const SectionFooter = props => {
     };
   });
 
+  const config = useConfiguration();
+  const hasTrackingScripts = !!(
+    config?.analytics?.facebookPixelId || config?.analytics?.googleAnalyticsId
+  );
   const bottomBlocks = blocks.filter(block => !HIDDEN_BLOCK_IDS.includes(block.blockId));
   const showSocialMediaLinks = socialMediaLinks?.length > 0;
   const hasMatchMedia = typeof window !== 'undefined' && window?.matchMedia;
@@ -147,6 +153,11 @@ const SectionFooter = props => {
             <div className={css.legal}>
               <BlockBuilder blocks={bottomBlocks} sectionId={sectionId} options={options} />
             </div>
+            {hasTrackingScripts ? (
+              <button type="button" className={css.cookieSettings} onClick={openCookieSettings}>
+                <FormattedMessage id="SectionFooter.cookieSettings" />
+              </button>
+            ) : null}
             <span className={css.madeFor}>
               <FormattedMessage id="SectionFooter.madeFor" />
             </span>

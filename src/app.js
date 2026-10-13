@@ -23,7 +23,7 @@ import {
 import { includeCSSProperties } from './util/style';
 import { IncludeScripts } from './util/includeScripts';
 
-import { MaintenanceMode } from './components';
+import { CookieConsent, MaintenanceMode } from './components';
 
 // routing
 import routeConfiguration from './routing/routeConfiguration';
@@ -270,6 +270,7 @@ export const ClientApp = props => {
             <IncludeScripts config={appConfig} initialPathname={window.location.pathname} />
             <BrowserRouter>
               <Routes logLoadDataCalls={logLoadDataCalls} />
+              <CookieConsent analytics={appConfig.analytics} />
             </BrowserRouter>
           </HelmetProvider>
         </Provider>

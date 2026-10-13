@@ -179,3 +179,17 @@
   font-size: 12px;
   color: color-mix(in srgb, var(--colorWhite) 85%, transparent);
 }
+
+.cookieSettings {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--colorWhite) 85%, transparent);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--colorWhite);
+    text-decoration: underline;
+  }
+}

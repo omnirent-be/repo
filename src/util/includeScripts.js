@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 
 import { useRouteConfiguration } from '../context/routeConfigurationContext';
 import { matchPathname } from '../util/routes';
+import { CONSENT_DENIED, CONSENT_GRANTED, clearTrackingCookies, useConsent } from '../util/consent';
+import { trackMetaEvent } from '../util/analytics';
 
 const MAPBOX_SCRIPT_ID = 'mapbox_GL_JS';
 const GOOGLE_MAPS_SCRIPT_ID = 'GoogleMapsApi';
@@ -59,6 +61,31 @@ const canDeferStripeLibrary = (initialPathname, routeConfiguration) => {
 export const IncludeScripts = props => {
   const { marketplaceRootURL: rootURL, maps, analytics, stripe } = props?.config || {};
   const { googleAnalyticsId, plausibleDomains, facebookPixelId } = analytics;
+
+  // Marketing/analytics scripts (Google Analytics, Meta Pixel) are only loaded after the
+  // visitor accepted cookies (see util/consent.js and components/CookieConsent). The
+  // server never renders them, since consent is only known in the browser.
+  const consent = useConsent();
+  const analyticsAllowed = consent === CONSENT_GRANTED;
+  const analyticsAllowedBefore = useRef(analyticsAllowed);
+
+  // When consent is given on the current page, the page's own PageView has already
+  // been missed (the Pixel did not exist yet), so send it now. On later page loads
+  // with consent already stored, MetaPixelHandler sends it on the route change.
+  useEffect(() => {
+    if (analyticsAllowed && !analyticsAllowedBefore.current && facebookPixelId) {
+      trackMetaEvent('PageView');
+    }
+    analyticsAllowedBefore.current = analyticsAllowed;
+  }, [analyticsAllowed, facebookPixelId]);
+
+  // Tracking scripts may rewrite their cookies while the page unloads after consent was
+  // withdrawn, so remove them again on the next load.
+  useEffect(() => {
+    if (consent === CONSENT_DENIED) {
+      clearTrackingCookies();
+    }
+  }, [consent]);
 
   const routeConfiguration = useRouteConfiguration();
   // Note: Affects Mapbox only. Google Maps initialization is not yet ready to support asynchronous loading.
@@ -141,7 +168,7 @@ export const IncludeScripts = props => {
     );
   }
 
-  if (googleAnalyticsId && hasGoogleAnalyticsv4Id) {
+  if (analyticsAllowed && googleAnalyticsId && hasGoogleAnalyticsv4Id) {
     // Google Analytics: gtag.js
     // NOTE: This template is a single-page application (SPA).
     //       gtag.js sends initial page_view event after page load.
@@ -182,22 +209,13 @@ export const IncludeScripts = props => {
     );
   }
 
-  if (facebookPixelId) {
+  if (analyticsAllowed && facebookPixelId) {
     // Meta Pixel: async-load fbevents.js, same pattern as the gtag.js setup above -
     // define the fbq stub/queue before the script has loaded, so early fbq() calls
     // (init and events) are queued and replayed once fbevents.js is ready.
     analyticsLibraries.push(
       <script key="meta_pixel" async src="https://connect.facebook.net/en_US/fbevents.js"></script>
     );
-    analyticsLibraries.push(
-      <noscript
-        key="meta_pixel_noscript"
-        dangerouslySetInnerHTML={{
-          __html: `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${facebookPixelId}&ev=PageView&noscript=1" alt="" />`,
-        }}
-      />
-    );
-
     if (typeof window !== 'undefined') {
       if (!window.fbq) {
         const fbq = function() {

@@ -8,9 +8,9 @@ let warnedNotConfigured = false;
  * to the Pixel, so Meta deduplicates the two.
  *
  * Fire-and-forget: always answers 204 and never blocks the page. Needs
- * REACT_APP_FACEBOOK_PIXEL_ID and META_CAPI_ACCESS_TOKEN; without them it does
- * nothing. META_CAPI_TEST_EVENT_CODE (optional) routes events to the "Test
- * events" tab in Meta Events Manager.
+ * REACT_APP_FACEBOOK_PIXEL_ID and META_CAPI_ACCESS_TOKEN, and the cookie consent
+ * cookie to be "granted"; without them it does nothing. META_CAPI_TEST_EVENT_CODE
+ * (optional) routes events to the "Test events" tab in Meta Events Manager.
  *
  * Body: { eventName, eventId, eventSourceUrl, customData? }
  */
@@ -27,6 +27,13 @@ module.exports = (req, res) => {
         'Meta Conversions API events are not sent: REACT_APP_FACEBOOK_PIXEL_ID or META_CAPI_ACCESS_TOKEN is not set.'
       );
     }
+    res.status(204).end();
+    return;
+  }
+
+  // Marketing events are only allowed with the visitor's consent (cookie set by
+  // src/util/consent.js), so the endpoint cannot be used to track visitors who declined.
+  if (req.cookies?.omnirent_cookie_consent !== 'granted') {
     res.status(204).end();
     return;
   }

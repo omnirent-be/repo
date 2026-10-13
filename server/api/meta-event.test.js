@@ -15,7 +15,7 @@ const req = {
     eventSourceUrl: 'https://omnirent.be/',
   },
   ip: '203.0.113.5',
-  cookies: {},
+  cookies: { omnirent_cookie_consent: 'granted' },
   get: () => 'Mozilla/5.0',
 };
 
@@ -54,6 +54,17 @@ describe('meta-event', () => {
     expect(args).toMatchObject({ pixelId: '123', accessToken: 'token', testEventCode: 'TEST1' });
     expect(args.events[0]).toMatchObject({ event_name: 'PageView', event_id: 'evt-1' });
     expect(res.status).toHaveBeenCalledWith(204);
+  });
+
+  it('does not call Meta when the visitor has not granted cookie consent', () => {
+    process.env.REACT_APP_FACEBOOK_PIXEL_ID = '123';
+    process.env.META_CAPI_ACCESS_TOKEN = 'token';
+    ['denied', undefined].forEach(value => {
+      const res = mockRes();
+      metaEvent({ ...req, cookies: { omnirent_cookie_consent: value } }, res);
+      expect(res.status).toHaveBeenCalledWith(204);
+    });
+    expect(sendEvents).not.toHaveBeenCalled();
   });
 
   it('does not call Meta for an invalid event, and still answers 204', () => {
