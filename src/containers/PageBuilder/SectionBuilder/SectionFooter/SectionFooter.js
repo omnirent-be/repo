@@ -1,5 +1,4 @@
 import React from 'react';
-import classNames from 'classnames';
 import { FormattedMessage } from '../../../../util/reactIntl';
 import { LinkedLogo, NamedLink } from '../../../../components';
 
@@ -9,37 +8,20 @@ import BlockBuilder from '../../BlockBuilder';
 import SectionContainer from '../SectionContainer';
 import css from './SectionFooter.module.css';
 
-// The number of columns (numberOfColumns) affects styling
-
-const GRID_CONFIG = [
-  { contentCss: css.contentCol1, gridCss: css.gridCol1 },
-  { contentCss: css.contentCol2, gridCss: css.gridCol2 },
-  { contentCss: css.contentCol3, gridCss: css.gridCol3 },
-  { contentCss: css.contentCol4, gridCss: css.gridCol4 },
-];
 const MAX_MOBILE_SCREEN_WIDTH = 1024;
 
 // Code-defined links, so key pages (incl. Contact) are always reachable from
-// the footer without depending on what's configured in Console. Search and
-// New listing are left out on purpose: the CTA band above already links them.
+// the footer without depending on what's configured in Console.
 const DISCOVER_LINKS = [
   { name: 'HowItWorksPage', labelId: 'SectionFooter.link.howItWorks' },
   { name: 'FaqPage', labelId: 'SectionFooter.link.faq' },
-  { name: 'ReferralPage', labelId: 'SectionFooter.link.referral' },
   { name: 'ContactPage', labelId: 'SectionFooter.link.contact' },
+  { name: 'NewListingPage', labelId: 'SectionFooter.link.becomeProvider' },
 ];
 
-const getIndex = numberOfColumns => numberOfColumns - 1;
-
-const getContentCss = numberOfColumns => {
-  const contentConfig = GRID_CONFIG[getIndex(numberOfColumns)];
-  return contentConfig ? contentConfig.contentCss : GRID_CONFIG[0].contentCss;
-};
-
-const getGridCss = numberOfColumns => {
-  const contentConfig = GRID_CONFIG[getIndex(numberOfColumns)];
-  return contentConfig ? contentConfig.gridCss : GRID_CONFIG[0].gridCss;
-};
+// Console footer blocks that are shown in the bottom row (privacy, terms, ...).
+// The "general" block only repeats links that are already in the main nav.
+const HIDDEN_BLOCK_IDS = ['general'];
 
 /**
  * @typedef {Object} SocialMediaLinkConfig
@@ -70,7 +52,6 @@ const getGridCss = numberOfColumns => {
  * @param {string?} props.rootClassName overwrite components own css.root
  * @param {string} props.sectionId id of the section
  * @param {'footer'} props.sectionType
- * @param {number} props.numberOfColumns columns for blocks in footer (1-4)
  * @param {Array<SocialMediaLinkConfig>?} props.socialMediaLinks array of social media link configs
  * @param {Object?} props.slogan
  * @param {Object?} props.copyright
@@ -85,7 +66,6 @@ const SectionFooter = props => {
     sectionId,
     className,
     rootClassName,
-    numberOfColumns = 1,
     socialMediaLinks = [],
     slogan,
     appearance,
@@ -105,6 +85,7 @@ const SectionFooter = props => {
     };
   });
 
+  const bottomBlocks = blocks.filter(block => !HIDDEN_BLOCK_IDS.includes(block.blockId));
   const showSocialMediaLinks = socialMediaLinks?.length > 0;
   const hasMatchMedia = typeof window !== 'undefined' && window?.matchMedia;
   const isMobileLayout = hasMatchMedia
@@ -124,7 +105,7 @@ const SectionFooter = props => {
       options={fieldOptions}
     >
       <div className={css.footer}>
-        <div className={classNames(css.content, getContentCss(numberOfColumns))}>
+        <div className={css.top}>
           <div className={css.brand}>
             <LinkedLogo
               rootClassName={css.logoLink}
@@ -142,9 +123,6 @@ const SectionFooter = props => {
           </div>
 
           <nav className={css.discover} aria-label="OmniRent">
-            <h3 className={css.columnTitle}>
-              <FormattedMessage id="SectionFooter.discover" />
-            </h3>
             <ul className={css.discoverList}>
               {DISCOVER_LINKS.map(link => (
                 <li key={link.name}>
@@ -155,10 +133,6 @@ const SectionFooter = props => {
               ))}
             </ul>
           </nav>
-
-          <div className={classNames(css.grid, getGridCss(numberOfColumns))}>
-            <BlockBuilder blocks={blocks} sectionId={sectionId} options={options} />
-          </div>
         </div>
 
         <div className={css.bottom}>
@@ -168,9 +142,14 @@ const SectionFooter = props => {
               values={{ year: new Date().getFullYear() }}
             />
           </span>
-          <a className={css.toTop} href="#">
-            <FormattedMessage id="SectionFooter.toTop" />
-          </a>
+          <div className={css.bottomLinks}>
+            <div className={css.legal}>
+              <BlockBuilder blocks={bottomBlocks} sectionId={sectionId} options={options} />
+            </div>
+            <span className={css.madeFor}>
+              <FormattedMessage id="SectionFooter.madeFor" />
+            </span>
+          </div>
         </div>
       </div>
     </SectionContainer>
