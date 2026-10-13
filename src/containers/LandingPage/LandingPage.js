@@ -21,6 +21,7 @@ import HomepageListingRows from './HomepageListingRows/HomepageListingRows';
 import HomepageCategorySlider from './HomepageCategorySlider/HomepageCategorySlider';
 import HomepagePopularSearches from './HomepagePopularSearches/HomepagePopularSearches';
 import HomepageStepsSection from './HomepageStepsSection/HomepageStepsSection';
+import HomepageFaqSection from './HomepageFaqSection/HomepageFaqSection';
 import HomepageReviewsSection from './HomepageReviewsSection/HomepageReviewsSection';
 import HomepageProviderSection from './HomepageProviderSection/HomepageProviderSection';
 // HomepagePartyCalculator, HomepageEarningsCalculator, HomepageHowItWorksSection
@@ -110,7 +111,9 @@ export const LandingPageComponent = props => {
           {/* 5. Echte, publieke reviews - rendert niets zolang er nog geen
               echte zijn (zie recentReviews.duck.js), nooit verzonnen quotes. */}
           <HomepageReviewsSection />
-          {/* 6. Aparte, volwaardige route voor de aanbodzijde (verhuurders) -
+          {/* 6. Belangrijkste vragen + link naar alle vragen */}
+          <HomepageFaqSection />
+          {/* 7. Aparte, volwaardige route voor de aanbodzijde (verhuurders) -
               niet langer gelijkwaardig met de huurdersflow bovenaan, maar
               een eigen sectie met het echte voordeel en een duidelijke CTA. */}
           <HomepageProviderSection />

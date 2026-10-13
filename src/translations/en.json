@@ -2558,5 +2558,20 @@
   "RentalPage.feestmateriaal.faq3Q": "Moet ik een borg betalen?",
   "RentalPage.feestmateriaal.faq3A": "Sommige advertenties vragen een waarborg. Die wordt gereserveerd op je kaart en na de huurperiode vrijgegeven als alles in orde is.",
   "RentalPage.feestmateriaal.faq4Q": "Kan ik zelf materiaal verhuren?",
-  "RentalPage.feestmateriaal.faq4A": "Ja. Plaats gratis een advertentie, bepaal zelf je prijs en beschikbaarheid en ontvang aanvragen van mensen in je buurt."
+  "RentalPage.feestmateriaal.faq4A": "Ja. Plaats een advertentie, bepaal zelf je prijs en beschikbaarheid en ontvang aanvragen van mensen in je buurt.",
+  "HomepageFaqSection.eyebrow": "Goed om te weten",
+  "HomepageFaqSection.title": "Geen vraagtekens. Wel een goed feest.",
+  "HomepageFaqSection.lede": "Van je eerste aanvraag tot het terugbrengen: dit wil je vooraf weten.",
+  "HomepageFaqSection.contact": "Nog een vraag? Neem contact op",
+  "HomepageFaqSection.viewAll": "Bekijk alle veelgestelde vragen",
+  "HomepageFaqSection.free.q": "Is een huuraanvraag gratis?",
+  "HomepageFaqSection.free.a": "Ja. Je stuurt gratis een aanvraag en je kaart wordt nog niet belast. Na aanvaarding door de verhuurder wordt de betaling verwerkt volgens de voorwaarden die bij het materiaal staan.",
+  "HomepageFaqSection.delivery.q": "Kan het materiaal geleverd worden?",
+  "HomepageFaqSection.delivery.a": "Dat verschilt per verhuurder. In de advertentie zie je of ophalen, levering of allebei mogelijk is. Twijfel je, stuur dan een bericht aan de verhuurder.",
+  "HomepageFaqSection.depositCancel.q": "Hoe zit het met de borg en annuleren?",
+  "HomepageFaqSection.depositCancel.a": "Sommige advertenties vragen een waarborg. Die wordt gereserveerd op je kaart en na de huurperiode vrijgegeven als alles in orde is. De annuleringsvoorwaarden verschillen per advertentie en staan bij het materiaal.",
+  "HomepageFaqSection.availability.q": "Hoe weet ik of mijn datum beschikbaar is?",
+  "HomepageFaqSection.availability.a": "Kies je datum bij de advertentie en stuur je aanvraag. De verhuurder bevestigt of het materiaal beschikbaar is. Pas daarna wordt de betaling verwerkt.",
+  "HomepageFaqSection.rentOut.q": "Kan ik zelf materiaal verhuren?",
+  "HomepageFaqSection.rentOut.a": "Ja. Plaats een advertentie met foto’s, prijs en beschikbaarheid en ontvang aanvragen van mensen in je buurt. Jij bepaalt de prijs en wanneer het uitkomt."
 }
