@@ -70,24 +70,34 @@ const AccountSetupChecklistComponent = props => {
     <section className={css.root} aria-labelledby="account-setup-title">
       <div className={css.inner}>
         <div className={css.header}>
-          <div>
+          <div className={css.headerMain}>
             <h2 id="account-setup-title" className={css.title}>
               <FormattedMessage id="AccountSetup.title" />
             </h2>
-            <p className={css.progressText}>
-              <FormattedMessage
-                id="AccountSetup.progress"
-                values={{ done: doneCount, total: steps.length }}
-              />
-            </p>
+            <div className={css.progress}>
+              <div
+                className={css.bar}
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={steps.length}
+                aria-valuenow={doneCount}
+              >
+                <span
+                  className={css.barFill}
+                  style={{ width: `${(doneCount / steps.length) * 100}%` }}
+                />
+              </div>
+              <span className={css.progressText}>
+                <FormattedMessage
+                  id="AccountSetup.progress"
+                  values={{ done: doneCount, total: steps.length }}
+                />
+              </span>
+            </div>
           </div>
           <button type="button" className={css.dismiss} onClick={onDismiss}>
             <FormattedMessage id="AccountSetup.dismiss" />
           </button>
-        </div>
-
-        <div className={css.bar}>
-          <span className={css.barFill} style={{ width: `${(doneCount / steps.length) * 100}%` }} />
         </div>
 
         <ul className={css.list}>
