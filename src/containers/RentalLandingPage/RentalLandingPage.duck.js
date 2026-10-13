@@ -17,11 +17,11 @@ export const getRentalRowIds = pageId => ({
 
 /**
  * Creates a route `loadData` function for one rental landing page (for example
- * "springkasteel huren Gent"). It fetches the page's listings, plus the optional
+ * "springkasteel huren in Temse"). It fetches the page's listings, plus the optional
  * fallback listings that fill the page when only a few listings match exactly.
  * It runs on the server for SSR and on the client when navigating to the page.
  *
- * @param {Object} page entry of `src/config/rentalPages.json`
+ * @param {Object} page entry of `rentalPages` in `src/util/rentalPages.js`
  * @returns {Function} (params, search, config) => thunk
  */
 export const createLoadData = page => (params, search, config) => dispatch => {

@@ -1,0 +1,162 @@
+import React, { useState } from 'react';
+import { Field, Form as FinalForm } from 'react-final-form';
+
+import { FormattedMessage, useIntl } from '../../util/reactIntl';
+import { sendLead } from '../../util/api';
+import { trackEvent, trackMetaEvent } from '../../util/analytics';
+import { composeValidators, emailFormatValid, required } from '../../util/validators';
+
+import { FieldTextInput, Form, NamedLink, PrimaryButton } from '../../components';
+
+import css from './RentalLandingPage.module.css';
+
+export const LEAD_FORM_ID = 'rental-lead-form';
+const CONTACT_EMAIL = 'info@omnirent.be';
+const PHONE_CHARS_RE = /^[+()0-9 -]+$/;
+
+const todayIso = () => {
+  const now = new Date();
+  const month = `${now.getMonth() + 1}`.padStart(2, '0');
+  const day = `${now.getDate()}`.padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+};
+
+// Final Form validator: the visitor may leave either a phone number or an e-mail address.
+const phoneOrEmail = message => value => {
+  const trimmed = (value || '').trim();
+  const digitCount = (trimmed.match(/[0-9]/g) || []).length;
+  const isPhone = digitCount >= 8 && PHONE_CHARS_RE.test(trimmed);
+  const isEmail = emailFormatValid(message)(trimmed) === undefined;
+  return isPhone || isEmail ? undefined : message;
+};
+
+const buildMailto = (values, pageTitle, pageUrl) => {
+  const subject = `[Aanvraag - ${pageTitle}] ${values.name}`;
+  const body = `Naam: ${values.name}\nTelefoon of e-mail: ${values.contact}\nGewenste datum: ${values.date}\nPagina: ${pageUrl}`;
+  return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
+    body
+  )}`;
+};
+
+/**
+ * Short lead form for the conversion landing pages: name, phone or e-mail, wanted date.
+ * It is sent to OmniRent by e-mail (server/api/lead.js). If that fails, for example because
+ * e-mail is not configured, it falls back to the visitor's own mail client so a request is
+ * never lost. A confirmed send fires the Meta `Lead` event (browser and Conversions API).
+ *
+ * @component
+ * @param {Object} props
+ * @param {Object} props.page the landing page entry (see src/util/rentalPages.js)
+ * @param {string} props.pageTitle title of the landing page, shown in the e-mail subject
+ * @param {string?} props.responsePromise optional promise about the answer speed
+ * @returns {JSX.Element}
+ */
+const RentalLeadForm = props => {
+  const { page, pageTitle, responsePromise } = props;
+  const intl = useIntl();
+  const [sent, setSent] = useState(false);
+  const [sentViaMailto, setSentViaMailto] = useState(false);
+
+  const msg = id => intl.formatMessage({ id: `RentalPage.form.${id}` });
+
+  const onSubmit = async values => {
+    const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+    try {
+      await sendLead({
+        name: values.name,
+        contact: values.contact,
+        date: values.date,
+        pageTitle,
+        pageUrl,
+        website: values.website,
+      });
+      setSent(true);
+      const eventParams = { content_name: page.id, content_category: page.categoryId };
+      trackMetaEvent('Lead', eventParams);
+      trackEvent('rental_lead_submitted', { page: page.id });
+    } catch (error) {
+      setSentViaMailto(true);
+      window.location.href = buildMailto(values, pageTitle, pageUrl);
+    }
+  };
+
+  if (sent) {
+    return (
+      <div className={css.formSuccess} role="status">
+        <h2 className={css.formSuccessTitle}>{msg('successTitle')}</h2>
+        <p className={css.formSuccessText}>{msg('successText')}</p>
+        {responsePromise ? <p className={css.formSuccessText}>{responsePromise}</p> : null}
+      </div>
+    );
+  }
+
+  return (
+    <FinalForm
+      onSubmit={onSubmit}
+      render={({ handleSubmit, submitting }) => (
+        <Form className={css.leadForm} onSubmit={handleSubmit} id={LEAD_FORM_ID}>
+          <FieldTextInput
+            id={`${LEAD_FORM_ID}.name`}
+            name="name"
+            type="text"
+            autoComplete="name"
+            label={msg('name')}
+            placeholder={msg('namePlaceholder')}
+            validate={required(msg('nameRequired'))}
+          />
+          <FieldTextInput
+            id={`${LEAD_FORM_ID}.contact`}
+            name="contact"
+            type="text"
+            autoComplete="email tel"
+            label={msg('contact')}
+            placeholder={msg('contactPlaceholder')}
+            validate={composeValidators(
+              required(msg('contactRequired')),
+              phoneOrEmail(msg('contactInvalid'))
+            )}
+          />
+          <FieldTextInput
+            id={`${LEAD_FORM_ID}.date`}
+            name="date"
+            type="date"
+            min={todayIso()}
+            label={msg('date')}
+            validate={required(msg('dateRequired'))}
+          />
+          <Field
+            name="website"
+            component="input"
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className={css.honeypot}
+          />
+          <PrimaryButton type="submit" inProgress={submitting} className={css.formSubmit}>
+            {submitting ? msg('sending') : msg('submit')}
+          </PrimaryButton>
+          {sentViaMailto ? (
+            <p className={css.formNote}>
+              <FormattedMessage id="RentalPage.form.mailtoNote" values={{ email: CONTACT_EMAIL }} />
+            </p>
+          ) : null}
+          <p className={css.formNote}>
+            <FormattedMessage
+              id="RentalPage.form.privacy"
+              values={{
+                privacyLink: chunks => (
+                  <NamedLink name="PrivacyPolicyPage" target="_blank" className={css.formLink}>
+                    {chunks}
+                  </NamedLink>
+                ),
+              }}
+            />
+          </p>
+        </Form>
+      )}
+    />
+  );
+};
+
+export default RentalLeadForm;

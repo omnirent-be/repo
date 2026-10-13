@@ -3,7 +3,9 @@ import React from 'react';
 import { FormattedMessage, useIntl } from '../../../util/reactIntl';
 import { NamedLink } from '../../../components';
 
-import rentalPages from '../../../config/rentalPages.json';
+import { rentalPages } from '../../../util/rentalPages';
+
+const HOMEPAGE_REGION_ID = 'gent';
 
 import css from './HomepagePopularSearches.module.css';
 
@@ -24,13 +26,15 @@ const HomepagePopularSearches = () => {
           <FormattedMessage id="HomepagePopularSearches.title" />
         </h2>
         <ul className={css.list}>
-          {rentalPages.map(page => (
-            <li key={page.id}>
-              <NamedLink name={`RentalLandingPage_${page.id}`} className={css.link}>
-                {intl.formatMessage({ id: `RentalPage.${page.id}.short` })} Gent
-              </NamedLink>
-            </li>
-          ))}
+          {rentalPages
+            .filter(page => page.regionId === HOMEPAGE_REGION_ID)
+            .map(page => (
+              <li key={page.id}>
+                <NamedLink name={page.routeName} className={css.link}>
+                  {intl.formatMessage({ id: `RentalPage.${page.categoryId}.short` })} Gent
+                </NamedLink>
+              </li>
+            ))}
         </ul>
       </div>
     </section>

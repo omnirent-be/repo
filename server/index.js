@@ -46,6 +46,7 @@ const dataLoader = require('./dataLoader');
 const { generateCSPNonce, csp } = require('./csp');
 const sdkUtils = require('./api-util/sdk');
 const { getSDKProxy } = require('./api-util/sdkCacheProxy');
+const { rentalPages } = require('../src/util/rentalPages');
 
 const buildPath = path.resolve(__dirname, '..', 'build');
 const dev = process.env.REACT_APP_ENV === 'development';
@@ -226,6 +227,13 @@ app.use(passport.initialize());
 
 // Server-side routes that do not render the application
 app.use('/api', apiRouter);
+
+// The first version of the landing pages lived at /springkasteel-huren-gent and so on.
+rentalPages
+  .filter(page => page.legacySlug)
+  .forEach(page => {
+    app.get(`/${page.legacySlug}`, (req, res) => res.redirect(301, `/${page.slug}`));
+  });
 
 const noCacheHeaders = {
   'Cache-control': 'no-cache, no-store, must-revalidate',

@@ -237,6 +237,11 @@ export const sendContactMessage = body => {
   return post('/api/contact', body);
 };
 
+// Landing page lead form (name, phone or e-mail, wanted date). See server/api/lead.js.
+export const sendLead = body => {
+  return post('/api/lead', body);
+};
+
 // Reports one page view of a listing so the "Populairste" sort option has
 // something to order by. Fire-and-forget: see server/api/listing-view.js
 // and src/hooks/useTrackListingView.js.

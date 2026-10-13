@@ -3,7 +3,7 @@ import loadable from '@loadable/component';
 
 import getPageDataLoadingAPI from '../containers/pageDataLoadingAPI';
 import { createLoadData as createRentalPageLoadData } from '../containers/RentalLandingPage/RentalLandingPage.duck';
-import rentalPages from '../config/rentalPages.json';
+import { rentalPages } from '../util/rentalPages';
 import NotFoundPage from '../containers/NotFoundPage/NotFoundPage';
 import PreviewResolverPage from '../containers/PreviewResolverPage/PreviewResolverPage';
 
@@ -91,11 +91,11 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: LandingPage,
       loadData: pageDataLoadingAPI.LandingPage.loadData,
     },
-    // SEO landing pages, one per rental topic in the Ghent region (e.g. /springkasteel-huren-gent).
-    // The slugs are listed in src/config/rentalPages.json, which the server sitemap reads as well.
+    // Conversion landing pages, one per category and region (e.g. /springkasteel-huren/temse).
+    // They are listed in src/config/rentalPages.js, which the server sitemap reads as well.
     ...rentalPages.map(page => ({
       path: `/${page.slug}`,
-      name: `RentalLandingPage_${page.id}`,
+      name: page.routeName,
       component: RentalLandingPage,
       loadData: createRentalPageLoadData(page),
     })),

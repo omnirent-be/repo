@@ -5,7 +5,7 @@ const { createTTLCache } = require('../api-util/cache.js');
 const { getRootURL } = require('../api-util/rootURL.js');
 const sdkUtils = require('../api-util/sdk.js');
 
-const rentalPages = require('../../src/config/rentalPages.json');
+const { rentalPages } = require('../../src/util/rentalPages');
 
 const isSitemapDisabled = process.env.SITEMAP_DISABLED === 'true';
 const dev = process.env.REACT_APP_ENV === 'development';
@@ -55,8 +55,8 @@ const defaultPublicPaths = {
   search: { url: '/s' },
 };
 
-// Landing pages for rental topics in the Ghent region, e.g. /springkasteel-huren-gent.
-// Their slugs are defined in src/config/rentalPages.json, shared with the client routes.
+// Conversion landing pages per category and region, e.g. /springkasteel-huren/temse.
+// They are defined in src/config/rentalPages.js, shared with the client routes.
 rentalPages.forEach(page => {
   defaultPublicPaths[`rentalPage_${page.id}`] = { url: `/${page.slug}` };
 });

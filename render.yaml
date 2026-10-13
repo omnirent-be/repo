@@ -63,6 +63,17 @@ services:
       # so events show up there. Remove it again afterwards.
       - key: META_CAPI_TEST_EVENT_CODE
         sync: false
+      # Landing pages (/springkasteel-huren/temse etc.): public contact details shown as
+      # call and WhatsApp buttons. A button only shows when its variable is set.
+      # Phone and WhatsApp in international format, e.g. +32471234567.
+      - key: REACT_APP_CONTACT_PHONE
+        sync: false
+      - key: REACT_APP_WHATSAPP_NUMBER
+        sync: false
+      # Optional promise shown on the landing pages, only set it when you can keep it,
+      # e.g. "Wij antwoorden binnen 30 minuten tijdens kantooruren."
+      - key: REACT_APP_RESPONSE_PROMISE
+        sync: false
       # Soft launch: locks the .onrender.com URL behind a username/password
       # so only people with the credentials can reach the live site before
       # the public launch. Remove both vars in Render once it's time to go
