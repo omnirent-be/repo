@@ -3,7 +3,12 @@
 .root {
   margin: 32px 0 0 0;
   padding: 36px 24px;
-  background-color: rgb(223, 241, 230);
+  background-color: var(--marketplaceColor);
+  background-image: radial-gradient(
+    ellipse 520px 300px at 100% 0%,
+    color-mix(in srgb, var(--colorWhite) 10%, transparent),
+    transparent 65%
+  );
 
   @media (--viewportMedium) {
     margin-top: 48px;
@@ -40,7 +45,7 @@
   font-weight: var(--fontWeightBold);
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--marketplaceColor);
+  color: color-mix(in srgb, var(--colorWhite) 85%, transparent);
 }
 
 .eyebrowIcon {
@@ -53,7 +58,7 @@
   font-size: 24px;
   line-height: 1.3;
   font-weight: var(--fontWeightBold);
-  color: var(--colorGrey900);
+  color: var(--colorWhite);
 
   @media (--viewportMedium) {
     font-size: 30px;
@@ -65,7 +70,7 @@
   max-width: 52ch;
   font-size: 15px;
   line-height: 1.6;
-  color: var(--colorGrey600);
+  color: color-mix(in srgb, var(--colorWhite) 80%, transparent);
 }
 
 .actions {
@@ -87,16 +92,16 @@
   gap: 10px;
   padding: 14px 24px;
   border-radius: 12px;
-  background-color: var(--marketplaceColor);
-  color: var(--colorWhite);
+  background-color: var(--colorWhite);
+  color: var(--marketplaceColor);
   font-weight: var(--fontWeightSemiBold);
   font-size: 15px;
   white-space: nowrap;
   transition: background-color 0.2s ease, transform 0.2s ease;
 
   &:hover {
-    background-color: color-mix(in srgb, var(--marketplaceColor) 85%, black);
-    color: var(--colorWhite);
+    background-color: var(--colorGrey50);
+    color: var(--marketplaceColor);
     text-decoration: none;
     transform: translateY(-1px);
   }
@@ -106,5 +111,5 @@
   margin: 0;
   font-size: 12px;
   line-height: 18px;
-  color: var(--colorGrey500);
+  color: color-mix(in srgb, var(--colorWhite) 65%, transparent);
 }
