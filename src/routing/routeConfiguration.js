@@ -2,6 +2,8 @@ import React from 'react';
 import loadable from '@loadable/component';
 
 import getPageDataLoadingAPI from '../containers/pageDataLoadingAPI';
+import { createLoadData as createRentalPageLoadData } from '../containers/RentalLandingPage/RentalLandingPage.duck';
+import rentalPages from '../config/rentalPages.json';
 import NotFoundPage from '../containers/NotFoundPage/NotFoundPage';
 import PreviewResolverPage from '../containers/PreviewResolverPage/PreviewResolverPage';
 
@@ -38,6 +40,7 @@ const ContactPage = loadable(() => import(/* webpackChunkName: "ContactPage" */ 
 const HowItWorksPage = loadable(() => import(/* webpackChunkName: "HowItWorksPage" */ '../containers/HowItWorksPage/HowItWorksPage'));
 const ProfilePage = loadable(() => import(/* webpackChunkName: "ProfilePage" */ '../containers/ProfilePage/ProfilePage'));
 const ProfileSettingsPage = loadable(() => import(/* webpackChunkName: "ProfileSettingsPage" */ '../containers/ProfileSettingsPage/ProfileSettingsPage'));
+const RentalLandingPage = loadable(() => import(/* webpackChunkName: "RentalLandingPage" */ '../containers/RentalLandingPage/RentalLandingPage'));
 const RequestQuotePage = loadable(() => import(/* webpackChunkName: "RequestQuotePage" */ '../containers/RequestQuotePage/RequestQuotePage'));
 const SearchPageWithMap = loadable(() => import(/* webpackChunkName: "SearchPageWithMap" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithMap'));
 const SearchPageWithGrid = loadable(() => import(/* webpackChunkName: "SearchPageWithGrid" */ /* webpackPrefetch: true */  '../containers/SearchPage/SearchPageWithGrid'));
@@ -88,6 +91,14 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       component: LandingPage,
       loadData: pageDataLoadingAPI.LandingPage.loadData,
     },
+    // SEO landing pages, one per rental topic in the Ghent region (e.g. /springkasteel-huren-gent).
+    // The slugs are listed in src/config/rentalPages.json, which the server sitemap reads as well.
+    ...rentalPages.map(page => ({
+      path: `/${page.slug}`,
+      name: `RentalLandingPage_${page.id}`,
+      component: RentalLandingPage,
+      loadData: createRentalPageLoadData(page),
+    })),
     {
       path: '/p/:pageId',
       name: 'CMSPage',

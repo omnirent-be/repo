@@ -19,6 +19,7 @@ import LandingPageHero from './LandingPageHero/LandingPageHero';
 import AccountSetupChecklist from './AccountSetupChecklist/AccountSetupChecklist';
 import HomepageListingRows from './HomepageListingRows/HomepageListingRows';
 import HomepageCategorySlider from './HomepageCategorySlider/HomepageCategorySlider';
+import HomepagePopularSearches from './HomepagePopularSearches/HomepagePopularSearches';
 import HomepageStepsSection from './HomepageStepsSection/HomepageStepsSection';
 import HomepageReviewsSection from './HomepageReviewsSection/HomepageReviewsSection';
 import HomepageProviderSection from './HomepageProviderSection/HomepageProviderSection';
@@ -100,6 +101,8 @@ export const LandingPageComponent = props => {
           {/* 3. "Populair voor feesten in Gent" - strak 2x4-grid i.p.v. de
               eerdere losse carrousels per categorie */}
           <HomepageListingRows categoryFilter={selectedCategory} />
+          {/* Links naar de regio + categorie pagina's (springkasteel huren Gent, ...) */}
+          <HomepagePopularSearches />
           {/* 4. Vier geruststellingen + "Jouw feest in vier stappen" - de echte
               stappen van de request-to-book flow (HomepageTrustSteps is de
               oudere, compactere variant en staat niet meer op de homepage) */}
