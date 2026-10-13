@@ -101,6 +101,7 @@ const SectionFooter = props => {
       id={sectionId}
       className={className || css.root}
       rootClassName={rootClassName}
+      contentClassName={css.sectionContent}
       appearance={appearance}
       options={fieldOptions}
     >
