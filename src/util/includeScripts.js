@@ -185,7 +185,7 @@ export const IncludeScripts = props => {
   if (facebookPixelId) {
     // Meta Pixel: async-load fbevents.js, same pattern as the gtag.js setup above -
     // define the fbq stub/queue before the script has loaded, so early fbq() calls
-    // (init, PageView) are queued and replayed once fbevents.js is ready.
+    // (init and events) are queued and replayed once fbevents.js is ready.
     analyticsLibraries.push(
       <script key="meta_pixel" async src="https://connect.facebook.net/en_US/fbevents.js"></script>
     );
@@ -212,8 +212,10 @@ export const IncludeScripts = props => {
         fbq.version = '2.0';
         fbq.queue = [];
       }
-      window.fbq('init', facebookPixelId);
-      window.fbq('track', 'PageView');
+      if (!window.fbq.pixelInitialized) {
+        window.fbq.pixelInitialized = true;
+        window.fbq('init', facebookPixelId);
+      }
     }
   }
 

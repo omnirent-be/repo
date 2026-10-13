@@ -27,6 +27,7 @@ const referralAdminReport = require('./api/referral/admin-report');
 const contract = require('./api/contract');
 const contact = require('./api/contact');
 const listingView = require('./api/listing-view');
+const metaEvent = require('./api/meta-event');
 
 const createUserWithIdp = require('./api/auth/createUserWithIdp');
 
@@ -76,6 +77,7 @@ router.get('/referral/admin-report', referralAdminReport);
 router.get('/contract/:transactionId', contract);
 router.post('/contact', contact);
 router.post('/listing-view', listingView);
+router.post('/meta-event', metaEvent);
 router.post('/idenfy/initiate', idenfyInitiate);
 // Raw body needed here for HMAC signature verification - see
 // server/api/idenfy/callback.js and server/api-util/idenfy.js.

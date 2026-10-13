@@ -1,3 +1,5 @@
+import { sendMetaEvent } from './api';
+
 // A small, direct custom-event helper for interaction-time analytics (a
 // click, a form submit) - distinct from src/analytics/handlers.js, which
 // reacts to route changes and sends the Meta Pixel Standard Events
@@ -27,6 +29,34 @@ export const trackEvent = (name, params = {}) => {
   }
 };
 
+const createEventId = () => {
+  if (typeof window !== 'undefined' && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}`;
+};
+
+// Sends one Meta Pixel Standard Event from the browser (fbq) and the same
+// event through our server to the Meta Conversions API. Both carry the same
+// eventID, so Meta counts the pair once. The server call is fire-and-forget
+// and a no-op server-side until META_CAPI_ACCESS_TOKEN is configured.
+// Like fbq itself, this does nothing when the Pixel is not loaded.
+export const trackMetaEvent = (name, params = {}) => {
+  if (typeof window === 'undefined' || !window.fbq) {
+    return;
+  }
+  const eventId = createEventId();
+  window.fbq('track', name, params, { eventID: eventId });
+  sendMetaEvent({
+    eventName: name,
+    eventId,
+    eventSourceUrl: window.location.href,
+    customData: params,
+  }).catch(() => {});
+};
+
 // For the rare interaction that has no route-change equivalent in
 // handlers.js's MetaPixelHandler (so no risk of double-counting) and
 // genuinely warrants its own Meta Pixel Standard Event - e.g. a completed
@@ -35,10 +65,7 @@ export const trackEvent = (name, params = {}) => {
 // trackEvent: most of our custom events DO have a route-based counterpart,
 // and must never get a Standard Event from both places.
 export const trackStandardEvent = (name, params = {}) => {
-  if (typeof window === 'undefined' || !window.fbq) {
-    return;
-  }
-  window.fbq('track', name, params);
+  trackMetaEvent(name, params);
 };
 
 const MOBILE_MAX_WIDTH = 767;

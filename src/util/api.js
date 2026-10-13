@@ -243,3 +243,10 @@ export const sendContactMessage = body => {
 export const trackListingView = listingId => {
   return post('/api/listing-view', { listingId });
 };
+
+// Forwards a browser Meta Pixel event to the Meta Conversions API through our
+// own server (server/api/meta-event.js), using the same eventId as the Pixel
+// call so Meta can deduplicate them. Fire-and-forget.
+export const sendMetaEvent = ({ eventName, eventId, eventSourceUrl, customData }) => {
+  return post('/api/meta-event', { eventName, eventId, eventSourceUrl, customData });
+};

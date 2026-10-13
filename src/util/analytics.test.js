@@ -1,8 +1,17 @@
+jest.mock('./api', () => ({
+  sendMetaEvent: jest.fn(),
+}));
+
+import { sendMetaEvent } from './api';
 import { trackEvent, trackStandardEvent, getDeviceType, getTrafficSource } from './analytics';
 
 describe('getDeviceType', () => {
   const setWidth = width => {
-    Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: width });
+    Object.defineProperty(window, 'innerWidth', {
+      writable: true,
+      configurable: true,
+      value: width,
+    });
   };
 
   it('returns mobile under the mobile breakpoint', () => {
@@ -73,7 +82,7 @@ describe('trackEvent', () => {
     delete window.fbq;
   });
 
-  it('never sends a Standard Event itself - that is handlers.js MetaPixelHandler\'s job', () => {
+  it("never sends a Standard Event itself - that is handlers.js MetaPixelHandler's job", () => {
     window.fbq = jest.fn();
     trackEvent('listing_clicked', { listing_id: 'abc' });
     expect(window.fbq).not.toHaveBeenCalledWith('track', expect.anything(), expect.anything());
@@ -82,14 +91,32 @@ describe('trackEvent', () => {
 });
 
 describe('trackStandardEvent', () => {
-  it('does nothing when fbq is not available', () => {
-    expect(() => trackStandardEvent('Contact')).not.toThrow();
+  beforeEach(() => {
+    sendMetaEvent.mockReset();
+    sendMetaEvent.mockResolvedValue();
   });
 
-  it('sends the Standard Event straight to fbq', () => {
+  it('does nothing when fbq is not available', () => {
+    expect(() => trackStandardEvent('Contact')).not.toThrow();
+    expect(sendMetaEvent).not.toHaveBeenCalled();
+  });
+
+  it('sends the Standard Event to fbq and the Conversions API with the same event id', () => {
     window.fbq = jest.fn();
     trackStandardEvent('Contact', { topic: 'support' });
-    expect(window.fbq).toHaveBeenCalledWith('track', 'Contact', { topic: 'support' });
+    expect(window.fbq).toHaveBeenCalledWith(
+      'track',
+      'Contact',
+      { topic: 'support' },
+      { eventID: expect.any(String) }
+    );
+    const { eventID } = window.fbq.mock.calls[0][3];
+    expect(sendMetaEvent).toHaveBeenCalledWith({
+      eventName: 'Contact',
+      eventId: eventID,
+      eventSourceUrl: window.location.href,
+      customData: { topic: 'support' },
+    });
     delete window.fbq;
   });
 });

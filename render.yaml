@@ -53,6 +53,16 @@ services:
       # Meta (Facebook) Pixel - not a secret, so set directly rather than sync: false.
       - key: REACT_APP_FACEBOOK_PIXEL_ID
         value: '1026773429933253'
+      # Meta Conversions API (server-side events, server/api/meta-event.js).
+      # Secret: create it in Meta Events Manager > Data sources > pixel >
+      # Settings > Conversions API > Generate access token, and set it in the
+      # Render dashboard. Without it, only the browser Pixel is active.
+      - key: META_CAPI_ACCESS_TOKEN
+        sync: false
+      # Optional: while testing, set the code from Events Manager > Test events
+      # so events show up there. Remove it again afterwards.
+      - key: META_CAPI_TEST_EVENT_CODE
+        sync: false
       # Soft launch: locks the .onrender.com URL behind a username/password
       # so only people with the credentials can reach the live site before
       # the public launch. Remove both vars in Render once it's time to go
