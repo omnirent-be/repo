@@ -130,6 +130,10 @@
   text-align: right;
 }
 
+.priceTransparencyOption {
+  display: block;
+}
+
 .priceTransparencyVatNote {
   composes: marketplaceTinyFontStyles from global;
   margin: 6px 0 0 0;

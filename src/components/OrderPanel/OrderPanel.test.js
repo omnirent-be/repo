@@ -337,8 +337,8 @@ describe('OrderPanel', () => {
     await waitFor(() => {
       expect(getByText('OrderPanel.staticDepositLabel')).toBeInTheDocument();
       expect(getByText('OrderPanel.staticDepositNotice')).toBeInTheDocument();
-      expect(getByText('OrderPanel.staticDeliveryLabel')).toBeInTheDocument();
-      expect(getByText('OrderPanel.staticDeliveryFromNotice')).toBeInTheDocument();
+      expect(getByText('OrderPanel.staticFulfilmentLabel')).toBeInTheDocument();
+      expect(getByText('OrderPanel.staticFulfilmentShippingFrom')).toBeInTheDocument();
       expect(getByText('OrderPanel.staticVatNotice')).toBeInTheDocument();
     });
   });
@@ -382,7 +382,7 @@ describe('OrderPanel', () => {
 
     await waitFor(() => {
       expect(queryByText('OrderPanel.staticDepositLabel')).not.toBeInTheDocument();
-      expect(queryByText('OrderPanel.staticDeliveryLabel')).not.toBeInTheDocument();
+      expect(queryByText('OrderPanel.staticFulfilmentLabel')).not.toBeInTheDocument();
       expect(queryByText('OrderPanel.staticVatNotice')).not.toBeInTheDocument();
     });
   });

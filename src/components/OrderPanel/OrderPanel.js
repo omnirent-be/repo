@@ -328,29 +328,29 @@ const PriceTransparencyNotice = props => {
           </span>
         </div>
       ) : null}
-      {pickupEnabled && !shippingEnabled ? (
+      {hasDeliveryInfo ? (
         <div className={css.priceTransparencyRow}>
           <span className={css.priceTransparencyLabel}>
-            <FormattedMessage id="OrderPanel.staticPickupOnlyLabel" />
+            <FormattedMessage id="OrderPanel.staticFulfilmentLabel" />
           </span>
           <span className={css.priceTransparencyValue}>
-            <FormattedMessage id="OrderPanel.staticPickupOnlyNotice" />
-          </span>
-        </div>
-      ) : shippingEnabled ? (
-        <div className={css.priceTransparencyRow}>
-          <span className={css.priceTransparencyLabel}>
-            <FormattedMessage id="OrderPanel.staticDeliveryLabel" />
-          </span>
-          <span className={css.priceTransparencyValue}>
-            {deliveryFromAmount ? (
-              <FormattedMessage
-                id="OrderPanel.staticDeliveryFromNotice"
-                values={{ deliveryFromAmount }}
-              />
-            ) : (
-              <FormattedMessage id="OrderPanel.staticDeliveryUnknownNotice" />
-            )}
+            {pickupEnabled ? (
+              <span className={css.priceTransparencyOption}>
+                <FormattedMessage id="OrderPanel.staticFulfilmentPickup" />
+              </span>
+            ) : null}
+            {shippingEnabled ? (
+              <span className={css.priceTransparencyOption}>
+                {deliveryFromAmount ? (
+                  <FormattedMessage
+                    id="OrderPanel.staticFulfilmentShippingFrom"
+                    values={{ deliveryFromAmount }}
+                  />
+                ) : (
+                  <FormattedMessage id="OrderPanel.staticFulfilmentShippingUnknown" />
+                )}
+              </span>
+            ) : null}
           </span>
         </div>
       ) : null}
