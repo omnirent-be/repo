@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 // Utils
 import { FormattedMessage } from '../../util/reactIntl';
+import { getPublicPlaceName } from '../../util/publicLocation';
 import { LISTING_STATE_CLOSED, AVAILABILITY_MULTIPLE_SEATS, propTypes } from '../../util/types';
 import { OFFER, REQUEST } from '../../transactions/transaction';
 import { getExternalReview, getMemberSinceYear } from '../../util/userHelpers';
@@ -201,7 +202,7 @@ export const ListingPageComponent = props => {
 
   // City, shown directly under the title so a visitor can judge where a
   // listing is without scrolling down to the map section further down.
-  const locationCity = publicData?.location?.address || null;
+  const locationCity = getPublicPlaceName(publicData?.location?.address);
 
   // Real native-review average + count next to the title - null (hidden)
   // rather than a fabricated score when the listing has zero reviews yet.

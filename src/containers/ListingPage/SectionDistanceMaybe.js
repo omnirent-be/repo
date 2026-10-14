@@ -3,6 +3,7 @@ import classNames from 'classnames';
 
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { obfuscatedCoordinates, userLocation } from '../../util/maps';
+import { getPublicPlaceName } from '../../util/publicLocation';
 import {
   clearUserLocation,
   distanceInKm,
@@ -56,7 +57,7 @@ const SectionDistanceMaybe = props => {
         listingId ? `${listingId.uuid}_${geolocation.lat}_${geolocation.lng}` : null
       )
     : geolocation;
-  const city = publicData?.location?.address;
+  const city = getPublicPlaceName(publicData?.location?.address);
 
   const applyLocation = location => {
     saveUserLocation(location);
