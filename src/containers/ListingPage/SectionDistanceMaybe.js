@@ -3,7 +3,7 @@ import classNames from 'classnames';
 
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { obfuscatedCoordinates, userLocation } from '../../util/maps';
-import { getPublicPlaceName } from '../../util/publicLocation';
+import usePublicLocationLabel from '../../hooks/usePublicLocationLabel';
 import {
   clearUserLocation,
   distanceInKm,
@@ -35,6 +35,11 @@ const SectionDistanceMaybe = props => {
   const { className, geolocation, publicData, listingId, mapsConfig, isOwnListing } = props;
   const intl = useIntl();
 
+  const city = usePublicLocationLabel({
+    location: publicData?.location,
+    geolocation,
+    mapsConfig,
+  });
   const [mine, setMine] = useState(null);
   const [ready, setReady] = useState(false);
   const [query, setQuery] = useState('');
@@ -57,7 +62,6 @@ const SectionDistanceMaybe = props => {
         listingId ? `${listingId.uuid}_${geolocation.lat}_${geolocation.lng}` : null
       )
     : geolocation;
-  const city = getPublicPlaceName(publicData?.location?.address);
 
   const applyLocation = location => {
     saveUserLocation(location);
@@ -122,7 +126,10 @@ const SectionDistanceMaybe = props => {
         </div>
         <div className={css.body}>
           <p className={css.headline}>
-            <FormattedMessage id="SectionDistanceMaybe.distance" values={{ km: formatKm(intl, km) }} />
+            <FormattedMessage
+              id="SectionDistanceMaybe.distance"
+              values={{ km: formatKm(intl, km) }}
+            />
             {city ? (
               <span className={css.city}>
                 <FormattedMessage id="SectionDistanceMaybe.inCity" values={{ city }} />

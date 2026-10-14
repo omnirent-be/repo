@@ -5,7 +5,6 @@ import classNames from 'classnames';
 
 // Utils
 import { FormattedMessage } from '../../util/reactIntl';
-import { getPublicPlaceName } from '../../util/publicLocation';
 import { LISTING_STATE_CLOSED, AVAILABILITY_MULTIPLE_SEATS, propTypes } from '../../util/types';
 import { OFFER, REQUEST } from '../../transactions/transaction';
 import { getExternalReview, getMemberSinceYear } from '../../util/userHelpers';
@@ -16,6 +15,7 @@ import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck
 import { initializeCardPaymentData } from '../../ducks/stripe.duck.js';
 import { login, signup } from '../../ducks/auth.duck';
 import useTrackListingView from '../../hooks/useTrackListingView';
+import usePublicLocationLabel from '../../hooks/usePublicLocationLabel';
 
 // Shared components
 import {
@@ -178,6 +178,13 @@ export const ListingPageComponent = props => {
     !!currentListing?.id && !isOwnListing && !isVariant && !showListingError
   );
 
+  // Nearest sub-municipality, shown directly under the title - never the street address.
+  const locationCity = usePublicLocationLabel({
+    location: publicData?.location,
+    geolocation,
+    mapsConfig: config.maps,
+  });
+
   const topbar = <TopbarContainer />;
 
   if (showListingError && showListingError.status === 404) {
@@ -199,10 +206,6 @@ export const ListingPageComponent = props => {
   }
   const unitType = publicData.unitType;
   const isNegotiation = processType === 'negotiation';
-
-  // City, shown directly under the title so a visitor can judge where a
-  // listing is without scrolling down to the map section further down.
-  const locationCity = getPublicPlaceName(publicData?.location?.address);
 
   // Real native-review average + count next to the title - null (hidden)
   // rather than a fabricated score when the listing has zero reviews yet.
