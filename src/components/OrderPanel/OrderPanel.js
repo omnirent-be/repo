@@ -331,7 +331,7 @@ const PriceTransparencyNotice = props => {
       {pickupEnabled && !shippingEnabled ? (
         <div className={css.priceTransparencyRow}>
           <span className={css.priceTransparencyLabel}>
-            <FormattedMessage id="OrderPanel.staticDeliveryLabel" />
+            <FormattedMessage id="OrderPanel.staticPickupOnlyLabel" />
           </span>
           <span className={css.priceTransparencyValue}>
             <FormattedMessage id="OrderPanel.staticPickupOnlyNotice" />
