@@ -73,7 +73,15 @@ const InboxLink = ({ notificationCount, inboxTab, intl }) => {
   );
 };
 
-const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLink, intl }) => {
+const ProfileMenu = ({
+  currentPage,
+  currentUser,
+  onLogout,
+  showManageListingsLink,
+  inboxTab,
+  notificationCount,
+  intl,
+}) => {
   const currentPageClass = page => {
     const isAccountSettingsPage =
       page === 'AccountSettingsPage' && ACCOUNT_SETTINGS_PAGES.includes(currentPage);
@@ -101,6 +109,17 @@ const ProfileMenu = ({ currentPage, currentUser, onLogout, showManageListingsLin
           >
             <span className={css.menuItemBorder} />
             <FormattedMessage id="TopbarDesktop.referralBadge" />
+          </NamedLink>
+        </MenuItem>
+        <MenuItem key="InboxPage">
+          <NamedLink
+            className={classNames(css.menuLink, currentPageClass('InboxPage'))}
+            name="InboxPage"
+            params={{ tab: inboxTab }}
+          >
+            <span className={css.menuItemBorder} />
+            <FormattedMessage id="TopbarDesktop.inboxLink" />
+            {notificationCount > 0 ? <span className={css.menuNotificationDot} /> : null}
           </NamedLink>
         </MenuItem>
         {showManageListingsLink ? (
@@ -239,6 +258,8 @@ const TopbarDesktop = props => {
       currentUser={currentUser}
       onLogout={onLogout}
       showManageListingsLink={showCreateListingsLink}
+      inboxTab={inboxTab}
+      notificationCount={notificationCount}
       intl={intl}
     />
   ) : null;
