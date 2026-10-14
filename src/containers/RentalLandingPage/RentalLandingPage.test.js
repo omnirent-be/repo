@@ -6,7 +6,7 @@ import { rentalPages } from '../../util/rentalPages';
 
 import { RentalLandingPageComponent } from './RentalLandingPage';
 
-const { waitFor } = testingLibrary;
+const { waitFor, within } = testingLibrary;
 
 jest.mock('../../util/api', () => ({
   ...jest.requireActual('../../util/api'),
@@ -69,7 +69,16 @@ describe('RentalLandingPage', () => {
     expect(getByLabelText('RentalPage.form.date')).toBeInTheDocument();
   });
 
-  it('has no navigation to other pages besides the legal links', async () => {
+  it('links the logo to the homepage', async () => {
+    const { getByRole } = renderPage('/bbq-huren/gent');
+    await waitFor(() => {
+      expect(getByRole('heading', { level: 1 })).toBeInTheDocument();
+    });
+    const [logoLink] = within(getByRole('banner')).getAllByRole('link');
+    expect(logoLink).toHaveAttribute('href', '/');
+  });
+
+  it('has no navigation to other pages besides the logo and the legal links', async () => {
     const { getByRole, queryByRole } = renderPage('/bbq-huren/waasland');
     await waitFor(() => {
       expect(getByRole('heading', { level: 1 })).toBeInTheDocument();

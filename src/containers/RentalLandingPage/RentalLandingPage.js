@@ -105,7 +105,7 @@ const IconChat = () => (
  * a specific headline with a real "vanaf" price, one clear call to action, direct contact
  * buttons (phone, WhatsApp, Messenger, Instagram) and a three-field form. A sticky bar keeps
  * the call to action in reach on mobile. The page has no navigation menu or footer links, so
- * visitors from ads stay on it.
+ * visitors from ads stay on it. The logo is the one exception and leads to the homepage.
  *
  * Listings come from `RentalLandingPage.duck.js`, the pages from `src/config/rentalPages.js`
  * and the copy from the `RentalPage.*` translations. The phone, WhatsApp and answer-speed
@@ -277,14 +277,14 @@ export const RentalLandingPageComponent = props => {
       <div className={css.root}>
         <header className={css.topBar}>
           <div className={css.topBarInner}>
-            <span className={css.logo} aria-label={common('logoLabel')}>
+            <NamedLink name="LandingPage" className={css.logo}>
               <span className={css.logoDesktop}>
                 <Logo layout="desktop" />
               </span>
               <span className={css.logoMobile}>
                 <Logo layout="mobile" />
               </span>
-            </span>
+            </NamedLink>
             <div className={css.topBarActions}>
               {stickyChannels.map(channel => renderChannel(channel, css.topBarChannel))}
               <a
