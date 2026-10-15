@@ -572,7 +572,7 @@ export const BookingDatesForm = props => {
       : {};
 
   const allTimeSlots = getAllTimeSlots(monthlyTimeSlots);
-  const hasMultipleSeatsAvailable = allTimeSlots.some(ts => ts.attributes?.seats > 1);
+  const showQuantityField = Number(publicData?.totalQuantity) > 1;
   const monthId = monthIdString(currentMonth);
   const currentMonthInProgress = monthlyTimeSlots[monthId]?.fetchTimeSlotsInProgress;
   const nextMonthId = monthIdString(nextMonthFn(currentMonth, timeZone));
@@ -830,7 +830,7 @@ export const BookingDatesForm = props => {
               }}
             />
 
-            {seatsEnabled && hasMultipleSeatsAvailable ? (
+            {seatsEnabled && showQuantityField ? (
               <FieldSelect
                 name="seats"
                 id="seats"
