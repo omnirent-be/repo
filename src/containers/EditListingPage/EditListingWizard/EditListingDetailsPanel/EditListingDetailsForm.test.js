@@ -203,13 +203,13 @@ describe('EditListingDetailsForm', () => {
         name: 'Feest & Events',
         subcategories: [
           {
-            id: 'Springkastelen-Fun',
-            name: 'Springkastelen & Fun',
-            subcategories: [{ id: 'Springkastelen', name: 'Springkastelen' }],
+            id: 'Entertainment-Kinderanimatie',
+            name: 'Entertainment & Kinderanimatie',
+            subcategories: [{ id: 'springkasteel', name: 'Springkastelen' }],
           },
           {
             id: 'tent-structuren',
-            name: 'Tent & Structuren',
+            name: 'Tenten',
             subcategories: [{ id: 'party-tent', name: 'Partytenten' }],
           },
         ],

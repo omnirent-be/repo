@@ -6,28 +6,33 @@
 // `publicData.smartTags: string[]`, shown as extra bullet points on the
 // listing page.
 //
-// NOTE: same caveat as categorySuggestion.js - categories live in Console,
-// not in this codebase, so this table needs a manual update if the
-// category tree changes there.
+// NOTE: same caveat as categorySuggestion.js - categories live in Console
+// (/listings/listing-categories.json), not in this codebase, so this table
+// needs a manual update if the category tree changes there.
 const TAGS_BY_CATEGORY = {
-  Springkastelen: ['waterdicht', 'omheining-inbegrepen', 'blower-inbegrepen', 'geschikt-buiten'],
-  'party-tent': ['waterdicht', 'inclusief-haringen', 'makkelijk-op-te-zetten', 'zijwanden-inbegrepen'],
-  'Paviljoen-gazebo': ['waterdicht', 'inclusief-haringen', 'makkelijk-op-te-zetten'],
+  springkasteel: ['waterdicht', 'omheining-inbegrepen', 'blower-inbegrepen', 'geschikt-buiten'],
+  'party-tent': [
+    'waterdicht',
+    'inclusief-haringen',
+    'makkelijk-op-te-zetten',
+    'zijwanden-inbegrepen',
+  ],
+  feesttent: ['waterdicht', 'inclusief-haringen', 'makkelijk-op-te-zetten', 'zijwanden-inbegrepen'],
+  slaaptent: ['waterdicht', 'inclusief-haringen', 'makkelijk-op-te-zetten'],
   Parasols: ['waterdicht', 'stevige-voet-inbegrepen'],
-  'Tafels-stoelen': ['stapelbaar', 'buiten-en-binnen', 'inclusief-hoezen'],
-  Feestverlichting: ['dimbaar', 'buiten-geschikt', 'inclusief-verlengkabel'],
-  Linnengoed: ['gestreken', 'gewassen-en-hygienisch'],
-  Decoratiesets: ['herbruikbaar', 'thema-aanpasbaar'],
-  'BBQ-kookapparatuur': ['gasfles-inbegrepen', 'gereinigd-geleverd', 'geschikt-groot-gezelschap'],
-  'Servies-glaswerk': ['vaatwasserbestendig', 'per-set-te-huur'],
-  'Koelboxen-dispensers': ['elektrisch', 'geschikt-buiten'],
-  'Slush-cocktailmachines': ['inclusief-siroop', 'makkelijk-te-reinigen'],
-  'PA-installatie': ['inclusief-microfoons', 'bluetooth', 'geschikt-buiten'],
-  'DJ-installatie': ['inclusief-kabels', 'plug-and-play'],
-  Feestlichten: ['geluidsgestuurd', 'afstandsbediening-inbegrepen'],
-  'Games-sporten': ['geschikt-alle-leeftijden', 'snel-opgezet'],
+  Tafels: ['stapelbaar', 'buiten-en-binnen', 'inclusief-hoezen'],
+  'Stoelen-Zitmeubilair': ['stapelbaar', 'buiten-en-binnen', 'inclusief-hoezen'],
+  Lounge: ['buiten-en-binnen'],
+  'verlichting-sfeer': ['dimbaar', 'geschikt-buiten', 'inclusief-verlengkabel'],
+  'Thema-Drapering': ['herbruikbaar', 'thema-aanpasbaar'],
+  barbecue: ['gasfles-inbegrepen', 'gereinigd-geleverd', 'geschikt-groot-gezelschap'],
+  'borden-servies': ['vaatwasserbestendig', 'per-set-te-huur'],
+  Koeling: ['elektrisch', 'geschikt-buiten'],
+  Geluidsinstallaties: ['inclusief-microfoons', 'bluetooth', 'geschikt-buiten'],
+  'DJ-apparatuur': ['inclusief-kabels', 'plug-and-play'],
+  'Verlichting-effecten': ['geluidsgestuurd', 'afstandsbediening-inbegrepen'],
+  'games-sporten': ['geschikt-alle-leeftijden', 'snel-opgezet'],
   'Photo-booth': ['inclusief-props', 'inclusief-afdrukken'],
-  'Trouwfotografie-apparatuur': ['professionele-uitrusting', 'inclusief-statief'],
 };
 
 /**

@@ -420,7 +420,7 @@ const EditListingDetailsForm = props => (
           return undefined;
         }
         const timeoutId = setTimeout(() => {
-          const suggestion = suggestCategoryFromTitle(title);
+          const suggestion = suggestCategoryFromTitle(title, selectableCategories);
           if (!suggestion) {
             return;
           }
