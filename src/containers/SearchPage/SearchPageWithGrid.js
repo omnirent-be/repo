@@ -25,7 +25,7 @@ import {
   onSortBy,
 } from './SearchPage.shared';
 
-import { CATEGORY_ICONS } from './CategoryIcons';
+import { iconForCategory } from './CategoryIcons';
 import FilterComponent from './FilterComponent';
 import SearchFiltersMobile from './SearchFiltersMobile/SearchFiltersMobile';
 import SortBy from './SortBy/SortBy';
@@ -62,7 +62,7 @@ const CategoryQuickNav = props => {
     <div className={css.categoryQuickNav}>
       {subcategories.map(sub => {
         const isActive = activeCategoryLevel2 === sub.id;
-        const CategoryIcon = CATEGORY_ICONS[sub.id];
+        const CategoryIcon = iconForCategory(sub.id, sub.name);
         return (
           <a
             key={sub.id}
@@ -107,7 +107,7 @@ const CategoryFilterTiles = props => {
       <div className={css.categoryTilesGrid}>
         {subcategories.map(sub => {
           const isActive = activeCategoryLevel2 === sub.id;
-          const CategoryIcon = CATEGORY_ICONS[sub.id];
+          const CategoryIcon = iconForCategory(sub.id, sub.name);
           return (
             <button
               key={sub.id}

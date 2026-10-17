@@ -1,125 +1,40 @@
 @import '../../../../styles/customMediaQueries.css';
 
-.root {
-  background-color: var(--colorWhite);
+.root,
+.root:nth-of-type(odd) {
+  background-color: color-mix(in srgb, var(--marketplaceColor) 55%, black);
+  color: var(--colorWhite);
 }
 
-.ctaBand {
-  background-color: var(--marketplaceColor);
-  background-image: radial-gradient(
-    ellipse 520px 300px at 100% 0%,
-    color-mix(in srgb, var(--colorWhite) 10%, transparent),
-    transparent 65%
-  );
-  padding: 40px 32px;
+.sectionContent {
+  position: relative;
+  padding: 24px 0 16px 0;
+  word-break: break-word;
 
   @media (--viewportMedium) {
-    padding: 56px 32px;
-  }
-}
-
-.ctaInner {
-  max-width: var(--contentMaxWidthPages);
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-
-  @media (--viewportLarge) {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 48px;
-  }
-}
-
-.ctaTitle {
-  margin: 0;
-  font-size: 26px;
-  line-height: 1.2;
-  color: var(--colorWhite);
-
-  @media (--viewportMedium) {
-    font-size: 32px;
-  }
-}
-
-.ctaText {
-  margin: 8px 0 0 0;
-  max-width: 48ch;
-  font-size: 16px;
-  line-height: 1.6;
-  color: color-mix(in srgb, var(--colorWhite) 80%, transparent);
-}
-
-.ctaButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  flex-shrink: 0;
-}
-
-.ctaPrimary,
-.ctaGhost {
-  display: inline-block;
-  padding: 12px 26px;
-  border-radius: 999px;
-  font-size: 15px;
-  font-weight: var(--fontWeightSemiBold);
-
-  &:hover {
-    text-decoration: none;
-  }
-}
-
-.ctaPrimary {
-  background-color: var(--colorWhite);
-  color: var(--marketplaceColor);
-
-  &:hover {
-    background-color: var(--colorGrey50);
-    color: var(--marketplaceColor);
-  }
-}
-
-.ctaGhost {
-  border: 1px solid color-mix(in srgb, var(--colorWhite) 45%, transparent);
-  color: var(--colorWhite);
-
-  &:hover {
-    background-color: color-mix(in srgb, var(--colorWhite) 10%, transparent);
-    color: var(--colorWhite);
+    padding: 28px 0 20px 0;
   }
 }
 
 .footer {
   max-width: var(--contentMaxWidthPages);
   margin: 0 auto;
-  padding: 48px 32px 24px 32px;
-
-  @media (--viewportLarge) {
-    padding-top: 64px;
-  }
-}
-
-.footer ul {
-  list-style-type: none;
-  padding-inline-start: 0;
-  margin: 0;
-}
-
-.content {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 36px;
+  padding: 0 24px;
 
   @media (--viewportMedium) {
-    grid-template-columns: 1fr 1fr;
-    gap: 40px 32px;
+    padding: 0 32px;
   }
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 
   @media (--viewportLarge) {
-    grid-template-columns: 1.5fr 1fr 2fr;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: 48px;
   }
 }
@@ -128,15 +43,7 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
-
-  @media (--viewportMedium) {
-    grid-column: 1 / -1;
-
-    @media (--viewportLarge) {
-      grid-column: auto;
-    }
-  }
+  gap: 6px;
 }
 
 .logoLink {
@@ -149,119 +56,140 @@
 }
 
 .logoWrapper {
-  max-width: 240px;
+  max-width: 140px;
 }
 
+/* The hosted logo is dark on a white background; invert it and blend it away so only the
+   light logo shapes remain on the dark footer. */
 .logoImage {
   height: auto;
   width: auto;
   max-width: 100%;
   object-fit: contain;
   object-position: left center;
+  filter: grayscale(1) invert(1) contrast(1.4);
+  mix-blend-mode: screen;
 }
 
 .slogan {
   max-width: 34ch;
   margin: 0;
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--colorGrey600);
-}
-
-.icons {
-  margin-top: 4px;
-}
-
-.icon {
-  font-size: 28px;
-  margin: 15px 15px 0px 0px;
-  padding: 10px 15px;
-}
-
-.columnTitle {
-  margin: 0 0 16px 0;
   font-size: 13px;
-  font-weight: var(--fontWeightSemiBold);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--colorGrey500);
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--colorWhite) 80%, transparent);
+}
+
+.brand .icons {
+  display: flex;
+  gap: 0;
+  margin-top: -6px;
+  margin-bottom: -6px;
+  transform: scale(0.9);
+  transform-origin: left center;
+  filter: brightness(0) invert(1);
+}
+
+.discover {
+  @media (--viewportLarge) {
+    padding-top: 4px;
+  }
 }
 
 .discoverList {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
 }
 
 .discoverLink {
-  font-size: 15px;
-  color: var(--colorGrey700);
+  font-size: 14px;
+  font-weight: var(--fontWeightMedium);
+  color: var(--colorWhite);
 
   &:hover {
-    color: var(--marketplaceColor);
-    text-decoration: none;
-  }
-}
-
-.grid {
-  display: grid;
-  gap: 32px;
-  align-content: start;
-}
-
-.gridCol1,
-.gridCol2,
-.gridCol3,
-.gridCol4 {
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 480px) {
-  .gridCol2,
-  .gridCol3,
-  .gridCol4 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (--viewportMedium) {
-  .grid {
-    grid-column: 1 / -1;
-
-    @media (--viewportLarge) {
-      grid-column: auto;
-    }
-  }
-
-  .gridCol3,
-  .gridCol4 {
-    grid-template-columns: repeat(3, 1fr);
+    color: var(--colorWhite);
+    text-decoration: underline;
   }
 }
 
 .bottom {
-  margin-top: 48px;
-  padding-top: 20px;
-  border-top: 1px solid var(--colorGrey100);
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--colorWhite) 18%, transparent);
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
+
+  @media (--viewportMedium) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
 }
 
 .copyright {
-  font-size: 13px;
-  color: var(--colorGrey500);
+  font-size: 12px;
+  color: color-mix(in srgb, var(--colorWhite) 85%, transparent);
 }
 
-.toTop {
-  font-size: 13px;
-  font-weight: var(--fontWeightSemiBold);
-  color: var(--colorGrey600);
+.bottomLinks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 24px;
+}
+
+/* Footer blocks come from Console as rendered markdown, so their markup has to be
+   styled through element selectors. */
+.legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+}
+
+.legal ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+.legal li {
+  margin: 0;
+  padding: 0;
+}
+
+.legal a {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--colorWhite) 85%, transparent);
 
   &:hover {
-    color: var(--marketplaceColor);
-    text-decoration: none;
+    color: var(--colorWhite);
+    text-decoration: underline;
+  }
+}
+
+.madeFor {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--colorWhite) 85%, transparent);
+}
+
+.cookieSettings {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--colorWhite) 85%, transparent);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--colorWhite);
+    text-decoration: underline;
   }
 }

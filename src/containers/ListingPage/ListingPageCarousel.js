@@ -15,6 +15,8 @@ import { manageDisableScrolling, isScrollingDisabled } from '../../ducks/ui.duck
 import { initializeCardPaymentData } from '../../ducks/stripe.duck.js';
 import { toggleFavoriteListing, isFavoriteListing } from '../../ducks/user.duck';
 import { login, signup } from '../../ducks/auth.duck';
+import useTrackListingView from '../../hooks/useTrackListingView';
+import usePublicLocationLabel from '../../hooks/usePublicLocationLabel';
 
 // Shared components
 import {
@@ -172,6 +174,19 @@ export const ListingPageComponent = props => {
     hasInvalidListingData,
   } = derivedData;
 
+  // Counts towards the "Populairste" sort order (once per visitor).
+  useTrackListingView(
+    listingId?.uuid,
+    !!currentListing?.id && !isOwnListing && !isVariant && !showListingError
+  );
+
+  // Nearest sub-municipality, shown directly under the title - never the street address.
+  const locationCity = usePublicLocationLabel({
+    location: publicData?.location,
+    geolocation,
+    mapsConfig: config.maps,
+  });
+
   const topbar = <TopbarContainer />;
 
   if (showListingError && showListingError.status === 404) {
@@ -202,10 +217,6 @@ export const ListingPageComponent = props => {
     medium: 'EditListingRentalDetailsForm.transportSizeMedium',
     large: 'EditListingRentalDetailsForm.transportSizeLarge',
   }[publicData.transportSize];
-
-  // City, shown directly under the title so a visitor can judge where a
-  // listing is without scrolling down to the map section further down.
-  const locationCity = publicData?.location?.address || null;
 
   // Real native-review average + count next to the title - null (hidden)
   // rather than a fabricated score when the listing has zero reviews yet.

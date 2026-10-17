@@ -19,7 +19,9 @@ import LandingPageHero from './LandingPageHero/LandingPageHero';
 import AccountSetupChecklist from './AccountSetupChecklist/AccountSetupChecklist';
 import HomepageListingRows from './HomepageListingRows/HomepageListingRows';
 import HomepageCategorySlider from './HomepageCategorySlider/HomepageCategorySlider';
-import HomepageTrustSteps from './HomepageTrustSteps/HomepageTrustSteps';
+import HomepagePopularSearches from './HomepagePopularSearches/HomepagePopularSearches';
+import HomepageStepsSection from './HomepageStepsSection/HomepageStepsSection';
+import HomepageFaqSection from './HomepageFaqSection/HomepageFaqSection';
 import HomepageReviewsSection from './HomepageReviewsSection/HomepageReviewsSection';
 import HomepageProviderSection from './HomepageProviderSection/HomepageProviderSection';
 // HomepagePartyCalculator, HomepageEarningsCalculator, HomepageHowItWorksSection
@@ -87,6 +89,10 @@ export const LandingPageComponent = props => {
       featuredListings={getFeaturedListingsProps(camelize(ASSET_NAME), props)}
       mainContentPrepend={
         <>
+          {/* Profile-completion nudge - only ever shown to an authenticated
+              user with an incomplete profile. It sits at the very top so
+              it is the first thing they see, and renders nothing for anonymous visitors. */}
+          <AccountSetupChecklist />
           {/* 1. Hero (koptekst + zoekmodule + visual) + Social Proof Ticker
               (rendered inside LandingPageHero, right below the hero) */}
           <LandingPageHero />
@@ -96,19 +102,21 @@ export const LandingPageComponent = props => {
           {/* 3. "Populair voor feesten in Gent" - strak 2x4-grid i.p.v. de
               eerdere losse carrousels per categorie */}
           <HomepageListingRows categoryFilter={selectedCategory} />
-          {/* 4. "Zo werkt huren" - de 4 echte stappen van de request-to-book flow */}
-          <HomepageTrustSteps />
+          {/* Links naar de regio + categorie pagina's (springkasteel huren Gent, ...) */}
+          <HomepagePopularSearches />
+          {/* 4. Vier geruststellingen + "Jouw feest in vier stappen" - de echte
+              stappen van de request-to-book flow (HomepageTrustSteps is de
+              oudere, compactere variant en staat niet meer op de homepage) */}
+          <HomepageStepsSection />
           {/* 5. Echte, publieke reviews - rendert niets zolang er nog geen
               echte zijn (zie recentReviews.duck.js), nooit verzonnen quotes. */}
           <HomepageReviewsSection />
-          {/* 6. Aparte, volwaardige route voor de aanbodzijde (verhuurders) -
+          {/* 6. Belangrijkste vragen + link naar alle vragen */}
+          <HomepageFaqSection />
+          {/* 7. Aparte, volwaardige route voor de aanbodzijde (verhuurders) -
               niet langer gelijkwaardig met de huurdersflow bovenaan, maar
               een eigen sectie met het echte voordeel en een duidelijke CTA. */}
           <HomepageProviderSection />
-          {/* Profile-completion nudge - only ever shown to an authenticated
-              user with an incomplete profile, so it never displaces listings
-              for the anonymous visitors this order is optimized for. */}
-          <AccountSetupChecklist />
         </>
       }
     />

@@ -61,10 +61,14 @@ export const diversifyByCategory = (listings, categoryField, count) => {
 export const fetchHomepageRow = createAsyncThunk(
   'homepageRows/fetchHomepageRow',
   async (
-    { rowId, searchParams, listingImageConfig, diversify, categoryField },
+    { rowId, searchParams, listingImageConfig, diversify, categoryField, count, titlePattern },
     { extra: sdk, dispatch, rejectWithValue }
   ) => {
-    const { aspectWidth = 1, aspectHeight = 1, variantPrefix = 'listing-card' } = listingImageConfig;
+    const {
+      aspectWidth = 1,
+      aspectHeight = 1,
+      variantPrefix = 'listing-card',
+    } = listingImageConfig;
     const aspectRatio = aspectHeight / aspectWidth;
 
     try {
@@ -103,16 +107,21 @@ export const fetchHomepageRow = createAsyncThunk(
         'limit.images': 1,
       });
       dispatch(addMarketplaceEntities(response));
+      const rowCount = count || ROW_LISTING_COUNT;
+      const titleRegex = titlePattern ? new RegExp(titlePattern, 'i') : null;
       const goodListings = response.data.data.filter(
         listing =>
           listing.relationships?.images?.data?.length > 0 &&
           listing.attributes?.price != null &&
-          hasUsableTitle(listing)
+          hasUsableTitle(listing) &&
+          (!titleRegex || titleRegex.test(listing.attributes?.title || ''))
       );
       const listings = diversify
-        ? diversifyByCategory(goodListings, categoryField, ROW_LISTING_COUNT)
-        : goodListings.slice(0, ROW_LISTING_COUNT);
-      const totalCount = response.data.meta?.totalItems ?? listings.length;
+        ? diversifyByCategory(goodListings, categoryField, rowCount)
+        : goodListings.slice(0, rowCount);
+      const totalCount = titleRegex
+        ? goodListings.length
+        : response.data.meta?.totalItems ?? listings.length;
       return { rowId, ids: listings.map(l => l.id), totalCount };
     } catch (error) {
       log.error(error, 'homepage-row-fetch-failed', { rowId });

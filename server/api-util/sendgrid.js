@@ -76,3 +76,63 @@ exports.sendContactEmail = async params => {
     throw error;
   }
 };
+
+/**
+ * Sends a landing page lead (name, phone or e-mail, wanted date) to OmniRent's inbox.
+ * When the visitor left an e-mail address it becomes the reply-to address.
+ *
+ * @param {Object} params
+ * @param {string} params.name
+ * @param {string} params.contact - phone number or e-mail address
+ * @param {string} params.date - wanted rental date (YYYY-MM-DD)
+ * @param {string} params.pageTitle - landing page the lead came from
+ * @param {string} params.pageUrl
+ * @param {boolean} params.contactIsEmail
+ * @returns {Promise<void>}
+ */
+exports.sendLeadEmail = async params => {
+  if (!exports.isConfigured()) {
+    const error = new Error(
+      'Lead email is not configured. Set SENDGRID_API_KEY and SENDGRID_CONTACT_FROM_EMAIL.'
+    );
+    error.status = 503;
+    throw error;
+  }
+
+  const { name, contact, date, pageTitle, pageUrl, contactIsEmail } = params;
+  const subject = `[Aanvraag landingspagina - ${pageTitle}] ${name}`;
+  const text = [
+    `Nieuwe aanvraag via: ${pageTitle}`,
+    pageUrl ? `Pagina: ${pageUrl}` : null,
+    '',
+    `Naam: ${name}`,
+    `${contactIsEmail ? 'E-mail' : 'Telefoon'}: ${contact}`,
+    `Gewenste datum: ${date}`,
+  ]
+    .filter(line => line !== null)
+    .join('\n');
+
+  const body = {
+    personalizations: [{ to: [{ email: TO_EMAIL }] }],
+    from: { email: FROM_EMAIL, name: 'OmniRent aanvragen' },
+    subject,
+    content: [{ type: 'text/plain', value: text }],
+  };
+  if (contactIsEmail) {
+    body.reply_to = { email: contact, name };
+  }
+
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    const error = new Error(data?.errors?.[0]?.message || 'SendGrid request failed.');
+    error.status = response.status;
+    error.data = data;
+    throw error;
+  }
+};

@@ -1,10 +1,11 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 const loginWithIdp = require('./loginWithIdp');
+const { respondProviderNotConfigured } = require('./providerNotConfigured');
 
 const radix = 10;
 const PORT = parseInt(process.env.REACT_APP_DEV_API_SERVER_PORT, radix);
-const rootUrl = process.env.REACT_APP_MARKETPLACE_ROOT_URL;
+const rootUrl = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || '').replace(/\/+$/, '');
 const clientID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
@@ -81,6 +82,10 @@ if (clientID) {
  * @param {Function} next Call the next middleware function in the stack
  */
 exports.authenticateGoogle = (req, res, next) => {
+  if (!clientID) {
+    return respondProviderNotConfigured(res, 'google');
+  }
+
   const { from, defaultReturn, defaultConfirm, userType } = req.query || {};
   const params = {
     ...(from ? { from } : {}),
@@ -112,6 +117,10 @@ exports.authenticateGoogle = (req, res, next) => {
  * @param {Function} next Call the next middleware function in the stack
  */
 exports.authenticateGoogleCallback = (req, res, next) => {
+  if (!clientID) {
+    return respondProviderNotConfigured(res, 'google');
+  }
+
   // We've already defined the `verifyCallback` function for the Passport Google authentication
   // strategy. That function is normally used to verify the user information obtained from identity
   // provider, or alternatively create a new use while an internal Passport function is used to

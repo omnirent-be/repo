@@ -236,3 +236,22 @@ export const deleteUserAccount = body => {
 export const sendContactMessage = body => {
   return post('/api/contact', body);
 };
+
+// Landing page lead form (name, phone or e-mail, wanted date). See server/api/lead.js.
+export const sendLead = body => {
+  return post('/api/lead', body);
+};
+
+// Reports one page view of a listing so the "Populairste" sort option has
+// something to order by. Fire-and-forget: see server/api/listing-view.js
+// and src/hooks/useTrackListingView.js.
+export const trackListingView = listingId => {
+  return post('/api/listing-view', { listingId });
+};
+
+// Forwards a browser Meta Pixel event to the Meta Conversions API through our
+// own server (server/api/meta-event.js), using the same eventId as the Pixel
+// call so Meta can deduplicate them. Fire-and-forget.
+export const sendMetaEvent = ({ eventName, eventId, eventSourceUrl, customData }) => {
+  return post('/api/meta-event', { eventName, eventId, eventSourceUrl, customData });
+};

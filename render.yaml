@@ -29,6 +29,21 @@ services:
         sync: false
       - key: SENDGRID_CONTACT_TO_EMAIL
         sync: false
+      # Integration API application (Console > Build > Applications). Lets
+      # the server store each listing's view count for "Populairste" sorting
+      # (server/api/listing-view.js) and powers the referral admin report.
+      - key: SHARETRIBE_INTEGRATION_CLIENT_ID
+        sync: false
+      - key: SHARETRIBE_INTEGRATION_CLIENT_SECRET
+        sync: false
+      # Set to 'true' only after the viewCount search schema exists (see
+      # server/api-util/listingViews.js), otherwise the sort option stays hidden.
+      - key: REACT_APP_POPULAR_SORT_ENABLED
+        sync: false
+      # Set to 'true' to make "Populairste" the default sort. Only do this once
+      # view counts are actually being stored.
+      - key: REACT_APP_POPULAR_SORT_DEFAULT
+        sync: false
       - key: REACT_APP_CSP
         value: report
       - key: SERVER_SHARETRIBE_TRUST_PROXY
@@ -38,6 +53,27 @@ services:
       # Meta (Facebook) Pixel - not a secret, so set directly rather than sync: false.
       - key: REACT_APP_FACEBOOK_PIXEL_ID
         value: '1026773429933253'
+      # Meta Conversions API (server-side events, server/api/meta-event.js).
+      # Secret: create it in Meta Events Manager > Data sources > pixel >
+      # Settings > Conversions API > Generate access token, and set it in the
+      # Render dashboard. Without it, only the browser Pixel is active.
+      - key: META_CAPI_ACCESS_TOKEN
+        sync: false
+      # Optional: while testing, set the code from Events Manager > Test events
+      # so events show up there. Remove it again afterwards.
+      - key: META_CAPI_TEST_EVENT_CODE
+        sync: false
+      # Landing pages (/springkasteel-huren/temse etc.): public contact details shown as
+      # call and WhatsApp buttons. A button only shows when its variable is set.
+      # Phone and WhatsApp in international format, e.g. +32471234567.
+      - key: REACT_APP_CONTACT_PHONE
+        sync: false
+      - key: REACT_APP_WHATSAPP_NUMBER
+        sync: false
+      # Optional promise shown on the landing pages, only set it when you can keep it,
+      # e.g. "Wij antwoorden binnen 30 minuten tijdens kantooruren."
+      - key: REACT_APP_RESPONSE_PROMISE
+        sync: false
       # Soft launch: locks the .onrender.com URL behind a username/password
       # so only people with the credentials can reach the live site before
       # the public launch. Remove both vars in Render once it's time to go

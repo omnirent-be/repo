@@ -89,7 +89,7 @@ const SocialLoginButtons = props => {
     <>
       {showFacebookLogin ? (
         <div className={css.socialButtonWrapper}>
-          <SocialLoginButton onClick={() => authWithFacebook()}>
+          <SocialLoginButton rootClassName={css.button} onClick={() => authWithFacebook()}>
             <span className={css.buttonIcon}>
               <FacebookLogo ariaLabelledBy="facebook-authentication-msg" />
             </span>
@@ -100,7 +100,7 @@ const SocialLoginButtons = props => {
 
       {showGoogleLogin ? (
         <div className={css.socialButtonWrapper}>
-          <SocialLoginButton onClick={() => authWithGoogle()}>
+          <SocialLoginButton rootClassName={css.button} onClick={() => authWithGoogle()}>
             <span className={css.buttonIcon}>
               <GoogleLogo ariaLabelledBy="google-authentication-msg" />
             </span>

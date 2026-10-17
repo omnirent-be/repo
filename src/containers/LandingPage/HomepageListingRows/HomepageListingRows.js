@@ -36,17 +36,20 @@ const HomepageListingRowsComponent = props => {
       .catch(() => setTotalCount(null));
   }, []);
 
+  // Always newest first, independent of the site-wide default sort.
+  const sort = 'createdAt';
+
   const rowId = categoryFilter ? `category:${categoryFilter.subCategoryId}` : POPULAR_ROW_ID;
   const title = categoryFilter
     ? subcategories.find(s => s.id === categoryFilter.subCategoryId)?.name || ''
     : intl.formatMessage({ id: 'HomepageListingRows.popular' });
   const searchParams = categoryFilter
     ? {
-        sort: '-createdAt',
+        sort,
         [`pub_${categoryKey}1`]: categoryFilter.topCategoryId,
         [`pub_${categoryKey}2`]: categoryFilter.subCategoryId,
       }
-    : { sort: '-createdAt' };
+    : { sort };
 
   useEffect(() => {
     if (!rows[rowId]) {

@@ -1,10 +1,11 @@
 const passport = require('passport');
 const passportFacebook = require('passport-facebook');
 const loginWithIdp = require('./loginWithIdp');
+const { respondProviderNotConfigured } = require('./providerNotConfigured');
 
 const radix = 10;
 const PORT = parseInt(process.env.REACT_APP_DEV_API_SERVER_PORT, radix);
-const rootUrl = process.env.REACT_APP_MARKETPLACE_ROOT_URL;
+const rootUrl = (process.env.REACT_APP_MARKETPLACE_ROOT_URL || '').replace(/\/+$/, '');
 const clientID = process.env.REACT_APP_FACEBOOK_APP_ID;
 const clientSecret = process.env.FACEBOOK_APP_SECRET;
 
@@ -78,6 +79,10 @@ if (clientID) {
  * @param {Function} next Call the next middleware function in the stack
  */
 exports.authenticateFacebook = (req, res, next) => {
+  if (!clientID) {
+    return respondProviderNotConfigured(res, 'facebook');
+  }
+
   const { from, defaultReturn, defaultConfirm, userType } = req.query || {};
   const params = {
     ...(from ? { from } : {}),
@@ -102,6 +107,10 @@ exports.authenticateFacebook = (req, res, next) => {
  * @param {Function} next Call the next middleware function in the stack
  */
 exports.authenticateFacebookCallback = (req, res, next) => {
+  if (!clientID) {
+    return respondProviderNotConfigured(res, 'facebook');
+  }
+
   // We've already defined the `verifyCallback` function for the Passport Facebook authentication
   // strategy. That function is normally used to verify the user information obtained from identity
   // provider, or alternatively create a new use while an internal Passport function is used to

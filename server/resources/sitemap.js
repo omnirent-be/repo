@@ -5,6 +5,8 @@ const { createTTLCache } = require('../api-util/cache.js');
 const { getRootURL } = require('../api-util/rootURL.js');
 const sdkUtils = require('../api-util/sdk.js');
 
+const { rentalPages } = require('../../src/util/rentalPages');
+
 const isSitemapDisabled = process.env.SITEMAP_DISABLED === 'true';
 const dev = process.env.REACT_APP_ENV === 'development';
 
@@ -52,6 +54,12 @@ const defaultPublicPaths = {
   login: { url: '/login' },
   search: { url: '/s' },
 };
+
+// Conversion landing pages per category and region, e.g. /springkasteel-huren/temse.
+// They are defined in src/config/rentalPages.js, shared with the client routes.
+rentalPages.forEach(page => {
+  defaultPublicPaths[`rentalPage_${page.id}`] = { url: `/${page.slug}` };
+});
 
 // Time-to-live (ttl) is set to one day aka 86400 seconds
 const ttl = 86400; // seconds

@@ -23,7 +23,7 @@ import {
 import { includeCSSProperties } from './util/style';
 import { IncludeScripts } from './util/includeScripts';
 
-import { MaintenanceMode, WhatsAppButton } from './components';
+import { CookieConsent, MaintenanceMode, WhatsAppButton } from './components';
 
 // routing
 import routeConfiguration from './routing/routeConfiguration';
@@ -271,6 +271,7 @@ export const ClientApp = props => {
             <BrowserRouter>
               <Routes logLoadDataCalls={logLoadDataCalls} />
               <WhatsAppButton variant="floating" ctaLocation="floating_button" />
+              <CookieConsent analytics={appConfig.analytics} />
             </BrowserRouter>
           </HelmetProvider>
         </Provider>

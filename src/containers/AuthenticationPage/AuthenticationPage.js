@@ -61,7 +61,10 @@ import css from './AuthenticationPage.module.css';
 
 const getTabHeading = ({ messageId, isSelected }) => {
   return (
-    <Heading as={isSelected ? 'h1' : 'h2'} rootClassName={css.tab}>
+    <Heading
+      as={isSelected ? 'h1' : 'h2'}
+      rootClassName={classNames(css.tab, isSelected ? css.tabSelected : css.tabInactive)}
+    >
       <FormattedMessage id={messageId} />
     </Heading>
   );
@@ -403,15 +406,6 @@ export const AuthenticationPageComponent = props => {
                 </>
               ) : (
                 <>
-                  <SocialLoginButtons
-                    isLogin={isLogin}
-                    showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
-                    showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
-                    dividerPosition="after"
-                    dividerMessageId="AuthenticationPage.orEmail"
-                    {...fromMaybe}
-                    {...userTypeMaybe}
-                  />
                   <SignupForm
                     className={css.signupForm}
                     onSubmit={getHandleSubmitSignup({
@@ -424,6 +418,13 @@ export const AuthenticationPageComponent = props => {
                     preselectedUserType={preselectedUserType}
                     userTypes={userTypes}
                     userFields={userFields}
+                  />
+                  <SocialLoginButtons
+                    isLogin={isLogin}
+                    showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
+                    showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
+                    {...fromMaybe}
+                    {...userTypeMaybe}
                   />
                 </>
               )}

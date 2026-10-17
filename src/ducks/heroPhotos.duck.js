@@ -11,6 +11,18 @@ const CANDIDATE_COUNT = 100;
 const PHOTOS_WANTED = 5;
 const VARIANT = 'hero-photo';
 
+// Hand-picked listings for the hero, shown first and in this order: strong
+// real photos, spread over barbecue, kids' entertainment, glamping, photobooth and food.
+// If one is unpublished or loses its photo it is skipped and the next
+// candidate takes its place. Replace the ids to change the selection.
+const CURATED_LISTING_IDS = [
+  '6a9ea99a-1f13-4ac2-abe6-fb73f74807c8', // BBQ cortenstaal
+  '6aa0633c-7e88-4b43-a4a9-7f72fd6c0780', // Wit springkasteel met ballenbad
+  '6a4d74e3-352d-49c8-b289-fdc6027ee7b7', // Luxe Glampingtent met Houten Vloer
+  '6abbb208-fa01-4a22-b843-a8447d211296', // photo booth
+  '6aa51453-9655-4486-9560-21c98461c3d9', // Foodtruck
+];
+
 // Real photos from real, recent listings for the homepage hero - instead of
 // one fixed stock-style photo. Falls back to an empty array (caller keeps
 // its own static fallback image) if nothing has a usable photo yet, which
@@ -33,7 +45,7 @@ export const fetchHeroPhotosThunk = createAsyncThunk(
   'heroPhotos/fetch',
   async ({ aspectRatio = 1 } = {}, { extra: sdk }) => {
     const baseParams = {
-      sort: '-createdAt',
+      sort: 'createdAt',
       perPage: CANDIDATE_COUNT,
       include: ['images'],
       'fields.listing': [
@@ -55,7 +67,21 @@ export const fetchHeroPhotosThunk = createAsyncThunk(
       ...createImageVariantConfig(`${VARIANT}-2x`, 2000, aspectRatio),
     };
 
-    const { data, included } = await fetchCandidates(sdk, baseParams);
+    const { sort, ...curatedBaseParams } = baseParams;
+    const [curated, candidates] = await Promise.all([
+      fetchCandidates(sdk, {
+        ...curatedBaseParams,
+        ids: CURATED_LISTING_IDS,
+        perPage: CURATED_LISTING_IDS.length,
+      }),
+      fetchCandidates(sdk, baseParams),
+    ]);
+    const curatedIds = new Set(CURATED_LISTING_IDS);
+    const data = [
+      ...curated.data,
+      ...candidates.data.filter(listing => !curatedIds.has(listing.id.uuid)),
+    ];
+    const included = [...curated.included, ...candidates.included];
 
     const usable = data
       .map(listing => {
@@ -76,13 +102,24 @@ export const fetchHeroPhotosThunk = createAsyncThunk(
               alt: title,
               price,
               publicData: listing.attributes?.publicData || {},
-              isFeatured: listing.attributes?.metadata?.featuredOnHomepage === 'yes',
+              isFeatured:
+                curatedIds.has(listing.id.uuid) ||
+                listing.attributes?.metadata?.featuredOnHomepage === 'yes',
             }
           : null;
       })
       .filter(Boolean);
 
-    const featuredFirst = [...usable].sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+    // Curated listings first, in the order of CURATED_LISTING_IDS, then any
+    // listings flagged in Console, then the newest ones.
+    const rank = photo => {
+      const curatedIndex = CURATED_LISTING_IDS.indexOf(photo.id);
+      if (curatedIndex !== -1) {
+        return curatedIndex;
+      }
+      return photo.isFeatured ? CURATED_LISTING_IDS.length : CURATED_LISTING_IDS.length + 1;
+    };
+    const featuredFirst = [...usable].sort((a, b) => rank(a) - rank(b));
     return featuredFirst.slice(0, PHOTOS_WANTED);
   }
 );

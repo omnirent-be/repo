@@ -31,19 +31,19 @@
   }
 }
 
-/* Strict grid ("Populair voor feesten in Gent") - 1 column on small phones,
-   2 from --viewportSmall, 4 from --viewportLarge (2 rows of 4 once there's
-   a full ROW_LISTING_COUNT (8) cards). */
+/* Strict grid ("Populair voor feesten in Gent") - 2 columns on phones (a
+   single column made 8 full-width cards a very long scroll), 4 from
+   --viewportLarge (2 rows of 4 once there's a full ROW_LISTING_COUNT (8)
+   cards). */
 .track {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 10px;
 
-  @media (--viewportSmall) {
-    grid-template-columns: repeat(2, 1fr);
+  @media (--viewportMedium) {
     gap: 16px 12px;
   }
 

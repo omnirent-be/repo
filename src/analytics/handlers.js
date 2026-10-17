@@ -1,3 +1,5 @@
+import { trackMetaEvent } from '../util/analytics';
+
 export class LoggingAnalyticsHandler {
   trackPageView(url) {
     console.log('Analytics page view:', url); // eslint-disable-line no-console
@@ -46,19 +48,30 @@ const FUNNEL_TO_META_STANDARD_EVENT = {
   booking_request_sent: 'Lead',
 };
 
-// Sends the same funnel steps as GoogleAnalyticsHandler to Meta Pixel, but
+// Sends PageView plus the same funnel steps as GoogleAnalyticsHandler to Meta
+// (browser Pixel and server-side Conversions API, deduplicated by event id), but
 // independently of it - Meta Pixel has its own id gate (facebookPixelId,
 // checked in util/includeScripts.js, which is what defines window.fbq), so
 // this handler is pushed unconditionally and no-ops until fbq exists.
+// PageView is sent from here (not from includeScripts.js) so that it is sent
+// exactly once per page, on the initial load and on every in-app navigation.
 export class MetaPixelHandler {
+  constructor() {
+    this.lastPageViewPath = null;
+  }
+
   trackPageView(canonicalPath, previousPath) {
     if (!window.fbq) {
       return;
     }
+    if (canonicalPath !== this.lastPageViewPath) {
+      this.lastPageViewPath = canonicalPath;
+      trackMetaEvent('PageView');
+    }
     const funnelEvent = matchFunnelEvent(canonicalPath, previousPath);
     const standardEvent = funnelEvent && FUNNEL_TO_META_STANDARD_EVENT[funnelEvent.name];
     if (standardEvent) {
-      window.fbq('track', standardEvent, funnelEvent.params);
+      trackMetaEvent(standardEvent, funnelEvent.params);
     }
   }
 }
