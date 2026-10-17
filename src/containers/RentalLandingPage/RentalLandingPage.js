@@ -206,9 +206,19 @@ export const RentalLandingPageComponent = props => {
     }
   };
 
-  const onChannelClick = method => {
+  const onChannelClick = (method, ctaLocation) => {
     trackEvent('rental_contact_clicked', { page: page.id, method });
     trackMetaEvent('Contact', { content_name: page.id, content_category: page.categoryId, method });
+    if (method === 'whatsapp') {
+      trackEvent(
+        'click_whatsapp',
+        {
+          page_location: typeof window !== 'undefined' ? window.location.href : null,
+          cta_location: ctaLocation,
+        },
+        'ClickWhatsApp'
+      );
+    }
   };
 
   const channelLinks = [
@@ -244,12 +254,12 @@ export const RentalLandingPageComponent = props => {
 
   const stickyChannels = channelLinks.filter(c => c.key === 'whatsapp' || c.key === 'phone');
 
-  const renderChannel = ({ key, href, label, Icon, external }, className) => (
+  const renderChannel = ({ key, href, label, Icon, external }, className, ctaLocation) => (
     <a
       key={key}
       href={href}
       className={className}
-      onClick={() => onChannelClick(key)}
+      onClick={() => onChannelClick(key, ctaLocation)}
       {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
     >
       <Icon />
@@ -286,7 +296,9 @@ export const RentalLandingPageComponent = props => {
               </span>
             </NamedLink>
             <div className={css.topBarActions}>
-              {stickyChannels.map(channel => renderChannel(channel, css.topBarChannel))}
+              {stickyChannels.map(channel =>
+                renderChannel(channel, css.topBarChannel, `${page.slug}_topbar`)
+              )}
               <a
                 href={`#${FORM_SECTION_ID}`}
                 className={css.topBarCta}
@@ -322,7 +334,9 @@ export const RentalLandingPageComponent = props => {
                 >
                   <span className={css.channelsTitle}>{common('contactTitle')}</span>
                   <div className={css.channelList}>
-                    {channelLinks.map(channel => renderChannel(channel, css.channel))}
+                    {channelLinks.map(channel =>
+                      renderChannel(channel, css.channel, `${page.slug}_hero`)
+                    )}
                   </div>
                   {channels.responsePromise ? (
                     <p className={css.responsePromise}>{channels.responsePromise}</p>
@@ -486,7 +500,9 @@ export const RentalLandingPageComponent = props => {
           >
             {common('ctaShort')}
           </a>
-          {stickyChannels.map(channel => renderChannel(channel, css.stickyChannel))}
+          {stickyChannels.map(channel =>
+            renderChannel(channel, css.stickyChannel, `${page.slug}_sticky`)
+          )}
         </div>
       </div>
     </Page>

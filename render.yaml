@@ -68,8 +68,10 @@ services:
       # Phone and WhatsApp in international format, e.g. +32471234567.
       - key: REACT_APP_CONTACT_PHONE
         sync: false
+      # OmniRent's business WhatsApp number - not a secret (same number as the
+      # site-wide floating WhatsApp button), so set directly rather than sync: false.
       - key: REACT_APP_WHATSAPP_NUMBER
-        sync: false
+        value: '+32489851854'
       # Optional promise shown on the landing pages, only set it when you can keep it,
       # e.g. "Wij antwoorden binnen 30 minuten tijdens kantooruren."
       - key: REACT_APP_RESPONSE_PROMISE
