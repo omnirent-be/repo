@@ -10,7 +10,12 @@
 // (gtag.js) and Meta Pixel (fbq), each injected via util/includeScripts.js
 // and each independently optional - no-ops for whichever hasn't loaded
 // (e.g. in dev/test, or when the corresponding env var/id isn't configured).
-export const trackEvent = (name, params = {}) => {
+// `metaEventName` lets a call site use GA4's snake_case convention
+// (e.g. 'click_whatsapp') while still sending Meta's own PascalCase custom
+// event name (e.g. 'ClickWhatsApp') for the same interaction. Defaults to
+// `name` for every other call site, so this is additive, not a behaviour
+// change for existing callers.
+export const trackEvent = (name, params = {}, metaEventName = name) => {
   if (typeof window === 'undefined') {
     return;
   }
@@ -23,7 +28,7 @@ export const trackEvent = (name, params = {}) => {
     window.gtag('event', name, enrichedParams);
   }
   if (window.fbq) {
-    window.fbq('trackCustom', name, enrichedParams);
+    window.fbq('trackCustom', metaEventName, enrichedParams);
   }
 };
 

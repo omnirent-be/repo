@@ -1,0 +1,61 @@
+@import '../../styles/customMediaQueries.css';
+
+.floatingRoot {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 99;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background-color: #25d366;
+  color: #ffffff;
+  box-shadow: var(--boxShadowButton);
+  text-decoration: none;
+
+  transition: transform var(--transitionStyleButton);
+
+  &:hover {
+    transform: scale(1.05);
+    color: #ffffff;
+    text-decoration: none;
+  }
+
+  @media (--viewportMedium) {
+    right: 24px;
+    bottom: 24px;
+    padding: 12px 20px;
+  }
+}
+
+.inlineRoot {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 4px;
+  background-color: #25d366;
+  color: #ffffff;
+  text-decoration: none;
+
+  &:hover {
+    background-color: #1ebe5b;
+    color: #ffffff;
+    text-decoration: none;
+  }
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.label {
+  font-weight: var(--fontWeightSemiBold);
+  font-size: 14px;
+  white-space: nowrap;
+}

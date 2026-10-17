@@ -23,7 +23,7 @@ import {
 import { includeCSSProperties } from './util/style';
 import { IncludeScripts } from './util/includeScripts';
 
-import { MaintenanceMode } from './components';
+import { MaintenanceMode, WhatsAppButton } from './components';
 
 // routing
 import routeConfiguration from './routing/routeConfiguration';
@@ -270,6 +270,7 @@ export const ClientApp = props => {
             <IncludeScripts config={appConfig} initialPathname={window.location.pathname} />
             <BrowserRouter>
               <Routes logLoadDataCalls={logLoadDataCalls} />
+              <WhatsAppButton variant="floating" ctaLocation="floating_button" />
             </BrowserRouter>
           </HelmetProvider>
         </Provider>
@@ -318,6 +319,7 @@ export const ServerApp = props => {
             <IncludeScripts config={appConfig} initialPathname={initialPathname} />
             <StaticRouter location={url} context={context}>
               <Routes />
+              <WhatsAppButton variant="floating" ctaLocation="floating_button" />
             </StaticRouter>
           </HelmetProvider>
         </Provider>

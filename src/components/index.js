@@ -41,6 +41,7 @@ export { default as IconSocialMediaInstagram } from './IconSocialMediaInstagram/
 export { default as IconSocialMediaTwitter } from './IconSocialMediaTwitter/IconSocialMediaTwitter';
 export { default as IconSpinner } from './IconSpinner/IconSpinner';
 export { default as IconSuccess } from './IconSuccess/IconSuccess';
+export { default as IconWhatsApp } from './IconWhatsApp/IconWhatsApp';
 
 // Typography
 export { Heading, H1, H2, H3, H4, H5, H6  } from './Heading/Heading';
@@ -159,3 +160,4 @@ export { default as StripeConnectAccountForm } from './StripeConnectAccountForm/
 export { default as LayoutComposer, LayoutSingleColumn, LayoutSideNavigation } from './LayoutComposer';
 export { default as MaintenanceMode } from './MaintenanceMode/MaintenanceMode';
 export { default as ModalMissingInformation } from './ModalMissingInformation/ModalMissingInformation';
+export { default as WhatsAppButton } from './WhatsAppButton/WhatsAppButton';
