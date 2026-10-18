@@ -22,10 +22,19 @@ const LineItemProviderVatMaybe = props => {
 
   const vatLineItem = lineItems.find(item => item.code === LINE_ITEM_PROVIDER_VAT && !item.reversal);
 
+  // `percentage` comes from the SDK as a decimal.js Decimal instance (see
+  // `typeHandlers` in src/util/api.js), not a plain number - passing it
+  // straight into FormattedMessage's `values` renders that object as a React
+  // child and crashes. Unwrap it first.
+  const percentage =
+    vatLineItem?.percentage && typeof vatLineItem.percentage === 'object'
+      ? vatLineItem.percentage.toString()
+      : vatLineItem?.percentage;
+
   return vatLineItem ? (
     <div className={css.lineItem}>
       <span className={css.itemLabel}>
-        <FormattedMessage id="OrderBreakdown.providerVat" values={{ percentage: vatLineItem.percentage }} />
+        <FormattedMessage id="OrderBreakdown.providerVat" values={{ percentage }} />
       </span>
       <span className={css.itemValue}>{formatMoney(intl, vatLineItem.lineTotal)}</span>
     </div>
