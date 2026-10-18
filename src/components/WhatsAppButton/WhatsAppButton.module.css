@@ -3,7 +3,10 @@
 .floatingRoot {
   position: fixed;
   right: 16px;
-  bottom: 16px;
+  /* Below --viewportLarge, ListingPage's own sticky mobile booking bar
+     (OrderPanel.module.css .openOrderForm, ~92px tall) is fixed to the
+     bottom of the screen too - clear it so the two never overlap. */
+  bottom: 108px;
   z-index: 99;
 
   display: flex;
@@ -26,8 +29,13 @@
 
   @media (--viewportMedium) {
     right: 24px;
-    bottom: 24px;
     padding: 12px 20px;
+  }
+
+  /* The sticky mobile booking bar hides from here on, same breakpoint as
+     OrderPanel.module.css .openOrderForm. */
+  @media (--viewportLarge) {
+    bottom: 24px;
   }
 }
 
