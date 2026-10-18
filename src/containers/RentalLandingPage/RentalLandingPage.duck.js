@@ -1,4 +1,7 @@
+import { types as sdkTypes } from '../../util/sdkLoader';
 import { fetchHomepageRow } from '../../ducks/homepageRows.duck';
+
+const { LatLng, LatLngBounds } = sdkTypes;
 
 export const RENTAL_PAGE_LISTING_COUNT = 12;
 const DEFAULT_SORT = 'createdAt';
@@ -30,10 +33,20 @@ export const createLoadData = page => (params, search, config) => dispatch => {
   const listingImageConfig = config?.layout?.listingImage || {};
   const { mainRowId, moreRowId } = getRentalRowIds(page.id);
 
+  const { ne, sw } = page.regionBounds || {};
+  const boundsMaybe =
+    ne && sw
+      ? { bounds: new LatLngBounds(new LatLng(ne.lat, ne.lng), new LatLng(sw.lat, sw.lng)) }
+      : {};
+
   const mainRequest = dispatch(
     fetchHomepageRow({
       rowId: mainRowId,
-      searchParams: { sort: DEFAULT_SORT, ...page.query },
+      // Filtered to the page's own region (+ a margin for nearby towns) so a page
+      // like "feestmateriaal huren Gent" actually shows Gent-area listings instead
+      // of whatever's newest sitewide. The broader fallback row below stays
+      // nationwide on purpose, so a region with few matches still fills the page.
+      searchParams: { sort: DEFAULT_SORT, ...page.query, ...boundsMaybe },
       listingImageConfig,
       diversify: !!page.diversify,
       categoryField,

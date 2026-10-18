@@ -13,6 +13,7 @@ const buildPages = () =>
       categoryId,
       regionId,
       regionName: region.name,
+      regionBounds: region.bounds,
       slug: `${category.pathBase}/${regionId}`,
       // The URL of the first version of these pages, kept as a permanent redirect.
       legacySlug: regionId === 'gent' ? `${category.pathBase}-gent` : null,

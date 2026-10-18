@@ -3,22 +3,30 @@
 // This is a CommonJS JavaScript file (not JSON) on purpose: the Express server reads it too,
 // and webpack strips nested data from JSON files that are loaded through require().
 module.exports = {
+  // `bounds` is a rough ~25km-radius box around the region's center, not a precise
+  // administrative boundary - wide enough to also catch "omgeving" listings in nearby
+  // towns (e.g. Eeklo, Deinze, Lochristi for Gent), used to filter the main listings row
+  // in RentalLandingPage.duck.js so the page actually matches its own region name.
   regions: [
     {
       id: 'gent',
       name: 'Gent',
+      bounds: { ne: { lat: 51.28, lng: 4.08 }, sw: { lat: 50.83, lng: 3.36 } },
     },
     {
       id: 'temse',
       name: 'Temse',
+      bounds: { ne: { lat: 51.3, lng: 4.49 }, sw: { lat: 50.94, lng: 3.91 } },
     },
     {
       id: 'antwerpen',
       name: 'Antwerpen',
+      bounds: { ne: { lat: 51.4, lng: 4.69 }, sw: { lat: 51.04, lng: 4.12 } },
     },
     {
       id: 'waasland',
       name: 'het Waasland',
+      bounds: { ne: { lat: 51.35, lng: 4.43 }, sw: { lat: 50.99, lng: 3.86 } },
     },
   ],
   categories: [
