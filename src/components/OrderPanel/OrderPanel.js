@@ -452,6 +452,15 @@ const OrderPanel = props => {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Lets the site-wide floating WhatsAppButton know to move itself up out of
+  // the way of this panel's own sticky mobile booking bar (.openOrderForm,
+  // below) - the two components aren't siblings in the DOM, so a body class
+  // is the simplest way to coordinate them. See WhatsAppButton.module.css.
+  useEffect(() => {
+    document.body.classList.add('has-sticky-order-bar');
+    return () => document.body.classList.remove('has-sticky-order-bar');
+  }, []);
   const {
     rootClassName,
     className,

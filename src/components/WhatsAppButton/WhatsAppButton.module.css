@@ -3,10 +3,7 @@
 .floatingRoot {
   position: fixed;
   right: 16px;
-  /* Below --viewportLarge, ListingPage's own sticky mobile booking bar
-     (OrderPanel.module.css .openOrderForm, ~92px tall) is fixed to the
-     bottom of the screen too - clear it so the two never overlap. */
-  bottom: 108px;
+  bottom: 16px;
   z-index: 99;
 
   display: flex;
@@ -19,7 +16,7 @@
   box-shadow: var(--boxShadowButton);
   text-decoration: none;
 
-  transition: transform var(--transitionStyleButton);
+  transition: transform var(--transitionStyleButton), bottom var(--transitionStyleButton);
 
   &:hover {
     transform: scale(1.05);
@@ -29,11 +26,23 @@
 
   @media (--viewportMedium) {
     right: 24px;
+    bottom: 24px;
     padding: 12px 20px;
   }
+}
 
-  /* The sticky mobile booking bar hides from here on, same breakpoint as
-     OrderPanel.module.css .openOrderForm. */
+/* Raised clear of a page's own sticky mobile booking bar (OrderPanel's
+   .openOrderForm, ~92px tall) while that panel is mounted - OrderPanel
+   toggles this body class, since the two components aren't DOM siblings.
+   Only below --viewportLarge, the same breakpoint .openOrderForm itself
+   hides at, since there's nothing to clear above that. */
+:global(body.has-sticky-order-bar) .floatingRoot {
+  bottom: 108px;
+
+  @media (--viewportMedium) {
+    bottom: 108px;
+  }
+
   @media (--viewportLarge) {
     bottom: 24px;
   }
