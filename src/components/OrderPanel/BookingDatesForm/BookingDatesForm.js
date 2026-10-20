@@ -619,6 +619,13 @@ export const BookingDatesForm = props => {
 
   const classes = classNames(rootClassName || css.root, className);
   const { depositInSubunits, extraDayPriceInSubunits } = publicData || {};
+  // Leaving the provider's own extraDayPrice field blank doesn't mean extra
+  // days are free or unavailable - server/api/extra-day/request.js falls
+  // back to the listing's normal per-day price in that case, so the public
+  // notice below must do the same instead of just disappearing.
+  const effectiveExtraDayPriceInSubunits = Number.isInteger(extraDayPriceInSubunits)
+    ? extraDayPriceInSubunits
+    : unitPrice?.amount;
 
   const onHandleFetchLineItems = calculateLineItems(
     listingId,
@@ -897,7 +904,7 @@ export const BookingDatesForm = props => {
                         marketplaceName={marketplaceName}
                         processName={BOOKING_PROCESS_NAME}
                       />
-                      {depositInSubunits || extraDayPriceInSubunits ? (
+                      {depositInSubunits || effectiveExtraDayPriceInSubunits ? (
                         <div className={css.extraCostsNotice}>
                           {depositInSubunits ? (
                             <>
@@ -917,14 +924,14 @@ export const BookingDatesForm = props => {
                               </p>
                             </>
                           ) : null}
-                          {extraDayPriceInSubunits ? (
+                          {effectiveExtraDayPriceInSubunits ? (
                             <p className={css.extraCostsRow}>
                               <FormattedMessage
                                 id="BookingDatesForm.extraDayNotice"
                                 values={{
                                   extraDayAmount: formatMoney(
                                     intl,
-                                    new Money(extraDayPriceInSubunits, unitPrice.currency)
+                                    new Money(effectiveExtraDayPriceInSubunits, unitPrice.currency)
                                   ),
                                 }}
                               />
