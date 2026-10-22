@@ -3,7 +3,7 @@ import * as log from '../util/log';
 import { storableError } from '../util/errors';
 import { addMarketplaceEntities } from './marketplaceData.duck';
 import { createImageVariantConfig } from '../util/sdkLoader';
-import { hasUsableTitle } from '../util/testListings';
+import { hasUsableTitle, isTestListing, isTestAuthor } from '../util/testListings';
 
 const ROW_LISTING_COUNT = 8;
 // Sharetribe's search API has no "has images"/"has price" filter to query
@@ -109,13 +109,19 @@ export const fetchHomepageRow = createAsyncThunk(
       dispatch(addMarketplaceEntities(response));
       const rowCount = count || ROW_LISTING_COUNT;
       const titleRegex = titlePattern ? new RegExp(titlePattern, 'i') : null;
-      const goodListings = response.data.data.filter(
-        listing =>
+      const included = response.data.included || [];
+      const goodListings = response.data.data.filter(listing => {
+        const authorId = listing.relationships?.author?.data?.id?.uuid;
+        const author = included.find(inc => inc.type === 'user' && inc.id.uuid === authorId);
+        return (
           listing.relationships?.images?.data?.length > 0 &&
           listing.attributes?.price != null &&
           hasUsableTitle(listing) &&
+          !isTestListing(listing) &&
+          !isTestAuthor(author) &&
           (!titleRegex || titleRegex.test(listing.attributes?.title || ''))
-      );
+        );
+      });
       const listings = diversify
         ? diversifyByCategory(goodListings, categoryField, rowCount)
         : goodListings.slice(0, rowCount);
