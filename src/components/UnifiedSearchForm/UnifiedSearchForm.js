@@ -94,24 +94,35 @@ const UnifiedSearchForm = () => {
       <FinalForm
         onSubmit={onSubmit}
         render={({ handleSubmit }) => (
-          <Form
-            role="search"
-            onSubmit={handleSubmit}
-            className={classNames(css.gridContainer, css.gridCol3)}
-          >
-            <div className={css.filterField}>
-              <ProductSearchField name="product" alignLeft />
-            </div>
-            <div className={css.filterField}>
-              <FilterLocation setSubmitDisabled={setSubmitDisabled} alignLeft />
-            </div>
-            <div className={css.filterField}>
-              <FilterDateRange config={config} />
-            </div>
-            <PrimaryButton disabled={submitDisabled} className={css.submitButton} type="submit">
-              <FormattedMessage id="UnifiedSearchForm.submit" />
-            </PrimaryButton>
-          </Form>
+          <>
+            <Form
+              role="search"
+              onSubmit={handleSubmit}
+              className={classNames(css.gridContainer, css.gridCol3)}
+            >
+              <div className={css.filterField}>
+                <ProductSearchField name="product" alignLeft />
+              </div>
+              <div className={css.filterField}>
+                <FilterLocation setSubmitDisabled={setSubmitDisabled} alignLeft />
+              </div>
+              <div className={css.filterField}>
+                <FilterDateRange config={config} />
+              </div>
+              <PrimaryButton disabled={submitDisabled} className={css.submitButton} type="submit">
+                <FormattedMessage id="UnifiedSearchForm.submit" />
+              </PrimaryButton>
+            </Form>
+            {/* The submit button being disabled isn't visually obvious on its
+                own (its disabled style is close to its normal one) - without
+                this, typing a location and not picking a suggestion from the
+                list silently does nothing on submit, with no indication why. */}
+            {submitDisabled ? (
+              <p className={css.locationHint} role="status">
+                <FormattedMessage id="UnifiedSearchForm.locationHint" />
+              </p>
+            ) : null}
+          </>
         )}
       />
     </div>

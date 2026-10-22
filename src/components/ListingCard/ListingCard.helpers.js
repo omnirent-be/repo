@@ -97,11 +97,24 @@ export const getListingCardTranslations = (listing, config, intl) => {
       ? intl.formatMessage({ id: priceMessageId }, { priceValue, pricePerUnit })
       : intl.formatMessage({ id: 'ListingCard.priceOnRequest' });
 
+  // aria-label (and any other plain-text use) needs plain strings, not the
+  // JSX spans priceMessage uses for on-screen styling - passing those into
+  // another formatMessage() call stringifies each <span> as "[object
+  // Object]" instead of its text, breaking the label for screen readers,
+  // crawlers and anything else reading the DOM rather than rendering it.
+  const priceMessagePlain =
+    (showPrice || isNegotiation) && formattedPrice != null
+      ? intl.formatMessage(
+          { id: priceMessageId },
+          { priceValue: formattedPrice, pricePerUnit: perUnitString }
+        )
+      : intl.formatMessage({ id: 'ListingCard.priceOnRequest' });
+
   const cardAriaLabel =
-    priceMessage.length > 0
+    priceMessagePlain.length > 0
       ? intl.formatMessage(
           { id: 'ListingCard.screenreader.label' },
-          { listingTitle: title, formattedPrice: priceMessage }
+          { listingTitle: title, formattedPrice: priceMessagePlain }
         )
       : title;
 

@@ -104,6 +104,14 @@
   grid-template-columns: 1fr;
 }
 
+.locationHint {
+  margin: 0;
+  padding: 6px 16px 0;
+  text-align: center;
+  font-size: 14px;
+  color: var(--colorGrey700);
+}
+
 .submitButton {
   min-height: 40px;
   min-width: 86px;

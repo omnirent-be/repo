@@ -214,7 +214,17 @@ const SearchCapsule = props => {
                     <FormattedMessage id="SearchCapsule.locationLabel" />
                   </label>
                   {isMobile || activeSegment === 'location' ? (
-                    <FilterLocation setSubmitDisabled={setSubmitDisabled} alignLeft />
+                    <>
+                      <FilterLocation setSubmitDisabled={setSubmitDisabled} alignLeft />
+                      {/* The submit button is icon-only here, so a disabled
+                          state is even easier to miss than elsewhere - make
+                          explicit why nothing happens on submit. */}
+                      {submitDisabled ? (
+                        <p className={css.locationHint} role="status">
+                          <FormattedMessage id="SearchCapsule.locationHint" />
+                        </p>
+                      ) : null}
+                    </>
                   ) : (
                     <span id="searchCapsuleLocation" className={css.segmentValue}>
                       {values.location?.search ||

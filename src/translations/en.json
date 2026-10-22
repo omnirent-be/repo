@@ -885,6 +885,8 @@
   "UnifiedSearchForm.locationPlaceholder": "Gent of postcode",
   "UnifiedSearchForm.datesPlaceholder": "Wanneer?",
   "UnifiedSearchForm.submit": "Zoek aanbod",
+  "UnifiedSearchForm.locationHint": "Kies een locatie uit de lijst om te zoeken.",
+  "SearchCapsule.locationHint": "Kies een locatie uit de lijst om te zoeken.",
   "WhatsAppButton.floatingLabel": "WhatsApp ons",
   "WhatsAppButton.inlineLabel": "Vraag via WhatsApp",
   "WhatsAppButton.ariaLabel": "Stuur OmniRent een bericht via WhatsApp",
