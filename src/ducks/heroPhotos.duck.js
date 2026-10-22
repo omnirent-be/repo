@@ -11,10 +11,57 @@ const CANDIDATE_COUNT = 100;
 const PHOTOS_WANTED = 5;
 const VARIANT = 'hero-photo';
 
-// Hand-picked listings for the hero, shown first and in this order: strong
-// real photos, spread over barbecue, kids' entertainment, glamping, photobooth and food.
-// If one is unpublished or loses its photo it is skipped and the next
-// candidate takes its place. Replace the ids to change the selection.
+// A per-day rental price above this is almost certainly a typo (an extra
+// zero, cents entered as whole euros, ...) rather than a real listing - see
+// "audiobook telefoon" at EUR 100 100/day in the live catalog. Keeps those
+// out of the hero without needing an operator to notice and flag them.
+const MAX_REASONABLE_PRICE_SUBUNITS = 100000; // EUR 1000
+
+// Deterministic (not Math.random(), which isn't seedable) so the server
+// render and the client hydration of the same page agree, and so the
+// selection only changes once a day instead of on every request/reload.
+const dailySeed = () => {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+  let hash = 0;
+  for (let i = 0; i < today.length; i += 1) {
+    hash = (hash * 31 + today.charCodeAt(i)) | 0;
+  }
+  return hash;
+};
+
+// Small seedable PRNG (mulberry32).
+const mulberry32 = seed => {
+  let t = seed;
+  return () => {
+    t = (t + 0x6d2b79f5) | 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+};
+
+const shuffle = (array, random) => {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+// Rotates which listings are featured once a day, instead of the same
+// handful forever - curation (CURATED_LISTING_IDS / the "Toon op
+// homepage" Console flag) still earns a listing the "Uitgelicht" badge
+// when it's picked, but no longer guarantees it fills a slot every single
+// day, since with only a few curated listings that would just reorder the
+// same set rather than actually showing different ones.
+const dailyPick = (pool, count) => shuffle(pool, mulberry32(dailySeed())).slice(0, count);
+
+// Hand-picked listings with strong real photos, spread over barbecue, kids'
+// entertainment, glamping, photobooth and food - included in the daily
+// rotation pool (see dailyPick above) and get the "Uitgelicht" badge
+// whenever picked. If one is unpublished or loses its photo it is skipped.
+// Replace the ids to change the selection.
 const CURATED_LISTING_IDS = [
   '6a9ea99a-1f13-4ac2-abe6-fb73f74807c8', // BBQ cortenstaal
   '6aa0633c-7e88-4b43-a4a9-7f72fd6c0780', // Wit springkasteel met ballenbad
@@ -24,17 +71,10 @@ const CURATED_LISTING_IDS = [
 ];
 
 // Real photos from real, recent listings for the homepage hero - instead of
-// one fixed stock-style photo. Falls back to an empty array (caller keeps
-// its own static fallback image) if nothing has a usable photo yet, which
-// can happen early on when few listings have uploaded images.
-//
-// Listings the operator explicitly approved for the hero - set via the
-// "Toon op homepage" metadata field in Console - are preferred (and get
-// the "Uitgelicht" badge) when any exist, since that's a deliberate
-// curation signal. But requiring it isn't realistic before an operator has
-// actually gone through and flagged listings one by one, so this doesn't
-// hard-filter on it: it fetches ordinary recent, real listings and simply
-// sorts any curated ones first.
+// one fixed stock-style photo, and different ones each day (see dailyPick)
+// instead of the same handful forever. Falls back to an empty array (caller
+// keeps its own static fallback image) if nothing has a usable photo yet,
+// which can happen early on when few listings have uploaded images.
 const fetchCandidates = (sdk, params) =>
   sdk.listings
     .query(params)
@@ -93,7 +133,8 @@ export const fetchHeroPhotosThunk = createAsyncThunk(
         const variant2x = image?.attributes?.variants?.[`${VARIANT}-2x`];
         const title = listing.attributes?.title || '';
         const price = listing.attributes?.price || null;
-        const isUsable = variant && hasUsableTitle(listing) && price && !isTestListing(listing);
+        const hasSanePrice = price && price.amount > 0 && price.amount <= MAX_REASONABLE_PRICE_SUBUNITS;
+        const isUsable = variant && hasUsableTitle(listing) && hasSanePrice && !isTestListing(listing);
         return isUsable
           ? {
               id: listing.id.uuid,
@@ -110,16 +151,6 @@ export const fetchHeroPhotosThunk = createAsyncThunk(
       })
       .filter(Boolean);
 
-    // Curated listings first, in the order of CURATED_LISTING_IDS, then any
-    // listings flagged in Console, then the newest ones.
-    const rank = photo => {
-      const curatedIndex = CURATED_LISTING_IDS.indexOf(photo.id);
-      if (curatedIndex !== -1) {
-        return curatedIndex;
-      }
-      return photo.isFeatured ? CURATED_LISTING_IDS.length : CURATED_LISTING_IDS.length + 1;
-    };
-    const featuredFirst = [...usable].sort((a, b) => rank(a) - rank(b));
-    return featuredFirst.slice(0, PHOTOS_WANTED);
+    return dailyPick(usable, PHOTOS_WANTED);
   }
 );
