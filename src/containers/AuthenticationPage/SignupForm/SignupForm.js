@@ -243,7 +243,10 @@ const SignupFormComponent = props => {
           return intl.formatMessage({ id: 'SignupFlow.vatNumberRequired' });
         }
         const normalized = value.replace(/[\s.]/g, '').toUpperCase();
-        const isValidBelgianVat = /^BE0\d{9}$/.test(normalized);
+        // Belgian company numbers started with 0, but the 0-prefixed range
+        // ran out around 2017-18 and newer ones start with 1 instead - both
+        // are valid, so BE1... numbers must not be rejected here.
+        const isValidBelgianVat = /^BE[01]\d{9}$/.test(normalized);
         return isValidBelgianVat
           ? undefined
           : intl.formatMessage({ id: 'SignupFlow.vatNumberInvalid' });
