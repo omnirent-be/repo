@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { parse } from '../../util/urlHelpers';
 
 import { types as sdkTypes, createImageVariantConfig } from '../../util/sdkLoader';
 import { storableError } from '../../util/errors';
@@ -561,9 +562,17 @@ export const loadData = (params, search, config) => (dispatch, getState, sdk) =>
   const listingId = new UUID(params.id);
   const state = getState();
   const currentUser = state.user?.currentUser;
+  // Two ways to arrive here wanting the inquiry modal pre-opened: the
+  // Redux flag (same-tab signup/login, see handleContactUser) and this
+  // ?inquiry=1 query param - the only one that survives a full page reload,
+  // which Google/Facebook's own OAuth redirect always causes (the login
+  // round-trip leaves the SPA entirely), so the Redux flag alone would be
+  // lost for a brand new user who signs up with Google from "Contact".
+  const wantsInquiryModal =
+    !!state.ListingPage.inquiryModalOpenForListingId || parse(search)?.inquiry === '1';
   const inquiryModalOpenForListingId =
-    isUserAuthorized(currentUser) && hasPermissionToInitiateTransactions(currentUser)
-      ? state.ListingPage.inquiryModalOpenForListingId
+    wantsInquiryModal && isUserAuthorized(currentUser) && hasPermissionToInitiateTransactions(currentUser)
+      ? params.id
       : null;
 
   // Clear old line-items

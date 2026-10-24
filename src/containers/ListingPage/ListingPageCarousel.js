@@ -251,6 +251,7 @@ export const ListingPageComponent = props => {
     setInitialValues, // from ListingPage.duck.js (set initial values for the listing page)
     location,
     setInquiryModalOpen,
+    authorDisplayName,
   });
   // Note: this is for inquire transition to inquiry state in booking, purchase and negotiation processes.
   // Inquiry process is handled through handleSubmit.

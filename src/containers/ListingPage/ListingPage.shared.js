@@ -375,10 +375,17 @@ export const handleContactUser = parameters => () => {
     location,
     routes,
     setInquiryModalOpen,
+    authorDisplayName,
   } = parameters;
 
   if (!currentUser) {
-    const state = { from: `${location.pathname}${location.search}${location.hash}` };
+    // ?inquiry=1 on the return path (not just the Redux flag below) so the
+    // modal still reopens after a brand new user signs up with Google -
+    // that round-trip leaves the single-page app entirely for Google's own
+    // consent screen and back, losing all in-memory Redux/history state.
+    const existingParams = location.search ? `${location.search}&` : '?';
+    const from = `${location.pathname}${existingParams}inquiry=1${location.hash}`;
+    const state = { from, contactingProviderName: authorDisplayName };
 
     // We need to log in before showing the modal, but first we need to ensure
     // that modal does open when user is redirected back to this listingpage

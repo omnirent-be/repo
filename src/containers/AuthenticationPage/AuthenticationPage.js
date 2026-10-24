@@ -261,6 +261,13 @@ export const AuthenticationPageComponent = props => {
   const locationFrom = location.state?.from || null;
   const authinfoFrom = authInfo?.from || null;
   const from = locationFrom || authinfoFrom || null;
+  // Set only by ListingPage's "Contact" button (handleContactUser in
+  // ListingPage.shared.js) - lets the signup intro name the actual provider
+  // instead of reading like registering with some random site. Only
+  // available for the initial client-side render (history state doesn't
+  // survive Google/Facebook's own OAuth redirect), but that's fine: it only
+  // needs to show before the visitor picks an auth method, not after.
+  const contactingProviderName = location.state?.contactingProviderName || null;
   const idp = authInfo ? authInfo.idpId.replace(/^./, str => str.toUpperCase()) : null;
 
   const isConfirm = tab === 'confirm';
@@ -406,6 +413,20 @@ export const AuthenticationPageComponent = props => {
                 </>
               ) : (
                 <>
+                  {/* Social login first and prominent: for someone arriving
+                      here mid-task (e.g. "Contact" on a listing), inventing
+                      a password is the single costliest step on this page -
+                      the one-tap option belongs above it, not buried below
+                      as an afterthought. */}
+                  <SocialLoginButtons
+                    isLogin={isLogin}
+                    showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
+                    showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
+                    dividerPosition="after"
+                    dividerMessageId="AuthenticationPage.orEmail"
+                    {...fromMaybe}
+                    {...userTypeMaybe}
+                  />
                   <SignupForm
                     className={css.signupForm}
                     onSubmit={getHandleSubmitSignup({
@@ -418,13 +439,7 @@ export const AuthenticationPageComponent = props => {
                     preselectedUserType={preselectedUserType}
                     userTypes={userTypes}
                     userFields={userFields}
-                  />
-                  <SocialLoginButtons
-                    isLogin={isLogin}
-                    showFacebookLogin={!!process.env.REACT_APP_FACEBOOK_APP_ID}
-                    showGoogleLogin={!!process.env.REACT_APP_GOOGLE_CLIENT_ID}
-                    {...fromMaybe}
-                    {...userTypeMaybe}
+                    contactingProviderName={contactingProviderName}
                   />
                 </>
               )}

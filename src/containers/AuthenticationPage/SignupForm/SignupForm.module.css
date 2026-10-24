@@ -220,6 +220,13 @@
   color: var(--colorGrey700);
 }
 
+.stepIntroWhy {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+  font-weight: var(--fontWeightRegular);
+  color: var(--colorGrey500);
+}
+
 .fieldNote {
   margin: 8px 0 0 0;
   font-size: 13px;

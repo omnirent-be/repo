@@ -171,6 +171,7 @@ const SignupFormComponent = props => {
         userTypes,
         userFields,
         values,
+        contactingProviderName,
       } = formRenderProps;
 
       const { userType, accountType } = values || {};
@@ -305,9 +306,23 @@ const SignupFormComponent = props => {
 
           <div ref={stepsRef}>
             <div className={css.stepPanel} data-step="0" hidden={step !== 0}>
-              <p className={css.stepIntro}>
-                <FormattedMessage id="SignupFlow.intro.login" />
-              </p>
+              {contactingProviderName ? (
+                <>
+                  <p className={css.stepIntro}>
+                    <FormattedMessage
+                      id="SignupFlow.intro.contact"
+                      values={{ providerName: contactingProviderName }}
+                    />
+                  </p>
+                  <p className={css.stepIntroWhy}>
+                    <FormattedMessage id="SignupFlow.intro.contactWhy" />
+                  </p>
+                </>
+              ) : (
+                <p className={css.stepIntro}>
+                  <FormattedMessage id="SignupFlow.intro.login" />
+                </p>
+              )}
               <FieldSelectUserType
                 name="userType"
                 userTypes={userTypes}
