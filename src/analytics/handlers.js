@@ -32,9 +32,13 @@ export const matchFunnelEvent = (canonicalPath, previousPath) => {
   if (/^\/l\/[^/]+\/[^/]+\/checkout$/.test(path)) {
     return { name: 'booking_request_started', params: {} };
   }
-  if (/^\/order\/[^/]+$/.test(path) && previousPath && /\/checkout$/.test(previousPath)) {
-    return { name: 'booking_request_sent', params: {} };
-  }
+  // booking_request_sent is NOT matched here on purpose - it used to fire on
+  // navigating from /checkout to /order/:id, which only means the request
+  // was submitted, not that payment was actually authorized (confirm-payment
+  // can still fail after that navigation happens). It's fired precisely
+  // instead from CheckoutPageTransactionHelpers.js's fnConfirmPayment, once
+  // the Marketplace API confirms it, with the real listing_id/transaction_id/
+  // value/currency - this route match can't produce those anyway.
   return null;
 };
 
@@ -45,7 +49,9 @@ const FUNNEL_TO_META_STANDARD_EVENT = {
   search: 'Search',
   view_item: 'ViewContent',
   booking_request_started: 'InitiateCheckout',
-  booking_request_sent: 'Lead',
+  // booking_request_sent is not mapped here - matchFunnelEvent no longer
+  // produces it (see its own comment); CheckoutPageTransactionHelpers.js
+  // sends the 'Lead' Standard Event itself via trackEvent's metaEventName.
 };
 
 // Sends PageView plus the same funnel steps as GoogleAnalyticsHandler to Meta

@@ -9,6 +9,7 @@ import { getAllTimeSlots } from '../../components/OrderPanel/booking.shared';
 import { requireListingImage } from '../../util/configHelpers';
 import { richText } from '../../util/richText';
 import { hasPermissionToInitiateTransactions, isUserAuthorized } from '../../util/userHelpers';
+import { trackEvent } from '../../util/analytics';
 import {
   ensureListing,
   ensureOwnListing,
@@ -422,6 +423,12 @@ export const handleSubmitInquiry = parameters => values => {
   onSendInquiry(listing, message.trim())
     .then(txId => {
       setInquiryModalOpen(false);
+
+      trackEvent('inquiry_sent', {
+        listing_id: listing.id.uuid,
+        transaction_id: txId.uuid,
+        flow: 'inquiry',
+      });
 
       const transactionPage =
         listing.attributes.publicData.unitType === REQUEST ? 'SaleDetailsPage' : 'OrderDetailsPage';

@@ -11,6 +11,7 @@ import {
   stringifyDateToISO8601,
 } from '../../util/dates';
 import { isTransactionsTransitionInvalidTransition, storableError } from '../../util/errors';
+import { trackEvent } from '../../util/analytics';
 import {
   transactionLineItems,
   transitionPrivileged,
@@ -384,6 +385,24 @@ const makeTransitionPayloadCreator = (
     .then(response => {
       dispatch(addMarketplaceEntities(response));
       dispatch(fetchCurrentUserNotifications());
+
+      // accept/operator-accept is also the transition that captures the
+      // Stripe payment (see ext/transaction-processes - its own action list
+      // includes action/stripe-capture-payment-intent), so both business
+      // events genuinely happen at this one point, not two separate ones.
+      if ([process?.transitions?.ACCEPT, process?.transitions?.OPERATOR_ACCEPT].includes(transitionName)) {
+        const acceptedTx = response.data.data;
+        const listingId = acceptedTx.relationships?.listing?.data?.id?.uuid;
+        const payinTotal = acceptedTx.attributes?.payinTotal;
+        trackEvent('booking_accepted', { transaction_id: txId.uuid, listing_id: listingId });
+        if (payinTotal) {
+          trackEvent('payment_confirmed', {
+            transaction_id: txId.uuid,
+            value: payinTotal.amount / 100,
+            currency: payinTotal.currency,
+          });
+        }
+      }
 
       // There could be automatic transitions after this transition
       // For example mark-received-from-purchased > auto-complete.

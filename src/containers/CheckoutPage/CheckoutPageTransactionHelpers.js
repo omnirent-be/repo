@@ -5,6 +5,7 @@ import { minutesBetween } from '../../util/dates';
 import { formatMoney } from '../../util/currency';
 import { isAtLeastYearsOldFromDateString } from '../../util/validators';
 import { NEGOTIATION_PROCESS_NAME, resolveLatestProcessName } from '../../transactions/transaction';
+import { trackEvent } from '../../util/analytics';
 import { storeData } from './CheckoutPageSessionHelpers';
 
 // Kept in sync with ProfileSettingsForm.js's own MINIMUM_RENTER_AGE_YEARS -
@@ -320,6 +321,25 @@ export const processCheckoutWithPayment = (orderParams, extraPaymentParams) => {
     orderPromise.then(order => {
       // Store the returned transaction (order)
       persistTransaction(order, pageData, storeData, setPageData, sessionStorageKey);
+
+      // Fired here (payment authorized against the Marketplace API), not
+      // when the checkout form is opened or submitted - this is the point
+      // a booking request genuinely exists, request-to-book style: the
+      // provider still has to accept it before the card is captured.
+      if (!isTransitionedAlready) {
+        const payinTotal = order?.attributes?.payinTotal;
+        trackEvent(
+          'booking_request_sent',
+          {
+            listing_id: pageData?.listing?.id?.uuid,
+            transaction_id: order?.id?.uuid,
+            value: payinTotal ? payinTotal.amount / 100 : undefined,
+            currency: payinTotal?.currency,
+            flow: 'booking',
+          },
+          'Lead'
+        );
+      }
     });
 
     return orderPromise;
