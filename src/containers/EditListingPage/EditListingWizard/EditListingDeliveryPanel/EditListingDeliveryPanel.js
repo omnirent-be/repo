@@ -72,6 +72,7 @@ const getInitialValues = props => {
     shippingPriceInSubunitsOneItem,
     shippingPriceInSubunitsAdditionalItems,
     deliveryPricePerKmInSubunits,
+    transportSize,
   } = publicData;
   const deliveryOptions = [];
 
@@ -109,6 +110,7 @@ const getInitialValues = props => {
         }
       : { search: undefined, selectedPlace: undefined },
     deliveryOptions,
+    transportSize,
     shippingPriceInSubunitsOneItem: shippingOneItemAsMoney,
     shippingPriceInSubunitsAdditionalItems: shippingAdditionalItemsAsMoney,
     deliveryPricePerKmInSubunits: pricePerKmAsMoney,
@@ -203,6 +205,7 @@ const EditListingDeliveryPanel = props => {
               shippingPriceInSubunitsAdditionalItems,
               deliveryPricePerKmInSubunits,
               deliveryOptions,
+              transportSize,
             } = values;
 
             const shippingEnabled = deliveryOptions.includes('shipping');
@@ -217,6 +220,11 @@ const EditListingDeliveryPanel = props => {
               pickupEnabled && address
                 ? { location: { address, building, postalCode, city, neighborhood } }
                 : {};
+
+            // Only meaningful (and only asked) once pickup is enabled - see
+            // EditListingDeliveryForm.js. Cleared when pickup is turned
+            // back off so a stale value doesn't linger in publicData.
+            const transportSizeMaybe = pickupEnabled ? { transportSize } : { transportSize: null };
 
             // Search filters: see the injected 'deliveryOptions' and
             // 'region' listing fields in configHelpers.js's
@@ -253,6 +261,7 @@ const EditListingDeliveryPanel = props => {
               publicData: {
                 pickupEnabled,
                 ...pickupDataMaybe,
+                ...transportSizeMaybe,
                 shippingEnabled,
                 ...shippingDataMaybe,
                 ...pricePerKmDataMaybe,
@@ -275,6 +284,7 @@ const EditListingDeliveryPanel = props => {
                 shippingPriceInSubunitsAdditionalItems,
                 deliveryPricePerKmInSubunits,
                 deliveryOptions,
+                transportSize: transportSizeMaybe.transportSize,
                 bookingMode: 'request',
               },
             });

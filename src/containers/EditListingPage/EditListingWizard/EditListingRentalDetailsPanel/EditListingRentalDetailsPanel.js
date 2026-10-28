@@ -65,7 +65,6 @@ const getInitialValues = props => {
   const {
     accessories,
     condition,
-    transportSize,
     replacementValueInSubunits,
     serialNumber,
     totalQuantity,
@@ -88,7 +87,6 @@ const getInitialValues = props => {
     description,
     accessories,
     condition,
-    transportSize,
     serialNumber,
     totalQuantity,
     ...replacementValueMaybe,
@@ -170,7 +168,6 @@ const EditListingRentalDetailsPanel = props => {
             description,
             accessories,
             condition,
-            transportSize,
             replacementValue,
             serialNumber,
             totalQuantity,
@@ -195,7 +192,6 @@ const EditListingRentalDetailsPanel = props => {
             publicData: {
               accessories,
               condition,
-              transportSize,
               replacementValueInSubunits: replacementValue?.amount ?? null,
               serialNumber: serialNumber?.trim() || null,
               totalQuantity: totalQuantity ?? null,

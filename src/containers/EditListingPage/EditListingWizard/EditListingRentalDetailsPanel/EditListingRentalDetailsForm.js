@@ -269,34 +269,10 @@ export const EditListingRentalDetailsForm = props => (
             </div>
           </div>
 
-          <div className={css.field}>
-            <H4 as="h3" className={css.conditionHeading}>
-              <FormattedMessage id="EditListingRentalDetailsForm.transportSizeHeading" />
-            </H4>
-            <div className={css.conditionCards}>
-              <FieldRadioButton
-                id={`${formId}transportSize-compact`}
-                className={css.conditionCard}
-                name="transportSize"
-                value={TRANSPORT_COMPACT}
-                label={intl.formatMessage({ id: 'EditListingRentalDetailsForm.transportSizeCompact' })}
-              />
-              <FieldRadioButton
-                id={`${formId}transportSize-medium`}
-                className={css.conditionCard}
-                name="transportSize"
-                value={TRANSPORT_MEDIUM}
-                label={intl.formatMessage({ id: 'EditListingRentalDetailsForm.transportSizeMedium' })}
-              />
-              <FieldRadioButton
-                id={`${formId}transportSize-large`}
-                className={css.conditionCard}
-                name="transportSize"
-                value={TRANSPORT_LARGE}
-                label={intl.formatMessage({ id: 'EditListingRentalDetailsForm.transportSizeLarge' })}
-              />
-            </div>
-          </div>
+          {/* Moved to EditListingDeliveryForm.js: only relevant once "ophalen"
+              (pickup) is actually enabled there, which happens in a later
+              wizard step - asking it here, unconditionally, made no sense
+              for a listing that only offers delivery. */}
 
           <AddListingFields
             listingType={listingType}

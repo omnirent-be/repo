@@ -9,6 +9,11 @@ import { propTypes } from '../../../../util/types';
 import { displayDeliveryPickup, displayDeliveryShipping } from '../../../../util/configHelpers';
 import { isBookingProcessAlias, isNegotiationProcessAlias } from '../../../../transactions/transaction';
 import {
+  TRANSPORT_COMPACT,
+  TRANSPORT_MEDIUM,
+  TRANSPORT_LARGE,
+} from '../EditListingRentalDetailsPanel/EditListingRentalDetailsForm';
+import {
   autocompleteSearchRequired,
   autocompletePlaceSelected,
   composeValidators,
@@ -219,6 +224,46 @@ export const EditListingDeliveryForm = props => (
               })}
               disabled={!pickupEnabled}
             />
+
+            {/* Only relevant once the renter will actually pick the item up
+                themselves (not when the provider delivers it), so this only
+                shows once "ophalen" is checked above - see css.hidden on
+                pickupClasses for why it's not shown at all when pickup
+                isn't even offered as an option for this listing type. */}
+            {pickupEnabled ? (
+              <div className={css.sectionContainer}>
+                <h3 className={css.sectionTitle}>
+                  <FormattedMessage id="EditListingRentalDetailsForm.transportSizeHeading" />
+                </h3>
+                <FieldRadioButton
+                  id={`${formId}.transportSize-compact`}
+                  className={css.bookingModeRadio}
+                  name="transportSize"
+                  value={TRANSPORT_COMPACT}
+                  label={intl.formatMessage({
+                    id: 'EditListingRentalDetailsForm.transportSizeCompact',
+                  })}
+                />
+                <FieldRadioButton
+                  id={`${formId}.transportSize-medium`}
+                  className={css.bookingModeRadio}
+                  name="transportSize"
+                  value={TRANSPORT_MEDIUM}
+                  label={intl.formatMessage({
+                    id: 'EditListingRentalDetailsForm.transportSizeMedium',
+                  })}
+                />
+                <FieldRadioButton
+                  id={`${formId}.transportSize-large`}
+                  className={css.bookingModeRadio}
+                  name="transportSize"
+                  value={TRANSPORT_LARGE}
+                  label={intl.formatMessage({
+                    id: 'EditListingRentalDetailsForm.transportSizeLarge',
+                  })}
+                />
+              </div>
+            ) : null}
           </div>
 
           <FieldCheckbox
