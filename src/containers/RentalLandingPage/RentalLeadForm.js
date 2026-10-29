@@ -74,6 +74,10 @@ const RentalLeadForm = props => {
       const eventParams = { content_name: page.id, content_category: page.categoryId };
       trackMetaEvent('Lead', eventParams);
       trackEvent('rental_lead_submitted', { page: page.id });
+      // GA4/Google Ads conversion name used by the rental landing pages'
+      // #aanvraag form specifically (distinct from rental_lead_submitted,
+      // which stays for internal funnel analysis).
+      trackEvent('contact_form_sent', { page: page.id, form_id: LEAD_FORM_ID });
     } catch (error) {
       setSentViaMailto(true);
       window.location.href = buildMailto(values, pageTitle, pageUrl);
