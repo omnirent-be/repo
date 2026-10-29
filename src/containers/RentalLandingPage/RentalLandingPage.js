@@ -195,6 +195,13 @@ export const RentalLandingPageComponent = props => {
   // Capped the same way as shownListings - previously rendered uncapped, which
   // didn't match MAX_LISTINGS_SHOWN-limited expectations elsewhere on the page.
   const shownMoreListings = showMore ? moreListings.slice(0, MAX_LISTINGS_SHOWN) : [];
+  // Offered in the lead form's "which one?" field - without it, a visitor filling in
+  // the form from this page (rather than a specific listing) gave no way to say
+  // which of the items shown they actually wanted.
+  const listingOptions = [...shownListings, ...shownMoreListings].map(l => ({
+    id: l.id.uuid,
+    title: l.attributes.title,
+  }));
   const priceFrom = getLowestDayPrice(mainListings, intl);
   // Skip anything that reads as a seed/placeholder listing (e.g. a title
   // containing "test") - the main listings feed already excludes isTestListing
@@ -426,6 +433,7 @@ export const RentalLandingPageComponent = props => {
                 page={page}
                 pageTitle={pageTitle}
                 responsePromise={channels.responsePromise}
+                listingOptions={listingOptions}
               />
               <div
                 className={css.channels}

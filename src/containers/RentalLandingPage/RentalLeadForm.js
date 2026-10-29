@@ -6,7 +6,7 @@ import { sendLead } from '../../util/api';
 import { trackEvent, trackMetaEvent } from '../../util/analytics';
 import { composeValidators, emailFormatValid, required } from '../../util/validators';
 
-import { FieldTextInput, Form, NamedLink, PrimaryButton } from '../../components';
+import { FieldSelect, FieldTextInput, Form, NamedLink, PrimaryButton } from '../../components';
 
 import css from './RentalLandingPage.module.css';
 
@@ -30,9 +30,11 @@ const phoneOrEmail = message => value => {
   return isPhone || isEmail ? undefined : message;
 };
 
-const buildMailto = (values, pageTitle, pageUrl) => {
+const buildMailto = (values, pageTitle, pageUrl, itemLabel) => {
   const subject = `[Aanvraag - ${pageTitle}] ${values.name}`;
-  const body = `Naam: ${values.name}\nTelefoon of e-mail: ${values.contact}\nGewenste datum: ${values.date}\nPagina: ${pageUrl}`;
+  const body = `Naam: ${values.name}\nTelefoon of e-mail: ${values.contact}\nGewenste datum: ${
+    values.date
+  }\nInteresse: ${itemLabel || '-'}\nPagina: ${pageUrl}`;
   return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
     body
   )}`;
@@ -49,10 +51,13 @@ const buildMailto = (values, pageTitle, pageUrl) => {
  * @param {Object} props.page the landing page entry (see src/util/rentalPages.js)
  * @param {string} props.pageTitle title of the landing page, shown in the e-mail subject
  * @param {string?} props.responsePromise optional promise about the answer speed
+ * @param {Array<{id: string, title: string}>?} props.listingOptions listings currently shown on
+ *   the page, offered as an optional "which one?" choice - without this, OmniRent had no way to
+ *   tell which item a visitor meant when several are shown on the same category page.
  * @returns {JSX.Element}
  */
 const RentalLeadForm = props => {
-  const { page, pageTitle, responsePromise } = props;
+  const { page, pageTitle, responsePromise, listingOptions = [] } = props;
   const intl = useIntl();
   const [sent, setSent] = useState(false);
   const [sentViaMailto, setSentViaMailto] = useState(false);
@@ -61,11 +66,14 @@ const RentalLeadForm = props => {
 
   const onSubmit = async values => {
     const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const selectedListing = listingOptions.find(l => l.id === values.item);
+    const itemLabel = values.item === 'other' ? msg('itemOther') : selectedListing?.title;
     try {
       await sendLead({
         name: values.name,
         contact: values.contact,
         date: values.date,
+        item: itemLabel,
         pageTitle,
         pageUrl,
         website: values.website,
@@ -80,7 +88,7 @@ const RentalLeadForm = props => {
       trackEvent('contact_form_sent', { page: page.id, form_id: LEAD_FORM_ID });
     } catch (error) {
       setSentViaMailto(true);
-      window.location.href = buildMailto(values, pageTitle, pageUrl);
+      window.location.href = buildMailto(values, pageTitle, pageUrl, itemLabel);
     }
   };
 
@@ -128,6 +136,17 @@ const RentalLeadForm = props => {
             label={msg('date')}
             validate={required(msg('dateRequired'))}
           />
+          {listingOptions.length > 0 ? (
+            <FieldSelect id={`${LEAD_FORM_ID}.item`} name="item" label={msg('item')}>
+              <option value="">{msg('itemPlaceholder')}</option>
+              {listingOptions.map(l => (
+                <option key={l.id} value={l.id}>
+                  {l.title}
+                </option>
+              ))}
+              <option value="other">{msg('itemOther')}</option>
+            </FieldSelect>
+          ) : null}
           <Field
             name="website"
             component="input"

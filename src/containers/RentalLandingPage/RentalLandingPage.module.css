@@ -489,7 +489,7 @@
 
   @media (--viewportLarge) {
     display: grid;
-    grid-template-columns: 1.2fr 1.2fr 1fr auto;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     align-items: end;
     gap: 16px;
   }
@@ -509,8 +509,10 @@
   margin-top: 4px;
 
   @media (--viewportLarge) {
-    margin-top: 0;
+    grid-column: 1 / -1;
+    margin-top: 4px;
     min-width: 200px;
+    justify-self: start;
   }
 }
 

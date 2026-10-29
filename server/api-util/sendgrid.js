@@ -99,7 +99,7 @@ exports.sendLeadEmail = async params => {
     throw error;
   }
 
-  const { name, contact, date, pageTitle, pageUrl, contactIsEmail } = params;
+  const { name, contact, date, item, pageTitle, pageUrl, contactIsEmail } = params;
   const subject = `[Aanvraag landingspagina - ${pageTitle}] ${name}`;
   const text = [
     `Nieuwe aanvraag via: ${pageTitle}`,
@@ -108,6 +108,7 @@ exports.sendLeadEmail = async params => {
     `Naam: ${name}`,
     `${contactIsEmail ? 'E-mail' : 'Telefoon'}: ${contact}`,
     `Gewenste datum: ${date}`,
+    item ? `Interesse: ${item}` : null,
   ]
     .filter(line => line !== null)
     .join('\n');

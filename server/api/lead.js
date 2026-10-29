@@ -4,7 +4,7 @@ const EMAIL_RE = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 const PHONE_CHARS_RE = /^[+()0-9 -]+$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-const MAX_LENGTHS = { name: 200, contact: 200, pageTitle: 200, pageUrl: 500 };
+const MAX_LENGTHS = { name: 200, contact: 200, pageTitle: 200, pageUrl: 500, item: 200 };
 
 const isPhone = value => {
   const digitCount = (value.match(/[0-9]/g) || []).length;
@@ -15,11 +15,13 @@ const isPhone = value => {
  * Landing page lead form (see src/containers/RentalLandingPage). Takes no Sharetribe
  * auth, anyone can ask for availability. Sends the lead to OmniRent's inbox via SendGrid.
  *
- * Body: { name, contact (phone or e-mail), date (YYYY-MM-DD), pageTitle, pageUrl?, website? }
+ * Body: { name, contact (phone or e-mail), date (YYYY-MM-DD), item?, pageTitle, pageUrl?, website? }
+ * `item` is the visitor's pick from the listings shown on the page (or "Iets anders"),
+ * optional since the form itself only shows it when the page has listings to offer.
  * `website` is a hidden honeypot field: bots fill it in, people do not.
  */
 module.exports = (req, res) => {
-  const { name, contact, date, pageTitle, pageUrl, website } = req.body || {};
+  const { name, contact, date, item, pageTitle, pageUrl, website } = req.body || {};
 
   if (website) {
     // Looks like a bot. Pretend it worked, send nothing.
@@ -56,12 +58,17 @@ module.exports = (req, res) => {
     res.status(400).json({ error: 'Invalid "pageUrl".' });
     return;
   }
+  if (item != null && (typeof item !== 'string' || item.length > MAX_LENGTHS.item)) {
+    res.status(400).json({ error: 'Invalid "item".' });
+    return;
+  }
 
   return sendLeadEmail({
     name: name.trim(),
     contact: contactValue,
     contactIsEmail,
     date,
+    item: typeof item === 'string' ? item.trim() : null,
     pageTitle: pageTitle.trim(),
     pageUrl,
   })
