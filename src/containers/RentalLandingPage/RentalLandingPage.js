@@ -8,6 +8,7 @@ import { formatMoney } from '../../util/currency';
 import { getContactChannels } from '../../util/contactChannels';
 import { openCookieSettings } from '../../util/consent';
 import { rentalPages } from '../../util/rentalPages';
+import { isTestListing } from '../../util/testListings';
 import { isScrollingDisabled } from '../../ducks/ui.duck';
 import { getListingsById } from '../../ducks/marketplaceData.duck';
 
@@ -195,7 +196,15 @@ export const RentalLandingPageComponent = props => {
   // didn't match MAX_LISTINGS_SHOWN-limited expectations elsewhere on the page.
   const shownMoreListings = showMore ? moreListings.slice(0, MAX_LISTINGS_SHOWN) : [];
   const priceFrom = getLowestDayPrice(mainListings, intl);
-  const heroImageListing = mainListings.find(l => l.images?.length > 0);
+  // Skip anything that reads as a seed/placeholder listing (e.g. a title
+  // containing "test") - the main listings feed already excludes isTestListing
+  // matches, but a looser title heuristic here catches entries that weren't
+  // flagged (like a provider's own draft named "testtent") before they end up
+  // as the one large photo on the page.
+  const heroImageListing =
+    mainListings.find(
+      l => l.images?.length > 0 && !isTestListing(l) && !/test/i.test(l.attributes.title || '')
+    ) || mainListings.find(l => l.images?.length > 0);
   const heroImage = heroImageListing?.images?.[0];
   const heroImageVariants = Object.keys(heroImage?.attributes?.variants || {}).filter(name =>
     name.startsWith(config.layout?.listingImage?.variantPrefix || 'listing-card')
