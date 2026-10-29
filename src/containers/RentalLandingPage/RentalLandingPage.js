@@ -22,6 +22,7 @@ import css from './RentalLandingPage.module.css';
 
 const TIP_NUMBERS = [1, 2, 3, 4];
 const FAQ_NUMBERS = [1, 2, 3, 4];
+const HOW_IT_WORKS_NUMBERS = [1, 2, 3];
 const MIN_LISTINGS_BEFORE_MORE = 6;
 const MAX_LISTINGS_SHOWN = 8;
 const FORM_SECTION_ID = 'aanvraag';
@@ -99,6 +100,52 @@ const IconChat = () => (
   </svg>
 );
 
+const IconGift = () => (
+  <svg className={css.trustIcon} viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M12 7V3M12 3c-1.1 0-2 .9-2 2s.9 2 2 2M12 3c1.1 0 2 .9 2 2s-.9 2-2 2M4 10h16v3H4zM5 13h14v7a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1zM12 10v11"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconShield = () => (
+  <svg className={css.trustIcon} viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9 12l2 2 4-4"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const IconPin = () => (
+  <svg className={css.trustIcon} viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+    <circle cx="12" cy="9.5" r="2.4" fill="none" stroke="currentColor" strokeWidth="1.6" />
+  </svg>
+);
+
 /**
  * A conversion landing page for one category in one region, for example
  * "springkasteel huren in Temse". Everything above the fold is built to get an enquiry:
@@ -164,6 +211,15 @@ export const RentalLandingPageComponent = props => {
 
   const faqs = FAQ_NUMBERS.map(n => ({ q: t(`faq${n}Q`), a: t(`faq${n}A`) }));
   const tips = TIP_NUMBERS.map(n => ({ title: t(`tip${n}Title`), text: t(`tip${n}Text`) }));
+  const howItWorksSteps = HOW_IT_WORKS_NUMBERS.map(n => ({
+    title: common(`howItWorksStep${n}Title`),
+    text: common(`howItWorksStep${n}Text`),
+  }));
+  const trustItems = [
+    { Icon: IconGift, label: common('trustFree') },
+    { Icon: IconShield, label: common('trustPay') },
+    { Icon: IconPin, label: common('trustLocal') },
+  ];
 
   const schema = [
     {
@@ -317,6 +373,12 @@ export const RentalLandingPageComponent = props => {
           <section className={css.hero}>
             <div className={css.heroInner}>
               <div className={css.heroCopy}>
+                {page.categoryId !== 'feestmateriaal' ? (
+                  <p className={css.breadcrumb}>
+                    {common('feestmateriaal.short')} <span aria-hidden="true">/</span>{' '}
+                    {t('short')}
+                  </p>
+                ) : null}
                 <H1 as="h1" className={css.title}>
                   {pageTitle}
                   {priceFrom ? (
@@ -329,50 +391,61 @@ export const RentalLandingPageComponent = props => {
                 <p className={css.lead}>{common('subheadline')}</p>
 
                 <div className={css.heroActions}>{ctaButton('hero')}</div>
-
-                <div
-                  className={css.channels}
-                  role="group"
-                  aria-label={common('contactChannelsLabel')}
-                >
-                  <span className={css.channelsTitle}>{common('contactTitle')}</span>
-                  <div className={css.channelList}>
-                    {channelLinks.map(channel =>
-                      renderChannel(channel, css.channel, `${page.slug}_hero`)
-                    )}
-                  </div>
-                  {channels.responsePromise ? (
-                    <p className={css.responsePromise}>{channels.responsePromise}</p>
-                  ) : null}
-                </div>
-
-                <ul className={css.trust}>
-                  <li>{common('trustFree')}</li>
-                  <li>{common('trustPay')}</li>
-                  <li>{common('trustLocal')}</li>
-                </ul>
               </div>
 
               <div className={css.heroSide}>
-                <div id={FORM_SECTION_ID} className={css.formCard}>
-                  <h2 className={css.formTitle}>{common('form.title')}</h2>
-                  <p className={css.formLede}>{common('form.lede')}</p>
-                  <RentalLeadForm
-                    page={page}
-                    pageTitle={pageTitle}
-                    responsePromise={channels.responsePromise}
-                  />
-                </div>
                 {heroImage ? (
                   <ResponsiveImage
                     rootClassName={css.heroImage}
                     alt={heroImageListing.attributes.title}
                     image={heroImage}
                     variants={heroImageVariants}
-                    sizes="(max-width: 1023px) 100vw, 480px"
+                    sizes="(max-width: 1023px) 100vw, 560px"
                   />
                 ) : null}
               </div>
+            </div>
+          </section>
+
+          <section className={css.leadBarSection}>
+            <div className={css.leadBarCard} id={FORM_SECTION_ID}>
+              <div className={css.leadBarHeader}>
+                <h2 className={css.formTitle}>{common('form.title')}</h2>
+                <p className={css.formLede}>{common('form.lede')}</p>
+              </div>
+              <RentalLeadForm
+                page={page}
+                pageTitle={pageTitle}
+                responsePromise={channels.responsePromise}
+              />
+              <div
+                className={css.channels}
+                role="group"
+                aria-label={common('contactChannelsLabel')}
+              >
+                <span className={css.channelsTitle}>{common('contactTitle')}</span>
+                <div className={css.channelList}>
+                  {channelLinks.map(channel =>
+                    renderChannel(channel, css.channel, `${page.slug}_hero`)
+                  )}
+                </div>
+                {channels.responsePromise ? (
+                  <p className={css.responsePromise}>{channels.responsePromise}</p>
+                ) : null}
+              </div>
+            </div>
+          </section>
+
+          <section className={css.trustSection}>
+            <div className={css.sectionInner}>
+              <ul className={css.trustIcons}>
+                {trustItems.map(({ Icon, label }) => (
+                  <li key={label} className={css.trustItem}>
+                    <Icon />
+                    <span>{label}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </section>
 
@@ -417,6 +490,25 @@ export const RentalLandingPageComponent = props => {
               </H2>
               <p className={css.paragraph}>{t('intro1')}</p>
               <p className={css.paragraph}>{t('intro2')}</p>
+            </div>
+          </section>
+
+          <section className={css.howItWorks} aria-labelledby="rental-how-title">
+            <div className={css.sectionInner}>
+              <H2 as="h2" id="rental-how-title" className={css.sectionTitleCenter}>
+                {common('howItWorksTitle')}
+              </H2>
+              <ol className={css.steps}>
+                {howItWorksSteps.map((step, index) => (
+                  <li key={step.title} className={css.step}>
+                    <span className={css.stepNumber} aria-hidden="true">
+                      {index + 1}
+                    </span>
+                    <h3 className={css.stepTitle}>{step.title}</h3>
+                    <p className={css.stepText}>{step.text}</p>
+                  </li>
+                ))}
+              </ol>
             </div>
           </section>
 
