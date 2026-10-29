@@ -88,6 +88,9 @@ exports.sendContactEmail = async params => {
  * @param {string} params.pageTitle - landing page the lead came from
  * @param {string} params.pageUrl
  * @param {boolean} params.contactIsEmail
+ * @param {Object} params.attribution - UTM params + landing page, already sanitized
+ *   (server/api/lead.js's sanitizeAttribution) to always carry every key, 'unknown'
+ *   for anything the visitor's browser didn't have.
  * @returns {Promise<void>}
  */
 exports.sendLeadEmail = async params => {
@@ -99,7 +102,7 @@ exports.sendLeadEmail = async params => {
     throw error;
   }
 
-  const { name, contact, date, item, pageTitle, pageUrl, contactIsEmail } = params;
+  const { name, contact, date, item, pageTitle, pageUrl, contactIsEmail, attribution } = params;
   const subject = `[Aanvraag landingspagina - ${pageTitle}] ${name}`;
   const text = [
     `Nieuwe aanvraag via: ${pageTitle}`,
@@ -109,6 +112,15 @@ exports.sendLeadEmail = async params => {
     `${contactIsEmail ? 'E-mail' : 'Telefoon'}: ${contact}`,
     `Gewenste datum: ${date}`,
     item ? `Interesse: ${item}` : null,
+    '',
+    // Ad attribution (see src/util/attribution.js) - 'unknown' for anything the
+    // visitor's browser didn't actually have, never backfilled.
+    `Landingspagina: ${attribution?.landingPage ?? 'unknown'}`,
+    `utm_source: ${attribution?.utm_source ?? 'unknown'}`,
+    `utm_medium: ${attribution?.utm_medium ?? 'unknown'}`,
+    `utm_campaign: ${attribution?.utm_campaign ?? 'unknown'}`,
+    `utm_term: ${attribution?.utm_term ?? 'unknown'}`,
+    `utm_content: ${attribution?.utm_content ?? 'unknown'}`,
   ]
     .filter(line => line !== null)
     .join('\n');

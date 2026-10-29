@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 
 import { useConfiguration } from '../../context/configurationContext';
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
+import { captureAttribution } from '../../util/attribution';
 import { trackEvent, trackMetaEvent } from '../../util/analytics';
 import { formatMoney } from '../../util/currency';
 import { getContactChannels } from '../../util/contactChannels';
@@ -169,6 +170,13 @@ export const RentalLandingPageComponent = props => {
   const intl = useIntl();
   const config = useConfiguration();
   const scrollingDisabled = useSelector(state => isScrollingDisabled(state));
+
+  // First-touch UTM capture: this page is the actual ad destination, so if the
+  // visitor arrived with campaign parameters, record them now (sessionStorage via
+  // util/attribution.js) before any internal navigation can drop them from the URL.
+  useEffect(() => {
+    captureAttribution();
+  }, []);
 
   const page = getPageByPath(location?.pathname);
   const { mainRowId, moreRowId } = getRentalRowIds(page.id);

@@ -3,6 +3,7 @@ import { Field, Form as FinalForm } from 'react-final-form';
 
 import { FormattedMessage, useIntl } from '../../util/reactIntl';
 import { sendLead } from '../../util/api';
+import { getAttribution } from '../../util/attribution';
 import { trackEvent, trackMetaEvent } from '../../util/analytics';
 import { composeValidators, emailFormatValid, required } from '../../util/validators';
 
@@ -30,11 +31,15 @@ const phoneOrEmail = message => value => {
   return isPhone || isEmail ? undefined : message;
 };
 
-const buildMailto = (values, pageTitle, pageUrl, itemLabel) => {
+const buildMailto = (values, pageTitle, pageUrl, itemLabel, attribution) => {
   const subject = `[Aanvraag - ${pageTitle}] ${values.name}`;
   const body = `Naam: ${values.name}\nTelefoon of e-mail: ${values.contact}\nGewenste datum: ${
     values.date
-  }\nInteresse: ${itemLabel || '-'}\nPagina: ${pageUrl}`;
+  }\nInteresse: ${itemLabel || '-'}\nPagina: ${pageUrl}\nLandingspagina: ${
+    attribution.landingPage
+  }\nutm_source: ${attribution.utm_source}\nutm_medium: ${attribution.utm_medium}\nutm_campaign: ${
+    attribution.utm_campaign
+  }`;
   return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(
     body
   )}`;
@@ -68,6 +73,10 @@ const RentalLeadForm = props => {
     const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
     const selectedListing = listingOptions.find(l => l.id === values.item);
     const itemLabel = values.item === 'other' ? msg('itemOther') : selectedListing?.title;
+    // Read back whatever the landing page captured at first touch (util/attribution.js) -
+    // by the time the form is submitted the visitor may have clicked into a listing and
+    // back, so the current URL's own query string can no longer be trusted for this.
+    const attribution = getAttribution();
     try {
       await sendLead({
         name: values.name,
@@ -77,6 +86,7 @@ const RentalLeadForm = props => {
         pageTitle,
         pageUrl,
         website: values.website,
+        attribution,
       });
       setSent(true);
       const eventParams = { content_name: page.id, content_category: page.categoryId };
@@ -88,7 +98,7 @@ const RentalLeadForm = props => {
       trackEvent('contact_form_sent', { page: page.id, form_id: LEAD_FORM_ID });
     } catch (error) {
       setSentViaMailto(true);
-      window.location.href = buildMailto(values, pageTitle, pageUrl, itemLabel);
+      window.location.href = buildMailto(values, pageTitle, pageUrl, itemLabel, attribution);
     }
   };
 
@@ -156,7 +166,12 @@ const RentalLeadForm = props => {
             aria-hidden="true"
             className={css.honeypot}
           />
-          <PrimaryButton type="submit" inProgress={submitting} className={css.formSubmit}>
+          <PrimaryButton
+            type="submit"
+            inProgress={submitting}
+            disabled={submitting}
+            className={css.formSubmit}
+          >
             {submitting ? msg('sending') : msg('submit')}
           </PrimaryButton>
           {sentViaMailto ? (
