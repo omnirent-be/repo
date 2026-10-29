@@ -144,6 +144,9 @@ export const RentalLandingPageComponent = props => {
   const isEmpty = !isLoading && mainListings.length === 0 && moreListings.length === 0;
 
   const shownListings = mainListings.slice(0, MAX_LISTINGS_SHOWN);
+  // Capped the same way as shownListings - previously rendered uncapped, which
+  // didn't match MAX_LISTINGS_SHOWN-limited expectations elsewhere on the page.
+  const shownMoreListings = showMore ? moreListings.slice(0, MAX_LISTINGS_SHOWN) : [];
   const priceFrom = getLowestDayPrice(mainListings, intl);
   const heroImageListing = mainListings.find(l => l.images?.length > 0);
   const heroImage = heroImageListing?.images?.[0];
@@ -379,11 +382,6 @@ export const RentalLandingPageComponent = props => {
                 <H2 as="h2" id="rental-listings-title" className={css.sectionTitle}>
                   {t('listingsTitle')}
                 </H2>
-                {!isLoading && mainListings.length > 0 ? (
-                  <span className={css.count}>
-                    {common('listingsCount', { count: mainRow.totalCount ?? mainListings.length })}
-                  </span>
-                ) : null}
               </div>
 
               {isLoading ? <GridSkeleton /> : <ListingGrid listings={shownListings} />}
@@ -395,7 +393,7 @@ export const RentalLandingPageComponent = props => {
                       ? t('moreTitle')
                       : common('moreTitle')}
                   </h3>
-                  <ListingGrid listings={moreListings.slice(0, MAX_LISTINGS_SHOWN)} />
+                  <ListingGrid listings={shownMoreListings} />
                 </>
               ) : null}
 
