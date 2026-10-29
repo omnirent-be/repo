@@ -71,12 +71,8 @@ module.exports = {
       pathBase: 'geluidsinstallatie-huren',
     },
     {
-      id: 'bbq',
+      id: 'barcatering',
       query: {
-        keywords: 'bbq',
-      },
-      titlePattern: 'bbq|barbecue|grill',
-      fallbackQuery: {
         pub_categoryLevel1: 'event-feest',
         pub_categoryLevel2: 'Bar-Catering',
       },
@@ -84,7 +80,11 @@ module.exports = {
         pub_categoryLevel1: 'event-feest',
         pub_categoryLevel2: 'Bar-Catering',
       },
-      pathBase: 'bbq-huren',
+      pathBase: 'bar-cateringmateriaal-huren',
+      // The page's previous identity, before it broadened from BBQs alone to the
+      // whole Bar & Catering category - kept as permanent redirects in server/index.js
+      // so existing links/search results to /bbq-huren/... still work.
+      legacyPathBases: ['bbq-huren'],
     },
     {
       id: 'feestmateriaal',
@@ -104,8 +104,8 @@ module.exports = {
     ['partytent', 'gent'],
     ['partytent', 'antwerpen'],
     ['geluidsinstallatie', 'gent'],
-    ['bbq', 'gent'],
-    ['bbq', 'waasland'],
+    ['barcatering', 'gent'],
+    ['barcatering', 'waasland'],
     ['feestmateriaal', 'gent'],
   ],
 };

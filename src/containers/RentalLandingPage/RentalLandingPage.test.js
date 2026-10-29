@@ -20,18 +20,19 @@ describe('rentalPages', () => {
   it('has unique slugs of the form "<category>-huren/<region>"', () => {
     const slugs = rentalPages.map(page => page.slug);
     expect(new Set(slugs).size).toEqual(slugs.length);
-    slugs.forEach(slug => expect(slug).toMatch(/^[a-z]+-huren\/[a-z]+$/));
+    slugs.forEach(slug => expect(slug).toMatch(/^[a-z-]+-huren\/[a-z]+$/));
   });
 
-  it('has unique route names and only keeps legacy slugs for Ghent', () => {
+  it('has unique route names and only keeps the dash-joined legacy slug for Ghent', () => {
     const names = rentalPages.map(page => page.routeName);
     expect(new Set(names).size).toEqual(names.length);
-    rentalPages
-      .filter(page => page.legacySlug)
-      .forEach(page => {
+    rentalPages.forEach(page => {
+      const dashJoined = page.legacySlugs.find(slug => slug === `${page.pathBase}-gent`);
+      if (dashJoined) {
         expect(page.regionId).toEqual('gent');
-        expect(page.legacySlug).toMatch(/^[a-z]+-huren-gent$/);
-      });
+      }
+      page.legacySlugs.forEach(slug => expect(slug).toMatch(/^[a-z-]+-huren(-gent)?(\/[a-z]+)?$/));
+    });
   });
 
   it('has a page for every example combination of the landing page plan', () => {
@@ -40,8 +41,15 @@ describe('rentalPages', () => {
       'springkasteel-huren/temse',
       'partytent-huren/antwerpen',
       'geluidsinstallatie-huren/gent',
-      'bbq-huren/waasland',
+      'bar-cateringmateriaal-huren/waasland',
     ].forEach(slug => expect(slugs).toContain(slug));
+  });
+
+  it('redirects the old bbq-huren URLs to the renamed bar-cateringmateriaal-huren page', () => {
+    const page = rentalPages.find(p => p.categoryId === 'barcatering' && p.regionId === 'gent');
+    expect(page.legacySlugs).toEqual(
+      expect.arrayContaining(['bbq-huren-gent', 'bbq-huren/gent'])
+    );
   });
 });
 
@@ -70,7 +78,7 @@ describe('RentalLandingPage', () => {
   });
 
   it('links the logo to the homepage', async () => {
-    const { getByRole } = renderPage('/bbq-huren/gent');
+    const { getByRole } = renderPage('/bar-cateringmateriaal-huren/gent');
     await waitFor(() => {
       expect(getByRole('heading', { level: 1 })).toBeInTheDocument();
     });
@@ -79,7 +87,7 @@ describe('RentalLandingPage', () => {
   });
 
   it('has no navigation to other pages besides the logo and the legal links', async () => {
-    const { getByRole, queryByRole } = renderPage('/bbq-huren/waasland');
+    const { getByRole, queryByRole } = renderPage('/bar-cateringmateriaal-huren/waasland');
     await waitFor(() => {
       expect(getByRole('heading', { level: 1 })).toBeInTheDocument();
     });

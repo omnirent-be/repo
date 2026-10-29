@@ -228,12 +228,14 @@ app.use(passport.initialize());
 // Server-side routes that do not render the application
 app.use('/api', apiRouter);
 
-// The first version of the landing pages lived at /springkasteel-huren-gent and so on.
-rentalPages
-  .filter(page => page.legacySlug)
-  .forEach(page => {
-    app.get(`/${page.legacySlug}`, (req, res) => res.redirect(301, `/${page.slug}`));
+// The first version of the landing pages lived at /springkasteel-huren-gent and so on,
+// and a renamed/broadened category (e.g. bbq-huren -> bar-cateringmateriaal-huren) adds
+// its old pathBase here too - every past URL for a page redirects to its current slug.
+rentalPages.forEach(page => {
+  page.legacySlugs.forEach(legacySlug => {
+    app.get(`/${legacySlug}`, (req, res) => res.redirect(301, `/${page.slug}`));
   });
+});
 
 const noCacheHeaders = {
   'Cache-control': 'no-cache, no-store, must-revalidate',

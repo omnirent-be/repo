@@ -7,6 +7,16 @@ const buildPages = () =>
   data.pages.map(([categoryId, regionId]) => {
     const category = data.categories.find(c => c.id === categoryId);
     const region = data.regions.find(r => r.id === regionId);
+    // Every URL this page used to live at, kept as permanent redirects to the
+    // current slug: the original dash-joined format (gent only), and - if the
+    // category itself was later renamed/broadened - its old pathBase(s) too.
+    const legacySlugs = [
+      regionId === 'gent' ? `${category.pathBase}-gent` : null,
+      ...(category.legacyPathBases || []).flatMap(legacyBase => [
+        `${legacyBase}/${regionId}`,
+        regionId === 'gent' ? `${legacyBase}-gent` : null,
+      ]),
+    ].filter(Boolean);
     return {
       ...category,
       id: `${categoryId}-${regionId}`,
@@ -15,8 +25,7 @@ const buildPages = () =>
       regionName: region.name,
       regionBounds: region.bounds,
       slug: `${category.pathBase}/${regionId}`,
-      // The URL of the first version of these pages, kept as a permanent redirect.
-      legacySlug: regionId === 'gent' ? `${category.pathBase}-gent` : null,
+      legacySlugs,
       routeName: `RentalLandingPage_${categoryId}_${regionId}`,
     };
   });
