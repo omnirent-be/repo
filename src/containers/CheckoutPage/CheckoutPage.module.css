@@ -406,14 +406,6 @@
   gap: 8px;
 }
 
-.couponCodeHint {
-  display: block;
-  margin: 6px 0 0 0;
-  font-size: 12px;
-  font-weight: var(--fontWeightRegular);
-  color: var(--colorGrey500);
-}
-
 .couponCodeInput {
   flex-grow: 1;
   min-width: 0;

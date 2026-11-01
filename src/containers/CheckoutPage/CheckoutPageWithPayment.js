@@ -571,9 +571,6 @@ export const CheckoutPageWithPayment = props => {
             <FormattedMessage id="CheckoutPage.couponCodeApply" />
           </button>
         </div>
-        <span className={css.couponCodeHint}>
-          <FormattedMessage id="CheckoutPage.couponCodeHint" />
-        </span>
       </label>
       {couponFeedback === 'applied' ? (
         <p className={css.couponCodeApplied}>
