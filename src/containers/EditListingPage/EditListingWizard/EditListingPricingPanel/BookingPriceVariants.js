@@ -326,15 +326,20 @@ const PriceVariant = props => {
   return (
     <div className={css.priceVariant}>
       {isPriceVariationsInUse ? (
-        <FieldTextInput
-          id={`${idPrefix}_name`}
-          name={`${name}.name`}
-          label={intl.formatMessage({ id: 'EditListingPricingForm.priceVariant.name' })}
-          placeholder={intl.formatMessage({
-            id: 'EditListingPricingForm.priceVariant.nameInputPlaceholder',
-          })}
-          validate={validate}
-        />
+        <div className={css.nameField}>
+          <FieldTextInput
+            id={`${idPrefix}_name`}
+            name={`${name}.name`}
+            label={intl.formatMessage({ id: 'EditListingPricingForm.priceVariant.name' })}
+            placeholder={intl.formatMessage({
+              id: 'EditListingPricingForm.priceVariant.nameInputPlaceholder',
+            })}
+            validate={validate}
+          />
+          <p className={css.nameHint}>
+            {intl.formatMessage({ id: 'EditListingPricingForm.priceVariant.nameHint' })}
+          </p>
+        </div>
       ) : null}
 
       <FieldCurrencyInput

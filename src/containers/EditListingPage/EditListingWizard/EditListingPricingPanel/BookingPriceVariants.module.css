@@ -20,6 +20,16 @@
 .noPriceVariant {
 }
 
+.nameField {
+}
+
+.nameHint {
+  composes: marketplaceTinyFontStyles from global;
+  color: var(--colorGrey400);
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
 .priceVariants {
   & .priceVariant {
     padding: 0 0 32px 0;
