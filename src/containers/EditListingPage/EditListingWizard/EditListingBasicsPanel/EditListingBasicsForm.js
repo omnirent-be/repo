@@ -565,6 +565,31 @@ export const EditListingBasicsForm = props => {
               formApi.mutators.update('images', formIndex, propImage);
             }
           });
+          // A pending upload (pushed above with only {id, file}, no imageId yet)
+          // that fails is removed from Redux's uploadedImages (see
+          // EditListingPage.duck.js's uploadImageThunk.rejected) - but that only
+          // drops it from propImages, it was never un-pushed from the form. Without
+          // this, the thumbnail is orphaned with no imageId, so ListingImage.js's
+          // "still uploading" spinner (shown whenever !image.imageId) never clears -
+          // the upload failed, but the UI says it's still in progress forever.
+          // Only prune entries that came from this exact reconciliation (matched a
+          // *previous* propImage that's now gone) and never resolved any other way,
+          // so a submitted/attached listing image (sourced from the listing entity
+          // itself, not a pending upload) is never touched.
+          if (prevPropImages) {
+            const stillPresent = img => propImages.some(pi => sameImage(img, pi));
+            const wasPending = img => prevPropImages.some(pi => sameImage(img, pi));
+            const latestFormImages = formApi.getState().values.images || [];
+            // Walk backwards so each removal's index shift never affects an
+            // index still to be visited.
+            for (let index = latestFormImages.length - 1; index >= 0; index -= 1) {
+              const formImage = latestFormImages[index];
+              const isUnresolvedLocalUpload = formImage?.file && !formImage?.attributes;
+              if (isUnresolvedLocalUpload && wasPending(formImage) && !stillPresent(formImage)) {
+                formApi.mutators.remove('images', index);
+              }
+            }
+          }
           // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [props.images]);
 
