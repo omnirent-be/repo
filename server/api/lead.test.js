@@ -32,8 +32,17 @@ describe('lead', () => {
       contact: '0471 23 45 67',
       contactIsEmail: false,
       date: '2026-06-20',
+      item: null,
       pageTitle: 'Springkasteel huren in Temse',
       pageUrl: 'https://omnirent.be/springkasteel-huren/temse',
+      attribution: {
+        landingPage: 'unknown',
+        utm_source: 'unknown',
+        utm_medium: 'unknown',
+        utm_campaign: 'unknown',
+        utm_term: 'unknown',
+        utm_content: 'unknown',
+      },
     });
     expect(res.status).toHaveBeenCalledWith(200);
   });

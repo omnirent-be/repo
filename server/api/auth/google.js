@@ -97,8 +97,11 @@ exports.authenticateGoogle = (req, res, next) => {
   const paramsAsString = JSON.stringify(params);
 
   passport.authenticate('google', {
+    // 'plus.login' was a Google+ scope - Google shut that API down in 2019, and
+    // Google's OAuth consent screen now rejects the whole request ("Toegang
+    // geblokkeerd") when it's still asked for. profile + email are the only
+    // scopes this app actually needs (name, e-mail - see verifyCallback above).
     scope: [
-      'https://www.googleapis.com/auth/plus.login',
       'https://www.googleapis.com/auth/userinfo.profile',
       'https://www.googleapis.com/auth/userinfo.email',
     ],
