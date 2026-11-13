@@ -6,6 +6,7 @@ const { getRootURL } = require('../api-util/rootURL.js');
 const sdkUtils = require('../api-util/sdk.js');
 
 const { rentalPages } = require('../../src/util/rentalPages');
+const { blogPosts } = require('../../src/util/blogPosts');
 
 const isSitemapDisabled = process.env.SITEMAP_DISABLED === 'true';
 const dev = process.env.REACT_APP_ENV === 'development';
@@ -59,6 +60,12 @@ const defaultPublicPaths = {
 // They are defined in src/config/rentalPages.js, shared with the client routes.
 rentalPages.forEach(page => {
   defaultPublicPaths[`rentalPage_${page.id}`] = { url: `/${page.slug}` };
+});
+
+// Blog articles, defined in src/config/blogPosts.js.
+defaultPublicPaths.blogIndex = { url: '/blog' };
+blogPosts.forEach(post => {
+  defaultPublicPaths[`blogPost_${post.slug}`] = { url: `/blog/${post.slug}` };
 });
 
 // Time-to-live (ttl) is set to one day aka 86400 seconds

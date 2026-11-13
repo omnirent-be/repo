@@ -36,6 +36,9 @@ const HomepagePopularSearches = () => {
               </li>
             ))}
         </ul>
+        <NamedLink name="BlogIndexPage" className={css.blogLink}>
+          <FormattedMessage id="HomepagePopularSearches.blogLink" />
+        </NamedLink>
       </div>
     </section>
   );

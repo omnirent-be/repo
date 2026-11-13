@@ -46,3 +46,11 @@
     text-decoration: none;
   }
 }
+
+.blogLink {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 14px;
+  font-weight: var(--fontWeightSemiBold);
+  color: var(--marketplaceColor);
+}

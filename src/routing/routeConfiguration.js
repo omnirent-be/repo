@@ -38,6 +38,8 @@ const PrivacyPolicyPage = loadable(() => import(/* webpackChunkName: "PrivacyPol
 const FaqPage = loadable(() => import(/* webpackChunkName: "FaqPage" */ '../containers/FaqPage/FaqPage'));
 const ContactPage = loadable(() => import(/* webpackChunkName: "ContactPage" */ '../containers/ContactPage/ContactPage'));
 const HowItWorksPage = loadable(() => import(/* webpackChunkName: "HowItWorksPage" */ '../containers/HowItWorksPage/HowItWorksPage'));
+const BlogIndexPage = loadable(() => import(/* webpackChunkName: "BlogIndexPage" */ '../containers/BlogPage/BlogIndexPage'));
+const BlogPostPage = loadable(() => import(/* webpackChunkName: "BlogPostPage" */ '../containers/BlogPage/BlogPostPage'));
 const ProfilePage = loadable(() => import(/* webpackChunkName: "ProfilePage" */ '../containers/ProfilePage/ProfilePage'));
 const ProfileSettingsPage = loadable(() => import(/* webpackChunkName: "ProfileSettingsPage" */ '../containers/ProfileSettingsPage/ProfileSettingsPage'));
 const RentalLandingPage = loadable(() => import(/* webpackChunkName: "RentalLandingPage" */ '../containers/RentalLandingPage/RentalLandingPage'));
@@ -469,6 +471,17 @@ const routeConfiguration = (layoutConfig, accessControlConfig) => {
       path: '/hoe-het-werkt',
       name: 'HowItWorksPage',
       component: HowItWorksPage,
+    },
+    // Articles are listed in src/config/blogPosts.js, which the server sitemap reads as well.
+    {
+      path: '/blog',
+      name: 'BlogIndexPage',
+      component: BlogIndexPage,
+    },
+    {
+      path: '/blog/:slug',
+      name: 'BlogPostPage',
+      component: BlogPostPage,
     },
     {
       path: '/styleguide',
